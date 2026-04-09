@@ -1,0 +1,100 @@
+# Gradle
+.gradle/
+build/
+*.apk
+*.ap_
+*.dex
+*.class
+*.jar
+*.so
+*.aar
+*.aab
+
+# Gradle wrapper
+gradle-wrapper.jar
+gradlew
+gradlew.bat
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+captures/
+.externalNativeBuild
+.cxx/
+
+# Android Studio Navigation Editor
+.navigation/
+
+# Android Studio Captures Folder
+captures/
+
+# Kotlin
+*.kt.bak
+*.kexe
+
+# Build files
+bin/
+out/
+
+# Gradle output
+.gradle
+
+# Local properties
+*.properties
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Google Maps
+google_maps_api.xml
+maps_api.properties
+
+# Testing
+.coverage
+coverage.xml
+*.lcov
+
+# OS specific
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Firebase (si se implementa)
+google-services.json
+
+# Archivos sensibles
+*.pem
+*.key
+*.keystore
+*.bks
+
+# Archivos temporales del IDE
+*.swp
+*.swo
+*~
+.classpath
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Versionamiento de dependencias lock files (opcional, descomentear si se usa)
+# .gradle/
+
+# Lint results
+lint-results-*.sarif
+
+# Fuentes de prueba
+test-results/
+androidTest-results/
+
+# Reportes de cobertura
+coverage-reports/
