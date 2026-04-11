@@ -1,218 +1,298 @@
 # ManTap
 
-Aplicación móvil nativa para Android que permite a los usuarios de Manta, Manabí, Ecuador reportar y explorar información sobre zonas de la ciudad.
+Aplicación móvil nativa para Android que permite a los usuarios de Manta, Manabí, Ecuador reportar incidentes urbanos y dar seguimiento a su resolución mediante la interacción con administradores y agencias responsables.
+
+---
 
 ## Descripción
 
-ManTap es una solución móvil diseñada exclusivamente para facilitar la comunicación comunitaria mediante reportes de zonas. La aplicación permite a los usuarios explorar información geográfica, crear reportes ubicados en el mapa y participar en la mejora continua de su comunidad.
+ManTap es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
+
+El sistema está diseñado con un enfoque escalable, permitiendo su evolución hacia un backend centralizado y un panel web administrativo.
+
+---
 
 ## Especificaciones del Proyecto
 
-**Ubicación:** Manta, Manabí, Ecuador  
-**Plataforma:** Android Nativo  
-**Lenguaje:** Kotlin  
-**Framework de UI:** Jetpack Compose  
-**Arquitectura:** MVVM (Model-View-ViewModel)  
+- **Ubicación:** Manta, Manabí, Ecuador  
+- **Plataforma:** Android Nativo  
+- **Lenguaje:** Kotlin  
+- **Framework de UI:** Jetpack Compose  
+- **Arquitectura:** MVVM + Clean Architecture  
+- **Principios:** SOLID  
+
+---
 
 ## Stack Tecnológico
 
 ### Core
-- **Kotlin** - Lenguaje de programación principal
-- **Jetpack Compose** - Framework de UI declarativo (prohibido usar XML layouts)
-- **Android Architecture Components** - ViewModel, LiveData, StateFlow
+- Kotlin  
+- Jetpack Compose  
+- Android Architecture Components (ViewModel, StateFlow)  
 
 ### Persistencia
-- **Room Database** - Base de datos local
-  - Entidad: Usuario (PK: cedula)
-  - Entidad: Barrio
-  - Entidad: Reporte
+- Room Database (fuente local)  
+- Preparado para integración con backend remoto (API REST o servicios como Firebase/Supabase)  
 
 ### Mapas y Geolocalización
-- **Google Maps** - Visualización de zonas
-- **Ubicación base:** Lat: -0.967653, Lng: -80.708910
+- Google Maps SDK  
+- Ubicación base: Lat -0.967653, Lng -80.708910  
+
+### Inyección de Dependencias
+- Hilt (recomendado)  
 
 ### Testing
-- **JUnit** - Tests unitarios
-- **Compose Testing Library** - Tests de componentes UI
-
-## Arquitectura
-
-La aplicación sigue el patrón **MVVM** con separación clara de capas:
-
-```
-├── ui/
-│   ├── screens/          # Pantallas principales
-│   ├── components/       # Componentes reutilizables Compose
-│   └── navigation/       # Lógica de navegación
-├── viewmodel/            # ViewModels (lógica de presentación)
-├── data/
-│   ├── local/            # Room database
-│   ├── remote/           # APIs externas
-│   └── repository/       # Abstracción de datos
-├── domain/               # Entidades y casos de uso
-└── utils/                # Utilidades comunes
-```
-
-## Funcionalidades Principales
-
-### 1. Navegación Principal
-La aplicación implementa un BottomNavigationBar con tres secciones:
-
-- **Explorar** (Icono: Compass) - Visualizar reportes en feed
-- **Post** (Icono: Plus) - Crear reportes (solo usuarios autenticados)
-- **Mapa** (Icono: Map) - Vista geográfica centrada en Manta
-
-### 2. Autenticación
-- Soporte para usuario autenticado y modo invitado
-- Validación obligatoria de cédula ecuatoriana (10 dígitos)
-- Persistencia de sesión con Room
-
-### 3. Modo Invitado
-- Los usuarios invitados pueden explorar y ver el mapa
-- **Restricción:** No pueden acceder a la funcionalidad de reportes ([+])
-
-### 4. Reportes
-- Crear reportes con ubicación geográfica
-- Asociar reportes a barrios específicos
-- Persistencia y sincronización de datos
-
-## Paleta de Colores
-
-| Elemento | Color | Valor |
-|----------|-------|-------|
-| Primario | Ocean Blue | #0077B6 |
-| Peligro | Danger Red | - |
-| Advertencia | Warning Yellow | - |
-| Seguridad | Safety Green | - |
-
-## Validaciones Requeridas
-
-### Validación de Cédula Ecuatoriana
-La aplicación implementa obligatoriamente el algoritmo de validación para cédulas de 10 dígitos ecuatorianas durante el registro de usuarios.
-
-## Guías de Desarrollo
-
-### Nomenclatura de Código
-
-**PascalCase:**
-- Componentes de Compose
-- Pantallas (Screens)
-- Clases principales
-
-**camelCase:**
-- Funciones
-- Variables
-- Estados
-
-### Lenguaje
-
-| Contexto | Idioma| Ejemplo |
-|----------|-------|---------|
-| UI (visible usuario) | Español | "Iniciar Sesión", "Reportar zona" |
-| Código (variables/funciones) | Inglés | `userReport`, `idCard`, `fetchData` |
-| Comentarios | Español (sin acentos) | `// Valida informacion de usuario` |
-| Commits | Español (sin acentos) | `feat: agregar validacion cedula` |
-
-
-### Recomendaciones de Rendimiento
-
-- Implementar Lazy Loading en listas
-- Evitar recomposiciones innecesarias en Compose
-- Considerar funcionalidad offline
-- Mensajes de error claros para fallos de conectividad
-
-## Testing
-
-### Tests Unitarios (Obligatorio)
-- Lógica de negocio
-- Servicios
-- Validaciones (especialmente validación de cédula)
-
-### Tests de Componentes
-- Utilizar librería estándar de testing para Jetpack Compose
-- Validar interacciones de UI
-
-## Estructura de Datos
-
-### Entidad: Usuario
-```
-cedula (String) - PK
-nombre (String)
-email (String)
-esInvitado (Boolean)
-```
-
-### Entidad: Barrio
-```
-id (Int) - PK
-nombre (String)
-ciudad (String)
-```
-
-### Entidad: Reporte
-```
-id (Int) - PK
-cedulaUsuario (String) - FK
-barrioId (Int) - FK
-descripcion (String)
-latitud (Double)
-longitud (Double)
-fecha (Long)
-```
-
-## Instalación
-
-### Prerequisitos
-- Android Studio Flamingo o superior
-- JDK 11 o superior
-- SDK de Android 31+
-
-### Pasos
-
-1. Clonar el repositorio
-```bash
-git clone <repositorio>
-cd ManTap
-```
-
-2. Obtener dependencias
-```bash
-./gradlew build
-```
-
-3. Configurar Google Maps API Key
-   - Agregar key en `local.properties` o AndroidManifest.xml
-
-4. Ejecutar la aplicación
-```bash
-./gradlew installDebug
-```
-
-## Contribuciones
-
-### Estándares de Commit
-- Formato: `tipo: descripcion`
-- Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `test`
-- Lenguaje: Español sin acentos
-- Ejemplo: `feat: agregar pantalla de reportes`
-
-### Pull Requests
-- Incluir tests unitarios para nuevas funcionalidades
-- Seguir nomenclatura establecida
-- Documentar cambios significativos
-
-## Roadmap
-
-- [ ] Autenticación con servidor backend
-- [ ] Sincronización en tiempo real
-- [ ] Sistema de comentarios en reportes
-- [ ] Notificaciones push
-- [ ] Filtrado avanzado de reportes por zona
-
-## Contacto y Soporte
-
-Para dudas o reporte de errores, contactar al equipo de desarrollo.
+- JUnit (unit testing)  
+- Compose Testing Library (UI testing)  
 
 ---
 
-**Última actualización:** Abril 2026
+## Arquitectura
+
+El proyecto implementa **MVVM + Clean Architecture**, separando responsabilidades en capas bien definidas:
+
+    ├── ui/ # Capa de presentación
+    │ ├── screens/
+    │ ├── components/
+    │ └── navigation/
+    ├── viewmodel/ # ViewModels (estado y lógica de UI)
+    ├── domain/ # Lógica de negocio
+    │ ├── model/ # Entidades de dominio
+    │ ├── repository/ # Interfaces
+    │ └── usecase/ # Casos de uso
+    ├── data/ # Capa de datos
+    │ ├── local/ # Room
+    │ ├── remote/ # API
+    │ └── repository/ # Implementaciones
+    └── utils/ # Utilidades
+
+
+---
+
+## Principios de Diseño
+
+### SOLID
+
+- **Single Responsibility:** Cada clase tiene una única responsabilidad.  
+- **Open/Closed:** El sistema permite extensión sin modificar código existente.  
+- **Liskov Substitution:** Las implementaciones pueden sustituirse sin afectar el sistema.  
+- **Interface Segregation:** Interfaces específicas y no monolíticas.  
+- **Dependency Inversion:** Dependencias hacia abstracciones, no implementaciones.  
+
+### Clean Architecture
+
+- Separación clara entre UI, dominio y datos.  
+- El dominio no depende de frameworks externos.  
+- Uso de casos de uso para encapsular lógica de negocio.  
+
+---
+
+## Modelo de Datos (Alineado con ERD)
+
+### Usuario
+
+    id (UUID) - PK
+    nombreCompleto (String)
+    email (String)
+    passwordHash (String)
+    rol (Enum)
+    activo (Boolean)
+
+### Ciudad
+
+    id (UUID) - PK
+    nombre (String)
+    pais (String)
+    centroLat (Double)
+    centroLng (Double)
+
+### Barrio
+
+    id (UUID) - PK
+    ciudadId (UUID) - FK
+    nombre (String)
+    nivelPeligrosidad (String)
+    perimetro (Geometry)
+
+### Reporte
+
+    id (UUID) - PK
+    usuarioId (UUID) - FK
+    ciudadId (UUID) - FK
+    ubicacionId (UUID) - FK
+    agenciaId (UUID) - FK (nullable)
+    descripcion (String)
+    estado (Enum)
+    fechaReporte (Timestamp)
+    updatedAt (Timestamp)
+
+### ReporteUbicacion
+
+    id (UUID) - PK
+    lat (Double)
+    lng (Double)
+    direccionAproximada (String)
+
+### ReporteImagen
+
+    id (UUID) - PK
+    reporteId (UUID) - FK
+    urlPath (String)
+    createdAt (Timestamp)
+
+### Agencia
+
+    id (UUID) - PK
+    nombre (String)
+    tipo (String)
+    contacto (String)
+
+---
+
+## Estados del Reporte
+
+Se recomienda el uso de un enum:
+
+    PENDIENTE
+    EN_PROCESO
+    RESUELTO
+
+
+---
+
+## Casos de Uso (Ejemplos)
+
+- CrearReporteUseCase  
+- ObtenerReportesUseCase  
+- AsignarAgenciaUseCase  
+- CambiarEstadoReporteUseCase  
+- SubirImagenReporteUseCase  
+
+---
+
+## Repositorios (Abstracción)
+
+Ejemplo:
+
+kotlin
+    ``
+    interface ReporteRepository {
+        suspend fun crearReporte(reporte: Reporte)
+        suspend fun obtenerReportes(): List<Reporte>
+        suspend fun asignarAgencia(reporteId: String, agenciaId: String)
+    }``
+
+---
+## Flujo del Sistema
+    El usuario crea un reporte desde la aplicación móvil.
+    El sistema almacena el reporte localmente y/o en backend.
+    El administrador visualiza los reportes.
+    El administrador asigna una agencia.
+    La agencia gestiona el incidente.
+    El estado del reporte se actualiza hasta su resolución.
+---
+## Funcionalidades Principales
+Navegación:
+
+    Explorar (feed de reportes)
+    Crear reporte
+    Mapa interactivo
+  
+Autenticación:
+
+    Registro y login
+    Modo invitado (solo lectura)
+  
+Reportes:
+
+    Creación con ubicación
+    Asociación a barrios
+    Subida de imágenes
+    Seguimiento de estado
+
+---
+
+## Escalabilidad
+El sistema está diseñado para evolucionar hacia:
+
+    Backend centralizado (API REST / GraphQL)
+    Sincronización en tiempo real
+    Panel web administrativo
+    Notificaciones push
+    Integración con servicios externos
+---
+
+## Roadmap
+
+     Implementación de casos de uso (UseCases)
+     Integración con backend remoto
+     Sistema de asignación de agencias
+     Gestión de estados de reportes
+     Subida de imágenes
+     Panel web para administradores
+     Notificaciones push
+     Sistema de comentarios
+
+---
+
+## Guías de Desarrollo
+Nomenclatura:
+
+    PascalCase: Clases, composables
+    camelCase: Variables, funciones
+    Inglés: Código
+    Español: UI
+Buenas Prácticas:
+
+    Evitar lógica en la UI
+    Uso de StateFlow en lugar de LiveData
+    Separación estricta de capas
+    Testing de casos de uso
+
+---
+
+## Testing
+  Unit Testing:
+  
+      Casos de uso
+      Validaciones
+      Repositorios
+  UI Testing:
+  
+      Componentes Compose
+      Flujos de usuario
+
+---
+
+## Instalación
+  Prerrequisitos:
+  
+    Android Studio Flamingo o superior
+    JDK 11 o superior
+    SDK de Android 31+
+
+  Pasos:
+  
+    git clone <repositorio>
+    cd ManTap
+    ./gradlew build
+    ./gradlew installDebug
+
+---
+
+## Contribuciones
+Commits
+  Formato:
+
+    tipo: descripcion
+
+  Ejemplo:
+
+    feat: agregar creacion de reportes
+
+---
+
+## Pull Requests
+    Incluir tests
+    Documentar cambios
+    Seguir arquitectura establecida
