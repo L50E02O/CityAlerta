@@ -6,14 +6,10 @@ build/
 *.dex
 *.class
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.so
 *.aar
 *.aab
-
-# Gradle wrapper
-gradle-wrapper.jar
-gradlew
-gradlew.bat
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -45,8 +41,7 @@ out/
 # Gradle output
 .gradle
 
-# Local properties
-*.properties
+# Local properties (no usar *.properties: ocultaría gradle-wrapper.properties)
 
 # Environment
 .env
