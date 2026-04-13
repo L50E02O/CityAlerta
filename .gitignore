@@ -11,6 +11,12 @@ build/
 *.aar
 *.aab
 
+.kotlin/
+*.log
+build/
+.gradle/
+local.properties
+
 # Local configuration file (sdk path, etc)
 local.properties
 

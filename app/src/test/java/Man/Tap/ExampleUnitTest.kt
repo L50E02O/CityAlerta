@@ -1,4 +1,4 @@
-package Man.Tap
+package man.tap
 
 import org.junit.Test
 
