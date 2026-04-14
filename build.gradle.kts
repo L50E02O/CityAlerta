@@ -11,5 +11,14 @@ sonar {
   properties {
     property("sonar.projectKey", "L50E02O_ManTap")
     property("sonar.organization", "l50e02o")
+    property("sonar.coverage.jacoco.xmlReportPaths", "app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
+    property(
+      "sonar.coverage.exclusions",
+      "app/src/main/java/Man/Tap/view/**,app/src/main/java/Man/Tap/navigation/**,app/src/main/java/Man/Tap/MainActivity.kt,app/src/main/java/Man/Tap/model/remote/**,app/src/main/java/Man/Tap/model/repository/authRepository.kt"
+    )
   }
+}
+
+tasks.named("sonar") {
+  dependsOn(":app:jacocoTestReport")
 }
