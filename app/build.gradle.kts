@@ -9,6 +9,10 @@ plugins {
     jacoco
 }
 
+jacoco {
+    toolVersion = "0.8.11"
+}
+
 android {
     namespace = "man.tap"
     compileSdk = 36
@@ -129,11 +133,12 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 
     classDirectories.setFrom(files(kotlinDebugTree, javaDebugTree))
     sourceDirectories.setFrom(files("src/main/java"))
-    executionData.setFrom(fileTree(layout.buildDirectory) {
-        include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
-        include("jacoco/testDebugUnitTest.exec")
-        include("**/*.exec")
-    })
+    executionData.setFrom(
+        files(
+            layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
+            layout.buildDirectory.file("jacoco/testDebugUnitTest.exec")
+        )
+    )
 }
 
 dependencies {
