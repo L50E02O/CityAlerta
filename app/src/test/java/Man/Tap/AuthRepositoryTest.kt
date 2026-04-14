@@ -81,12 +81,3 @@ class AuthRepositoryTest {
         assertTrue(result.isSuccess || result.isFailure)
     }
 }
-
-    @Test
-    fun testLogOutReturnsResult() = runTest {
-        val result = repository.logOut()
-        
-        assertNotNull(result)
-        assertTrue(result.isSuccess || result.isFailure)
-    }
-}
