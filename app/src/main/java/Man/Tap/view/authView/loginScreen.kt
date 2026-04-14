@@ -75,15 +75,6 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
                 val icon = if(passwordVisible) Icons.Filled.VisibilityOff
                 else Icons.Filled.Visibility
 
-                val description = if(passwordVisible){
-                    "Hide password"
-                }else {
-                    "Show password"
-                }
-
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = icon,
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         imageVector = icon,

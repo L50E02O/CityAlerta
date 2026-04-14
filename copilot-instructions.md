@@ -1,3 +1,7 @@
+---
+applyTo: "**"
+---
+
 # Instrucciones para GitHub Copilot: Aplicaciones Móviles Nativas
 
 ## Contexto y Alcance
@@ -20,6 +24,7 @@ Comentarios y Documentación: En español, sin emojis y sin acentos.
 
 Commits: Formato tipo: descripcion (feat, fix, docs, style, refactor, test), en español y sin acentos.
 
+lenguaje: Todo lo generado debe estar en español, sin acentos ni emojis, tanto en la UI como en los comentarios y mensajes de commit. El código (nombres de variables, funciones, clases) debe estar en inglés para mantener consistencia con las convenciones de programación.
 ## Estructura y Estándares de Código
 Evitar el uso de XML layouts; usar exclusivamente Jetpack Compose para la UI.
 
