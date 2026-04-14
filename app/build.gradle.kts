@@ -38,10 +38,6 @@ android {
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
-        if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
-            throw GradleException("Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY.")
-        }
-
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
     }
