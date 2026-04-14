@@ -84,7 +84,10 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = description
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
                     )
                 }
             },
