@@ -31,15 +31,17 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.navigation.NavController
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 
 
 @Composable
 fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
 //    Formulario de inicio de sesion
-    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.email).matches()
+    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
     var passwordVisible by remember { mutableStateOf(false) }
+    val isPasswordValid = viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >=8
+    val isFormValid = isEmailValid && isPasswordValid
+
 
     Column(
         modifier = Modifier
@@ -52,19 +54,19 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = viewModel.email,
-            onValueChange = { viewModel.email = it },
+            value = viewModel.uiState.email,
+            onValueChange = { viewModel.onEmailChange(it) },
             label = { Text(text = "email") },
             singleLine = true,
-            isError = viewModel.email.isNotEmpty() && !isEmailValid,
+            isError = viewModel.uiState.email.isNotEmpty() && !isEmailValid,
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = viewModel.password,
-            onValueChange = { viewModel.password = it },
+            value = viewModel.uiState.password,
+            onValueChange = { viewModel.onPasswordChange(it)},
             label = {Text( text = "password")},
             singleLine = true,
             visualTransformation = if(passwordVisible) VisualTransformation.None
@@ -73,8 +75,17 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
                 val icon = if(passwordVisible) Icons.Filled.VisibilityOff
                 else Icons.Filled.Visibility
 
+                val description = if(passwordVisible){
+                    "Hide password"
+                }else {
+                    "Show password"
+                }
+
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = icon, contentDescription = null)
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = description
+                    )
                 }
             },
 
@@ -82,9 +93,9 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
         )
 
 
-        if (viewModel.errorMessage != null) {
+        if (viewModel.uiState.errorMessage != null) {
             Text(
-                text = viewModel.errorMessage!!,
+                text = viewModel.uiState.errorMessage!!,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
@@ -102,9 +113,9 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !viewModel.isLoading
+            enabled =  isFormValid && !viewModel.uiState.isLoading
         ) {
-            Text(text = if (viewModel.isLoading) "Cargando..." else "Entrar")
+            Text(text = if (viewModel.uiState.isLoading) "Cargando..." else "Entrar")
         }
 
         Spacer(modifier = Modifier.height(8.dp))

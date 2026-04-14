@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.kapt)
 }
 
 android {
@@ -21,12 +22,25 @@ android {
 
         val properties = Properties()
 
-        properties.load(
-            project.rootProject.file("local.properties").inputStream()
-        )
+        val localProperties = rootProject.file("local.properties")
+        if (localProperties.exists()){
+            localProperties.inputStream().use {properties.load(it)}
+        }
 
-        val supabaseUrl = properties.getProperty("SUPABASE_URL") ?: ""
-        val supabaseKey = properties.getProperty("SUPABASE_ANON_KEY") ?: ""
+
+        val supabaseUrl = providers.gradleProperty("SUPABASE_URL")
+            .orElse(properties.getProperty("SUPABASE_URL") ?: "")
+            .getOrElse("")
+
+
+
+        val supabaseKey = providers.gradleProperty("SUPABASE_ANON_KEY")
+            .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
+            .getOrElse("")
+
+        if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
+            throw GradleException("Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY.")
+        }
 
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
@@ -54,6 +68,9 @@ android {
     }
 }
 
+kapt{
+    correctErrorTypes = true
+}
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -78,4 +95,10 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:gotrue-kt:2.0.0")
     implementation("io.github.jan-tennert.supabase:supabase-kt:2.0.0")
     implementation("io.ktor:ktor-client-android:2.3.7")
+
+//    Room
+    implementation("androidx.room:room-runtime:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+
 }

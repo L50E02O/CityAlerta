@@ -4,6 +4,7 @@ import man.tap.model.repository.AuthRepository
 import man.tap.view.authView.LoginScreen
 import man.tap.view.authView.RegisterScreen
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import man.tap.navigation.Routes
 import man.tap.view.home.HomeScreen
 import man.tap.viewmodel.AuthViewModel
@@ -18,10 +19,8 @@ import man.tap.viewmodel.AuthViewModelFactory
 fun AppNavigation(){
 
     val navController = rememberNavController()
-
-
-    val authRepository = AuthRepository()
-    val factory = AuthViewModelFactory(authRepository)
+    val authRepository = remember { AuthRepository() }
+    val factory = remember { AuthViewModelFactory(authRepository) }
 
     val viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
