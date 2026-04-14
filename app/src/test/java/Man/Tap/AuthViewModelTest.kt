@@ -146,4 +146,68 @@ class AuthViewModelTest {
         assertNotNull(viewModel.uiState.errorMessage)
         assertFalse(viewModel.uiState.isLoading)
     }
+
+    @Test
+    fun testOnLoginClickWhenRepositoryThrowsException() = runTest {
+        viewModel.onEmailChange("test@example.com")
+        viewModel.onPasswordChange("password123")
+
+        whenever(mockRepository.signIn("test@example.com", "password123"))
+            .thenThrow(RuntimeException("Login exception"))
+
+        var successCalled = false
+        viewModel.onLoginClick(onSuccess = { successCalled = true })
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(successCalled)
+        assertEquals("Login exception", viewModel.uiState.errorMessage)
+        assertFalse(viewModel.uiState.isLoading)
+    }
+
+    @Test
+    fun testOnLoginClickWhenRepositoryThrowsWithoutMessage() = runTest {
+        viewModel.onEmailChange("test@example.com")
+        viewModel.onPasswordChange("password123")
+
+        whenever(mockRepository.signIn("test@example.com", "password123"))
+            .thenThrow(RuntimeException())
+
+        viewModel.onLoginClick(onSuccess = {})
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
+        assertFalse(viewModel.uiState.isLoading)
+    }
+
+    @Test
+    fun testOnRegisterClickWhenRepositoryThrowsException() = runTest {
+        viewModel.onEmailChange("newuser@example.com")
+        viewModel.onPasswordChange("password123")
+
+        whenever(mockRepository.signUp("newuser@example.com", "password123"))
+            .thenThrow(RuntimeException("Register exception"))
+
+        var successCalled = false
+        viewModel.onRegisterClick(onSuccess = { successCalled = true })
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(successCalled)
+        assertEquals("Register exception", viewModel.uiState.errorMessage)
+        assertFalse(viewModel.uiState.isLoading)
+    }
+
+    @Test
+    fun testOnRegisterClickWhenRepositoryThrowsWithoutMessage() = runTest {
+        viewModel.onEmailChange("newuser@example.com")
+        viewModel.onPasswordChange("password123")
+
+        whenever(mockRepository.signUp("newuser@example.com", "password123"))
+            .thenThrow(RuntimeException())
+
+        viewModel.onRegisterClick(onSuccess = {})
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
+        assertFalse(viewModel.uiState.isLoading)
+    }
 }

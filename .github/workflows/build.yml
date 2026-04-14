@@ -39,5 +39,5 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           chmod +x gradlew
-          # "build" compila release+debug, tests release, lint…; para Sonar basta debug + tests unitarios debug (más rápido).
-          ./gradlew assembleDebug testDebugUnitTest sonar --info
+          # Generamos lint + tests + cobertura antes de sonar para asegurar importación de reportes.
+          ./gradlew assembleDebug lintDebug testDebugUnitTest sonar --info

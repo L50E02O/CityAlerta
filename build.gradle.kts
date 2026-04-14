@@ -11,6 +11,7 @@ sonar {
   properties {
     property("sonar.projectKey", "L50E02O_ManTap")
     property("sonar.organization", "l50e02o")
+    property("sonar.androidLint.reportPaths", "app/build/reports/lint-results-debug.xml")
     property("sonar.coverage.jacoco.xmlReportPaths", "app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
     property(
       "sonar.coverage.exclusions",
@@ -20,5 +21,6 @@ sonar {
 }
 
 tasks.named("sonar") {
+  dependsOn(":app:lintDebug")
   dependsOn(":app:jacocoTestReport")
 }
