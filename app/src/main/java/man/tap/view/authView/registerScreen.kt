@@ -10,7 +10,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
     AuthScreenScaffold(
         title = "Registrarse",
         primaryButtonText = "Registrarse",
-        secondaryActionText = "¿Ya tienes cuenta? Inicia sesión",
+        secondaryActionText = "¿Ya tienes cuenta? Inicia sesion",
         viewModel = viewModel,
         onPrimaryAction = {
             viewModel.onRegisterClick {
@@ -20,9 +20,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
             }
         },
         onSecondaryAction = {
-            navController.navigate(Routes.Login.route) {
-                popUpTo(Routes.Register.route) { inclusive = true }
-            }
+            navController.popBackStack()
         }
     )
 }

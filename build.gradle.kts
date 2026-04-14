@@ -25,11 +25,11 @@ project(":app") {
       property("sonar.androidLint.reportPaths", "build/reports/lint-results-debug.xml")
       property(
         "sonar.coverage.jacoco.xmlReportPaths",
-        "build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml,${layout.projectDirectory.asFile.absolutePath}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+        "build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
       )
       property(
         "sonar.coverage.exclusions",
-        "src/main/java/man/tap/view/**,src/main/java/man/tap/navigation/**,src/main/java/man/tap/MainActivity.kt,src/main/java/man/tap/model/remote/**,src/main/java/man/tap/model/repository/authRepository.kt"
+        "src/main/java/man/tap/view/**,src/main/java/man/tap/navigation/**,src/main/java/man/tap/MainActivity.kt,src/main/java/man/tap/model/remote/**"
       )
     }
   }
