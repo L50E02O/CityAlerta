@@ -15,7 +15,7 @@ sonar {
     property("sonar.coverage.jacoco.xmlReportPaths", "app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
     property(
       "sonar.coverage.exclusions",
-      "app/src/main/java/Man/Tap/view/**,app/src/main/java/Man/Tap/navigation/**,app/src/main/java/Man/Tap/MainActivity.kt,app/src/main/java/Man/Tap/model/remote/**,app/src/main/java/Man/Tap/model/repository/authRepository.kt"
+      "app/src/main/java/man/tap/view/**,app/src/main/java/man/tap/navigation/**,app/src/main/java/man/tap/MainActivity.kt,app/src/main/java/man/tap/model/remote/**,app/src/main/java/man/tap/model/repository/authRepository.kt"
     )
   }
 }

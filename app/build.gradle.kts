@@ -107,6 +107,8 @@ kapt{
 
 tasks.register<JacocoReport>("jacocoTestReport") {
     dependsOn("testDebugUnitTest")
+    group = "verification"
+    description = "Genera el reporte de cobertura JaCoCo para tests unitarios debug"
 
     reports {
         xml.required.set(true)
