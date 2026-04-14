@@ -47,7 +47,7 @@ fun AuthFormComponent(
 
         if (email.isNotEmpty() && !isEmailValid) {
             Text(
-                text = "Correo electrónico inválido",
+                text = "Correo electronico invalido",
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 4.dp)
@@ -65,7 +65,7 @@ fun AuthFormComponent(
 
         if (password.isNotEmpty() && !isPasswordValid) {
             Text(
-                text = "La contraseña debe tener al menos 8 caracteres",
+                text = "La contrasena debe tener al menos 8 caracteres",
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 4.dp)
@@ -94,7 +94,7 @@ private fun EmailField(
     OutlinedTextField(
         value = email,
         onValueChange = onEmailChange,
-        label = { Text(text = "Correo electrónico") },
+        label = { Text(text = "Correo electronico") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
@@ -113,12 +113,12 @@ private fun PasswordField(
     onToggleVisibility: () -> Unit
 ) {
     val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+    val description = if (passwordVisible) "Ocultar contrasena" else "Mostrar contrasena"
 
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChange,
-        label = { Text(text = "Contraseña") },
+        label = { Text(text = "Contrasena") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,

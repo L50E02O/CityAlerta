@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 data class AuthState(
     val email: String = "",
     val password: String = "",
+    val cedula: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -30,14 +31,25 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
         uiState = uiState.copy(password = password)
     }
 
+    fun onCedulaChange(cedula: String){
+        uiState = uiState.copy(cedula = cedula)
+    }
+
+    private fun validateCedula(cedula: String): Boolean {
+        return cedula.length == 10 && cedula.all { it.isDigit() }
+    }
+
     fun onLoginClick(onSuccess: () -> Unit) {
         if (uiState.email.isEmpty() || uiState.password.isEmpty()){
-            uiState = uiState.copy(errorMessage = "Email and password cannot be empty")
+            uiState = uiState.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
             return
         }
 
+        if (uiState.isLoading) return
+        uiState = uiState.copy(isLoading = true)
+
         viewModelScope.launch {
-            uiState = uiState.copy(isLoading = true, errorMessage = null)
+            uiState = uiState.copy(errorMessage = null)
 
             try {
                 var result = repository.signIn(uiState.email, uiState.password)
@@ -53,6 +65,7 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
                     }
                 )
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 uiState = uiState.copy(
                     errorMessage = e.message ?: UNKNOWN_ERROR_MESSAGE
                 )
@@ -64,12 +77,20 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
 
     fun onRegisterClick(onSuccess: () -> Unit) {
         if (uiState.email.isEmpty() || uiState.password.isEmpty()) {
-            uiState = uiState.copy(errorMessage = "Email and password cannot be empty")
+            uiState = uiState.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
             return
         }
 
+        if (!validateCedula(uiState.cedula)) {
+            uiState = uiState.copy(errorMessage = "Invalid cedula")
+            return
+        }
+
+        if (uiState.isLoading) return
+        uiState = uiState.copy(isLoading = true)
+
         viewModelScope.launch {
-           uiState = uiState.copy(isLoading = true, errorMessage = null)
+           uiState = uiState.copy(errorMessage = null)
 
             try {
                 var result = repository.signUp(uiState.email, uiState.password)
@@ -85,6 +106,7 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
                     }
                 )
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 uiState = uiState.copy(
                     errorMessage = e.message ?: UNKNOWN_ERROR_MESSAGE
                 )

@@ -9,9 +9,9 @@ import androidx.navigation.NavController
 @Composable
 fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
     AuthScreenScaffold(
-        title = "Iniciar sesión",
+        title = "Iniciar sesion",
         primaryButtonText = "Entrar",
-        secondaryActionText = "¿No tienes cuenta? Regístrate",
+        secondaryActionText = "¿No tienes cuenta? Registrate",
         viewModel = viewModel,
         onPrimaryAction = {
             viewModel.onLoginClick {
