@@ -35,6 +35,8 @@ jobs:
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           chmod +x gradlew
           # "build" compila release+debug, tests release, lint…; para Sonar basta debug + tests unitarios debug (más rápido).
