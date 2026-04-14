@@ -3,6 +3,7 @@ package man.tap.model.repository
 import man.tap.model.remote.SupabaseProvider
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
+import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepository: IAuthRepository {
     override suspend fun signUp(email: String, password: String): Result<Unit> {
@@ -12,6 +13,8 @@ class AuthRepository: IAuthRepository {
                 this.password = password
             }
             Result.success(Unit)
+        }catch (e: CancellationException){
+            throw e
         }catch (e: Exception){
             Result.failure(e)
         }
@@ -24,6 +27,8 @@ class AuthRepository: IAuthRepository {
                 this.password = password
             }
             Result.success(Unit)
+        }catch (e: CancellationException){
+            throw e
         }catch (e: Exception){
             Result.failure(e)
         }
@@ -33,6 +38,8 @@ class AuthRepository: IAuthRepository {
         return try {
             SupabaseProvider.client.auth.signOut()
             Result.success(Unit)
+        }catch (e: CancellationException){
+            throw e
         }catch (e: Exception){
             Result.failure(e)
         }

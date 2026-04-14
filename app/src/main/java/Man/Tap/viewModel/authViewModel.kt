@@ -29,49 +29,65 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
     }
 
     fun onLoginClick(onSuccess: () -> Unit) {
-        if (uiState.email.isNotEmpty() && uiState.password.isNotEmpty()){
-            viewModelScope.launch {
-                uiState = uiState.copy(isLoading = true, errorMessage = null)
+        if (uiState.email.isEmpty() || uiState.password.isEmpty()){
+            uiState = uiState.copy(errorMessage = "Email and password cannot be empty")
+            return
+        }
 
+        viewModelScope.launch {
+            uiState = uiState.copy(isLoading = true, errorMessage = null)
+
+            try {
                 var result = repository.signIn(uiState.email, uiState.password)
 
                 result.fold(
                     onSuccess = {
-                        uiState = uiState.copy(isLoading = false)
                         onSuccess()
                     },
                     onFailure = { error ->
                         uiState = uiState.copy(
-                            isLoading = false,
                             errorMessage = error.message ?: "Error desconocido"
                         )
-
                     }
                 )
+            } catch (e: Exception) {
+                uiState = uiState.copy(
+                    errorMessage = e.message ?: "Error desconocido"
+                )
+            } finally {
+                uiState = uiState.copy(isLoading = false)
             }
         }
     }
 
     fun onRegisterClick(onSuccess: () -> Unit) {
-        if (uiState.email.isNotEmpty() && uiState.password.isNotEmpty()) {
-            viewModelScope.launch {
-               uiState = uiState.copy(isLoading = true, errorMessage = null)
+        if (uiState.email.isEmpty() || uiState.password.isEmpty()) {
+            uiState = uiState.copy(errorMessage = "Email and password cannot be empty")
+            return
+        }
 
+        viewModelScope.launch {
+           uiState = uiState.copy(isLoading = true, errorMessage = null)
+
+            try {
                 var result = repository.signUp(uiState.email, uiState.password)
 
                 result.fold(
                     onSuccess = {
-                        uiState = uiState.copy(isLoading = false)
                         onSuccess()
                     },
                     onFailure = { error ->
                         uiState = uiState.copy(
-                            isLoading = false,
                             errorMessage = error.message ?: "Error desconocido"
                         )
-
                     }
                 )
+            } catch (e: Exception) {
+                uiState = uiState.copy(
+                    errorMessage = e.message ?: "Error desconocido"
+                )
+            } finally {
+                uiState = uiState.copy(isLoading = false)
             }
         }
     }
