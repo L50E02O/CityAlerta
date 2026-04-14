@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 data class AuthState(
     val email: String = "",
     val password: String = "",
-    val cedula: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -29,14 +28,6 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
 
     fun onPasswordChange(password: String){
         uiState = uiState.copy(password = password)
-    }
-
-    fun onCedulaChange(cedula: String){
-        uiState = uiState.copy(cedula = cedula)
-    }
-
-    private fun validateCedula(cedula: String): Boolean {
-        return cedula.length == 10 && cedula.all { it.isDigit() }
     }
 
     fun onLoginClick(onSuccess: () -> Unit) {
@@ -78,11 +69,6 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
     fun onRegisterClick(onSuccess: () -> Unit) {
         if (uiState.email.isEmpty() || uiState.password.isEmpty()) {
             uiState = uiState.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
-            return
-        }
-
-        if (!validateCedula(uiState.cedula)) {
-            uiState = uiState.copy(errorMessage = "Invalid cedula")
             return
         }
 
