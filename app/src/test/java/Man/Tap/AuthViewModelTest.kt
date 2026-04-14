@@ -8,7 +8,6 @@ import org.junit.Assert.*
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.whenever
-import org.mockito.kotlin.onBlocking
 
 class AuthViewModelTest {
     @Mock
@@ -58,14 +57,11 @@ class AuthViewModelTest {
         viewModel.onEmailChange("test@example.com")
         viewModel.onPasswordChange("password123")
         
-        whenever(mockRepository).onBlocking {
-            signIn("test@example.com", "password123")
-        }.thenReturn(Result.success(Unit))
+        whenever(mockRepository.signIn("test@example.com", "password123"))
+            .thenReturn(Result.success(Unit))
         
         var successCalled = false
         viewModel.onLoginClick(onSuccess = { successCalled = true })
-        
-        testScheduler.advanceUntilIdle()
         
         assertTrue(successCalled)
         assertNull(viewModel.uiState.errorMessage)
@@ -78,14 +74,11 @@ class AuthViewModelTest {
         viewModel.onPasswordChange("password123")
         
         val error = Exception("Login failed")
-        whenever(mockRepository).onBlocking {
-            signIn("test@example.com", "password123")
-        }.thenReturn(Result.failure(error))
+        whenever(mockRepository.signIn("test@example.com", "password123"))
+            .thenReturn(Result.failure(error))
         
         var successCalled = false
         viewModel.onLoginClick(onSuccess = { successCalled = true })
-        
-        testScheduler.advanceUntilIdle()
         
         assertFalse(successCalled)
         assertNotNull(viewModel.uiState.errorMessage)
@@ -106,14 +99,11 @@ class AuthViewModelTest {
         viewModel.onEmailChange("newuser@example.com")
         viewModel.onPasswordChange("password123")
         
-        whenever(mockRepository).onBlocking {
-            signUp("newuser@example.com", "password123")
-        }.thenReturn(Result.success(Unit))
+        whenever(mockRepository.signUp("newuser@example.com", "password123"))
+            .thenReturn(Result.success(Unit))
         
         var successCalled = false
         viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        
-        testScheduler.advanceUntilIdle()
         
         assertTrue(successCalled)
         assertNull(viewModel.uiState.errorMessage)
@@ -126,14 +116,11 @@ class AuthViewModelTest {
         viewModel.onPasswordChange("password123")
         
         val error = Exception("Registration failed")
-        whenever(mockRepository).onBlocking {
-            signUp("newuser@example.com", "password123")
-        }.thenReturn(Result.failure(error))
+        whenever(mockRepository.signUp("newuser@example.com", "password123"))
+            .thenReturn(Result.failure(error))
         
         var successCalled = false
         viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        
-        testScheduler.advanceUntilIdle()
         
         assertFalse(successCalled)
         assertNotNull(viewModel.uiState.errorMessage)
