@@ -20,6 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -31,20 +33,19 @@ fun AuthFormComponent(
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
-    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
-    val isPasswordValid = viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
+    val email = viewModel.uiState.email
+    val password = viewModel.uiState.password
+    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    val isPasswordValid = password.isNotEmpty() && password.length >= 8
 
     Column(modifier = modifier) {
-        OutlinedTextField(
-            value = viewModel.uiState.email,
-            onValueChange = { viewModel.onEmailChange(it) },
-            label = { Text(text = "Correo electrónico") },
-            singleLine = true,
-            isError = viewModel.uiState.email.isNotEmpty() && !isEmailValid,
-            modifier = Modifier.fillMaxWidth()
+        EmailField(
+            email = email,
+            isEmailValid = isEmailValid,
+            onEmailChange = viewModel::onEmailChange
         )
 
-        if (viewModel.uiState.email.isNotEmpty() && !isEmailValid) {
+        if (email.isNotEmpty() && !isEmailValid) {
             Text(
                 text = "Correo electrónico inválido",
                 color = MaterialTheme.colorScheme.error,
@@ -55,29 +56,14 @@ fun AuthFormComponent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = viewModel.uiState.password,
-            onValueChange = { viewModel.onPasswordChange(it) },
-            label = { Text(text = "Contraseña") },
-            singleLine = true,
-            visualTransformation = if (passwordVisible) VisualTransformation.None
-            else PasswordVisualTransformation(),
-            trailingIcon = {
-                val icon = if (passwordVisible) Icons.Filled.VisibilityOff
-                else Icons.Filled.Visibility
-
-                val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = description
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+        PasswordField(
+            password = password,
+            passwordVisible = passwordVisible,
+            onPasswordChange = viewModel::onPasswordChange,
+            onToggleVisibility = { passwordVisible = !passwordVisible }
         )
 
-        if (viewModel.uiState.password.isNotEmpty() && !isPasswordValid) {
+        if (password.isNotEmpty() && !isPasswordValid) {
             Text(
                 text = "La contraseña debe tener al menos 8 caracteres",
                 color = MaterialTheme.colorScheme.error,
@@ -97,4 +83,56 @@ fun AuthFormComponent(
             )
         }
     }
+}
+
+@Composable
+private fun EmailField(
+    email: String,
+    isEmailValid: Boolean,
+    onEmailChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = email,
+        onValueChange = onEmailChange,
+        label = { Text(text = "Correo electrónico") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Email,
+            autoCorrectEnabled = false
+        ),
+        isError = email.isNotEmpty() && !isEmailValid,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun PasswordField(
+    password: String,
+    passwordVisible: Boolean,
+    onPasswordChange: (String) -> Unit,
+    onToggleVisibility: () -> Unit
+) {
+    val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+
+    OutlinedTextField(
+        value = password,
+        onValueChange = onPasswordChange,
+        label = { Text(text = "Contraseña") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password,
+            autoCorrectEnabled = false
+        ),
+        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            IconButton(onClick = onToggleVisibility) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = description
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
 }

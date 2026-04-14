@@ -10,7 +10,8 @@ class AuthViewModelFactory(
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
-            return AuthViewModel(repository) as T
+            return modelClass.cast(AuthViewModel(repository))
+                ?: throw IllegalArgumentException("AuthViewModel cast returned null")
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

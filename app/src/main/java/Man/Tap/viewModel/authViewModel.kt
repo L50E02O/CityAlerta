@@ -16,6 +16,8 @@ data class AuthState(
     val errorMessage: String? = null
 )
 
+private const val UNKNOWN_ERROR_MESSAGE = "Error desconocido"
+
 class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
     var uiState by mutableStateOf(AuthState())
         private set
@@ -46,13 +48,13 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
                     },
                     onFailure = { error ->
                         uiState = uiState.copy(
-                            errorMessage = error.message ?: "Error desconocido"
+                            errorMessage = error.message ?: UNKNOWN_ERROR_MESSAGE
                         )
                     }
                 )
             } catch (e: Exception) {
                 uiState = uiState.copy(
-                    errorMessage = e.message ?: "Error desconocido"
+                    errorMessage = e.message ?: UNKNOWN_ERROR_MESSAGE
                 )
             } finally {
                 uiState = uiState.copy(isLoading = false)
@@ -78,13 +80,13 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
                     },
                     onFailure = { error ->
                         uiState = uiState.copy(
-                            errorMessage = error.message ?: "Error desconocido"
+                            errorMessage = error.message ?: UNKNOWN_ERROR_MESSAGE
                         )
                     }
                 )
             } catch (e: Exception) {
                 uiState = uiState.copy(
-                    errorMessage = e.message ?: "Error desconocido"
+                    errorMessage = e.message ?: UNKNOWN_ERROR_MESSAGE
                 )
             } finally {
                 uiState = uiState.copy(isLoading = false)
