@@ -39,5 +39,7 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           chmod +x gradlew
-          # Generamos lint + tests + cobertura antes de sonar para asegurar importación de reportes.
-          ./gradlew assembleDebug lintDebug testDebugUnitTest sonar --info
+          # Forzamos build reproducible para Sonar en PR y evitamos falsos 0% por cache.
+          ./gradlew clean assembleDebug lintDebug testDebugUnitTest :app:jacocoTestReport sonar --info --no-build-cache
+          test -f app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          grep -nE "authViewModel.kt|ViewModelFactory.kt" app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
