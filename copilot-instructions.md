@@ -29,8 +29,6 @@ applyTo: "**"
 - Usar HTTPS para llamadas de red y proteger credenciales o tokens con almacenamiento seguro.
 
 ## Reglas especificas del dominio
-- Validar la cedula ecuatoriana de 10 digitos en el registro.
-- Bloquear el acceso a Post para usuarios invitados.
 - Usar BottomNavigationBar con Explorar, Post y Mapa.
 - Centrar el mapa en Manta con las coordenadas definidas por el proyecto.
 - Usar Material3 Cards para el feed de Explorar.
