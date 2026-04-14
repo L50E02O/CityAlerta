@@ -38,6 +38,10 @@ android {
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
+        if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
+            project.logger.warn("WARNING: Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties. Build tasks that require Supabase will fail.")
+        }
+
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
     }
@@ -61,6 +65,32 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+// Runtime validation for tasks that require Supabase credentials
+tasks.matching {
+    it.name.contains("assemble", ignoreCase = true) ||
+    it.name.contains("bundle", ignoreCase = true) ||
+    it.name.contains("install", ignoreCase = true)
+}.configureEach {
+    doFirst {
+        val properties = Properties()
+        val localProperties = rootProject.file("local.properties")
+        if (localProperties.exists()) {
+            localProperties.inputStream().use { properties.load(it) }
+        }
+
+        val supabaseUrl = providers.gradleProperty("SUPABASE_URL")
+            .orElse(properties.getProperty("SUPABASE_URL") ?: "")
+            .getOrElse("")
+        val supabaseKey = providers.gradleProperty("SUPABASE_ANON_KEY")
+            .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
+            .getOrElse("")
+
+        if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
+            throw GradleException("Cannot build app without Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties.")
+        }
     }
 }
 
