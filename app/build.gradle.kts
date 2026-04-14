@@ -69,10 +69,11 @@ android {
 }
 
 // Runtime validation for tasks that require Supabase credentials
-tasks.matching {
-    it.name.contains("assemble", ignoreCase = true) ||
-    it.name.contains("bundle", ignoreCase = true) ||
-    it.name.contains("install", ignoreCase = true)
+tasks.matching { task ->
+    // enforce only when producing release artifacts
+    task.name.contains("Release", ignoreCase = true) &&
+        (task.name.contains("assemble", ignoreCase = true) ||
+         task.name.contains("bundle", ignoreCase = true))
 }.configureEach {
     doFirst {
         val properties = Properties()
@@ -88,8 +89,8 @@ tasks.matching {
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
-        if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
-            throw GradleException("Cannot build app without Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties.")
+        require(supabaseUrl.isNotBlank() && supabaseKey.isNotBlank()) {
+            "Missing SUPABASE_URL / SUPABASE_ANON_KEY for Release build."
         }
     }
 }
