@@ -2,77 +2,47 @@
 applyTo: "**"
 ---
 
-# Instrucciones para GitHub Copilot: Aplicaciones Móviles Nativas
+# Instrucciones base de ManTap
 
-## Contexto y Alcance
-Nombre de la App: ManTap.
+## Contexto del proyecto
+- App: ManTap.
+- Plataforma: Android nativo con Kotlin y Jetpack Compose.
+- Arquitectura: MVVM.
+- Persistencia local: Room.
+- Zona objetivo: Manta, Manabi, Ecuador.
 
-Ubicación Objetivo: Manta, Manabí, Ecuador.
+## Reglas globales
+- Todo texto visible para el usuario debe estar en espanol, sin acentos ni emojis.
+- El codigo debe usar nombres en ingles para variables, funciones y clases.
+- Los comentarios, KDoc y documentacion deben estar en espanol, sin acentos ni emojis.
+- Usar solo Jetpack Compose para la UI; no usar XML layouts.
+- Mantener tipado estricto y evitar Any.
+- Priorizar bajo acoplamiento, alta cohesion y separacion clara de responsabilidades.
+- No mezclar la logica de red con la UI.
+- Mantener la estructura por capas o por caracteristicas cuando aporte claridad.
 
-Tecnología: Android Nativo con Kotlin y Jetpack Compose.
+## Calidad minima esperada
+- Escribir tests unitarios para logica de negocio, servicios y validaciones.
+- Escribir tests de Compose para componentes y flujos de UI relevantes.
+- Mantener complejidad ciclomatica baja y extraer funciones pequenas cuando sea necesario.
+- Validar todas las entradas del usuario antes de persistir o enviar datos.
+- Usar HTTPS para llamadas de red y proteger credenciales o tokens con almacenamiento seguro.
 
-Arquitectura: MVVM (Model-View-ViewModel).
+## Reglas especificas del dominio
+- Validar la cedula ecuatoriana de 10 digitos en el registro.
+- Bloquear el acceso a Post para usuarios invitados.
+- Usar BottomNavigationBar con Explorar, Post y Mapa.
+- Centrar el mapa en Manta con las coordenadas definidas por el proyecto.
+- Usar Material3 Cards para el feed de Explorar.
+- Aplicar Lazy Loading en listas y recursos pesados.
 
-Persistencia: Room (Entidades: Usuario [PK: cedula], Barrio, Reporte).
+## SonarQube y calidad
+- Tomar como objetivo una cobertura alta en logica de negocio, servicios y validaciones.
+- Mantener la duplicacion baja y evitar code smells graves.
+- No introducir vulnerabilidades BLOCKER o HIGH.
+- Revisar el Quality Gate antes de considerar un cambio listo para merge.
+- Usar el MCP de SonarQube para investigar issues, cobertura y complejidad cuando haga falta.
 
-## Reglas de Salida y Lenguaje
-Interfaz de Usuario (UI): Todo el texto visible para el usuario en español (ej. "Iniciar Sesion", "Reportar zona").
-
-Código (Variables/Funciones/Clases): En inglés (ej. userReport, idCard, fetchData).
-
-Comentarios y Documentación: En español, sin emojis y sin acentos.
-
-Commits: Formato tipo: descripcion (feat, fix, docs, style, refactor, test), en español y sin acentos.
-
-lenguaje: Todo lo generado debe estar en español, sin acentos ni emojis, tanto en la UI como en los comentarios y mensajes de commit. El código (nombres de variables, funciones, clases) debe estar en inglés para mantener consistencia con las convenciones de programación.
-## Estructura y Estándares de Código
-Evitar el uso de XML layouts; usar exclusivamente Jetpack Compose para la UI.
-
-Nunca usar emogis en el código, comentarios, documentación o mensajes de commit.
-
-UI Framework: Uso exclusivo de Jetpack Compose. Prohibido el uso de XML layouts.
-
-Organización: Estructura por capas o características: pantallas (screens), componentes, navegación, servicios, utilidades y tipos/modelos.
-
-Nomenclatura:
-
-PascalCase: Para componentes de Compose y pantallas.
-
-camelCase: Para funciones, variables y estados.
-
-Tipado: Tipado estricto de Kotlin; evitar el uso de Any.
-
-Rendimiento: Implementar Lazy Loading en listas y recursos pesados; evitar re-renders (recomposiciones) innecesarios.
-
-## Requerimientos Específicos de ManTap
-Validación de Cédula: Implementar obligatoriamente el algoritmo de validación de 10 dígitos para cédulas ecuatorianas en el registro.
-
-Lógica de Navegación:
-
-Implementar un BottomNavigationBar con:
-
-Explorar (Icono: Compass)
-
-Post (Icono: Add/Plus)
-
-Mapa (Icono: Map)
-
-Modo Invitado: Bloquear el acceso a la pantalla de reporte ([+]) si userSession.isGuest es true.
-
-Capa de Datos: Servicios para APIs externos y Room para persistencia; no mezclar lógica de red en la UI. Considerar modo offline y mensajes de error claros.
-
-## Guías de Estilo Visual (UI)
-Paleta de Colores: * Primario: Ocean Blue (#0077B6).
-
-Semánticos: Danger Red, Warning Yellow, Safety Green.
-
-Componentes: Uso de Material3 Cards para el feed de la pantalla "Explorar".
-
-Mapa: Integración con Google Maps centrado en las coordenadas de Manta:
-
-Lat: -0.967653, Lng: -80.708910
-
-## Testing
-Tests Unitarios: Obligatorios para lógica de negocio, servicios y validaciones.
-
-Tests de Componentes: Utilizar la librería estándar de testing para Jetpack Compose.
+## Versionado y cambios
+- Mantener CHANGELOG en espanol cuando el proyecto lo requiera.
+- Los cambios deben seguir el estilo del repositorio y evitar duplicaciones innecesarias.
