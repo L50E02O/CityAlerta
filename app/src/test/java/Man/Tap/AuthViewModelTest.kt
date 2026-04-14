@@ -2,7 +2,9 @@ package man.tap.viewmodel
 
 import man.tap.model.repository.IAuthRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -14,6 +16,7 @@ import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.whenever
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     
@@ -75,6 +78,7 @@ class AuthViewModelTest {
         
         var successCalled = false
         viewModel.onLoginClick(onSuccess = { successCalled = true })
+        testDispatcher.scheduler.advanceUntilIdle()
         
         assertTrue(successCalled)
         assertNull(viewModel.uiState.errorMessage)
@@ -92,6 +96,7 @@ class AuthViewModelTest {
         
         var successCalled = false
         viewModel.onLoginClick(onSuccess = { successCalled = true })
+        testDispatcher.scheduler.advanceUntilIdle()
         
         assertFalse(successCalled)
         assertNotNull(viewModel.uiState.errorMessage)
@@ -117,6 +122,7 @@ class AuthViewModelTest {
         
         var successCalled = false
         viewModel.onRegisterClick(onSuccess = { successCalled = true })
+        testDispatcher.scheduler.advanceUntilIdle()
         
         assertTrue(successCalled)
         assertNull(viewModel.uiState.errorMessage)
@@ -134,6 +140,7 @@ class AuthViewModelTest {
         
         var successCalled = false
         viewModel.onRegisterClick(onSuccess = { successCalled = true })
+        testDispatcher.scheduler.advanceUntilIdle()
         
         assertFalse(successCalled)
         assertNotNull(viewModel.uiState.errorMessage)

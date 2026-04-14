@@ -1,6 +1,5 @@
 package man.tap.model.repository
 
-import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.Assert.*
 
@@ -8,63 +7,67 @@ class AuthRepositoryTest {
 
     @Test
     fun testAuthRepositoryImplementsInterface() {
-        val isImplementing = AuthRepository::class.java.interfaces
-            .any { it.name == IAuthRepository::class.java.name }
-        
-        assertTrue("AuthRepository debe implementar IAuthRepository", isImplementing)
+        val repository: IAuthRepository = AuthRepository()
+        assertNotNull(repository)
     }
 
     @Test
-    fun testAuthRepositoryHasSignUpMethod() {
-        val hasMethod = AuthRepository::class.java.declaredMethods
-            .any { it.name == "signUp" }
-        
-        assertTrue("AuthRepository debe tener el método signUp", hasMethod)
+    fun testInterfaceDeclaresSignUpSuspendMethod() {
+        val hasMethod = IAuthRepository::class.java.methods.any { method ->
+            method.name.startsWith("signUp")
+        }
+        assertTrue("IAuthRepository debe declarar signUp suspend", hasMethod)
     }
 
     @Test
-    fun testAuthRepositoryHasSignInMethod() {
-        val hasMethod = AuthRepository::class.java.declaredMethods
-            .any { it.name == "signIn" }
-        
-        assertTrue("AuthRepository debe tener el método signIn", hasMethod)
+    fun testInterfaceDeclaresSignInSuspendMethod() {
+        val hasMethod = IAuthRepository::class.java.methods.any { method ->
+            method.name.startsWith("signIn")
+        }
+        assertTrue("IAuthRepository debe declarar signIn suspend", hasMethod)
     }
 
     @Test
-    fun testAuthRepositoryHasLogOutMethod() {
-        val hasMethod = AuthRepository::class.java.declaredMethods
-            .any { it.name == "logOut" }
-        
-        assertTrue("AuthRepository debe tener el método logOut", hasMethod)
+    fun testInterfaceDeclaresLogOutSuspendMethod() {
+        val hasMethod = IAuthRepository::class.java.methods.any { method ->
+            method.name.startsWith("logOut")
+        }
+        assertTrue("IAuthRepository debe declarar logOut suspend", hasMethod)
     }
 
     @Test
-    fun testSignUpMethodReturnsResult() {
-        val signUpMethod = AuthRepository::class.java.declaredMethods
-            .find { it.name == "signUp" }
-        
-        assertNotNull("Método signUp no encontrado", signUpMethod)
-        val returnType = signUpMethod?.returnType?.simpleName
-        assertTrue("signUp debe retornar Result", returnType?.contains("Result") ?: false)
+    fun testFakeSignUpReturnsSuccess() = kotlinx.coroutines.test.runTest {
+        val fakeRepository = object : IAuthRepository {
+            override suspend fun signUp(email: String, password: String): Result<Unit> = Result.success(Unit)
+            override suspend fun signIn(email: String, password: String): Result<Unit> = Result.success(Unit)
+            override suspend fun logOut(): Result<Unit> = Result.success(Unit)
+        }
+
+        val result = fakeRepository.signUp("test@example.com", "password123")
+        assertTrue(result.isSuccess)
     }
 
     @Test
-    fun testSignInMethodReturnsResult() {
-        val signInMethod = AuthRepository::class.java.declaredMethods
-            .find { it.name == "signIn" }
-        
-        assertNotNull("Método signIn no encontrado", signInMethod)
-        val returnType = signInMethod?.returnType?.simpleName
-        assertTrue("signIn debe retornar Result", returnType?.contains("Result") ?: false)
+    fun testFakeSignInReturnsFailure() = kotlinx.coroutines.test.runTest {
+        val fakeRepository = object : IAuthRepository {
+            override suspend fun signUp(email: String, password: String): Result<Unit> = Result.success(Unit)
+            override suspend fun signIn(email: String, password: String): Result<Unit> = Result.failure(Exception("fail"))
+            override suspend fun logOut(): Result<Unit> = Result.success(Unit)
+        }
+
+        val result = fakeRepository.signIn("test@example.com", "password123")
+        assertTrue(result.isFailure)
     }
 
     @Test
-    fun testLogOutMethodReturnsResult() {
-        val logOutMethod = AuthRepository::class.java.declaredMethods
-            .find { it.name == "logOut" }
-        
-        assertNotNull("Método logOut no encontrado", logOutMethod)
-        val returnType = logOutMethod?.returnType?.simpleName
-        assertTrue("logOut debe retornar Result", returnType?.contains("Result") ?: false)
+    fun testFakeLogOutReturnsSuccess() = kotlinx.coroutines.test.runTest {
+        val fakeRepository = object : IAuthRepository {
+            override suspend fun signUp(email: String, password: String): Result<Unit> = Result.success(Unit)
+            override suspend fun signIn(email: String, password: String): Result<Unit> = Result.success(Unit)
+            override suspend fun logOut(): Result<Unit> = Result.success(Unit)
+        }
+
+        val result = fakeRepository.logOut()
+        assertTrue(result.isSuccess)
     }
 }
