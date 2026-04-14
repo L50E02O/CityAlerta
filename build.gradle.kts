@@ -11,19 +11,27 @@ sonar {
   properties {
     property("sonar.projectKey", "L50E02O_ManTap")
     property("sonar.organization", "l50e02o")
-    property("sonar.sources", "app/src/main/java")
-    property("sonar.tests", "app/src/test/java")
-    property("sonar.junit.reportPaths", "app/build/test-results/testDebugUnitTest")
-    property("sonar.java.binaries", "app/build/tmp/kotlin-classes/debug,app/build/intermediates/javac/debug/classes")
-    property("sonar.androidLint.reportPaths", "app/build/reports/lint-results-debug.xml")
-    property(
-      "sonar.coverage.jacoco.xmlReportPaths",
-      "app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml,${layout.projectDirectory.asFile.absolutePath}/app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
-    )
-    property(
-      "sonar.coverage.exclusions",
-      "app/src/main/java/man/tap/view/**,app/src/main/java/man/tap/navigation/**,app/src/main/java/man/tap/MainActivity.kt,app/src/main/java/man/tap/model/remote/**,app/src/main/java/man/tap/model/repository/authRepository.kt"
-    )
+  }
+}
+
+project(":app") {
+  sonar {
+    properties {
+      // Definimos fuentes y tests en el modulo para evitar indexacion duplicada en raiz.
+      property("sonar.sources", "src/main/java")
+      property("sonar.tests", "src/test/java")
+      property("sonar.junit.reportPaths", "build/test-results/testDebugUnitTest")
+      property("sonar.java.binaries", "build/tmp/kotlin-classes/debug,build/intermediates/javac/debug/classes")
+      property("sonar.androidLint.reportPaths", "build/reports/lint-results-debug.xml")
+      property(
+        "sonar.coverage.jacoco.xmlReportPaths",
+        "build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml,${layout.projectDirectory.asFile.absolutePath}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+      )
+      property(
+        "sonar.coverage.exclusions",
+        "src/main/java/man/tap/view/**,src/main/java/man/tap/navigation/**,src/main/java/man/tap/MainActivity.kt,src/main/java/man/tap/model/remote/**,src/main/java/man/tap/model/repository/authRepository.kt"
+      )
+    }
   }
 }
 
