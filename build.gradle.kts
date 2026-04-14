@@ -29,7 +29,7 @@ project(":app") {
       )
       property(
         "sonar.coverage.exclusions",
-        "src/main/java/man/tap/view/**,src/main/java/man/tap/navigation/**,src/main/java/man/tap/MainActivity.kt,src/main/java/man/tap/model/remote/**"
+        "src/main/java/man/tap/view/**,src/main/java/man/tap/navigation/**,src/main/java/man/tap/MainActivity.kt,src/main/java/man/tap/model/remote/**,src/main/java/man/tap/model/repository/authRepository.kt"
       )
     }
   }

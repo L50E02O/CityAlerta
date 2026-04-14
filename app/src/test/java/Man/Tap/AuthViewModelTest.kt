@@ -63,7 +63,6 @@ class AuthViewModelTest {
     fun testOnLoginClickWithEmptyFields() {
         var successCalled = false
         viewModel.onLoginClick(onSuccess = { successCalled = true })
-        
         assertTrue(viewModel.uiState.errorMessage != null)
         assertFalse(successCalled)
     }
@@ -107,7 +106,6 @@ class AuthViewModelTest {
     fun testOnRegisterClickWithEmptyFields() {
         var successCalled = false
         viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        
         assertTrue(viewModel.uiState.errorMessage != null)
         assertFalse(successCalled)
     }
@@ -209,5 +207,71 @@ class AuthViewModelTest {
 
         assertEquals("Error desconocido", viewModel.uiState.errorMessage)
         assertFalse(viewModel.uiState.isLoading)
+    }
+
+    @Test
+    fun testOnLoginClickWithEmptyEmail() {
+        viewModel.onPasswordChange("password123")
+        var successCalled = false
+        viewModel.onLoginClick(onSuccess = { successCalled = true })
+        assertNotNull(viewModel.uiState.errorMessage)
+        assertFalse(successCalled)
+    }
+
+    @Test
+    fun testOnLoginClickWithEmptyPassword() {
+        viewModel.onEmailChange("test@example.com")
+        var successCalled = false
+        viewModel.onLoginClick(onSuccess = { successCalled = true })
+        assertNotNull(viewModel.uiState.errorMessage)
+        assertFalse(successCalled)
+    }
+
+    @Test
+    fun testOnRegisterClickWithEmptyEmail() {
+        viewModel.onPasswordChange("password123")
+        var successCalled = false
+        viewModel.onRegisterClick(onSuccess = { successCalled = true })
+        assertNotNull(viewModel.uiState.errorMessage)
+        assertFalse(successCalled)
+    }
+
+    @Test
+    fun testOnRegisterClickWithEmptyPassword() {
+        viewModel.onEmailChange("newuser@example.com")
+        var successCalled = false
+        viewModel.onRegisterClick(onSuccess = { successCalled = true })
+        assertNotNull(viewModel.uiState.errorMessage)
+        assertFalse(successCalled)
+    }
+
+    @Test
+    fun testOnLoginClickFailureWithNullMessage() = runTest {
+        viewModel.onEmailChange("test@example.com")
+        viewModel.onPasswordChange("password123")
+        
+        val error = Exception()
+        whenever(mockRepository.signIn("test@example.com", "password123"))
+            .thenReturn(Result.failure(error))
+        
+        viewModel.onLoginClick(onSuccess = {})
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
+    }
+
+    @Test
+    fun testOnRegisterClickFailureWithNullMessage() = runTest {
+        viewModel.onEmailChange("newuser@example.com")
+        viewModel.onPasswordChange("password123")
+        
+        val error = Exception()
+        whenever(mockRepository.signUp("newuser@example.com", "password123"))
+            .thenReturn(Result.failure(error))
+        
+        viewModel.onRegisterClick(onSuccess = {})
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
     }
 }
