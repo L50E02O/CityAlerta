@@ -1,7 +1,12 @@
 package man.tap.viewmodel
 
 import man.tap.model.repository.IAuthRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
@@ -10,6 +15,8 @@ import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.whenever
 
 class AuthViewModelTest {
+    private val testDispatcher = StandardTestDispatcher()
+    
     @Mock
     private lateinit var mockRepository: IAuthRepository
 
@@ -17,8 +24,14 @@ class AuthViewModelTest {
 
     @Before
     fun setUp() {
+        Dispatchers.setMain(testDispatcher)
         MockitoAnnotations.openMocks(this)
         viewModel = AuthViewModel(mockRepository)
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test
