@@ -1,0 +1,23 @@
+package man.tap.model.remote
+
+import man.tap.BuildConfig
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.gotrue.Auth
+
+object SupabaseProvider{
+    val client: SupabaseClient by lazy {
+        require(BuildConfig.SUPABASE_URL.isNotEmpty()) {
+            "SUPABASE_URL must not be empty"
+        }
+        require(BuildConfig.SUPABASE_ANON_KEY.isNotEmpty()) {
+            "SUPABASE_ANON_KEY must not be empty"
+        }
+        createSupabaseClient(
+            supabaseUrl = BuildConfig.SUPABASE_URL,
+            supabaseKey = BuildConfig.SUPABASE_ANON_KEY
+        ) {
+            install(Auth)
+        }
+    }
+}

@@ -1,23 +1,55 @@
+import java.util.Properties
+import org.gradle.testing.jacoco.tasks.JacocoReport
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.kapt)
+    jacoco
+}
+
+jacoco {
+    toolVersion = "0.8.11"
 }
 
 android {
-    namespace = "Man.Tap"
-    compileSdk {
-        version = release(36)
-    }
+    namespace = "man.tap"
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "Man.Tap"
+        applicationId = "man.tap"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val properties = Properties()
+
+        val localProperties = rootProject.file("local.properties")
+        if (localProperties.exists()){
+            localProperties.inputStream().use {properties.load(it)}
+        }
+
+
+        val supabaseUrl = providers.gradleProperty("SUPABASE_URL")
+            .orElse(properties.getProperty("SUPABASE_URL") ?: "")
+            .getOrElse("")
+
+
+
+        val supabaseKey = providers.gradleProperty("SUPABASE_ANON_KEY")
+            .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
+            .getOrElse("")
+
+        if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
+            project.logger.warn("WARNING: Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties. Build tasks that require Supabase will fail.")
+        }
+
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
     }
 
     buildTypes {
@@ -38,11 +70,83 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
+// Runtime validation for tasks that require Supabase credentials
+tasks.matching { task ->
+    // enforce only when producing release artifacts
+    task.name.contains("Release", ignoreCase = true) &&
+        (task.name.contains("assemble", ignoreCase = true) ||
+         task.name.contains("bundle", ignoreCase = true))
+}.configureEach {
+    doFirst {
+        val properties = Properties()
+        val localProperties = rootProject.file("local.properties")
+        if (localProperties.exists()) {
+            localProperties.inputStream().use { properties.load(it) }
+        }
+
+        val supabaseUrl = providers.gradleProperty("SUPABASE_URL")
+            .orElse(properties.getProperty("SUPABASE_URL") ?: "")
+            .getOrElse("")
+        val supabaseKey = providers.gradleProperty("SUPABASE_ANON_KEY")
+            .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
+            .getOrElse("")
+
+        require(supabaseUrl.isNotBlank() && supabaseKey.isNotBlank()) {
+            "Missing SUPABASE_URL / SUPABASE_ANON_KEY for Release build."
+        }
+    }
+}
+
+kapt{
+    correctErrorTypes = true
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    group = "verification"
+    description = "Genera el reporte de cobertura JaCoCo para tests unitarios debug"
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
+    }
+
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*"
+    )
+
+    val kotlinDebugTree = fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+        exclude(fileFilter)
+    }
+    val javaDebugTree = fileTree("${layout.buildDirectory.get().asFile}/intermediates/javac/debug/classes") {
+        exclude(fileFilter)
+    }
+
+    classDirectories.setFrom(files(kotlinDebugTree, javaDebugTree))
+    sourceDirectories.setFrom(files("src/main/java"))
+    executionData.setFrom(
+        files(
+            layout.buildDirectory.file("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"),
+            layout.buildDirectory.file("jacoco/testDebugUnitTest.exec")
+        )
+    )
+}
+
 dependencies {
+    // Main implementation dependencies
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -50,11 +154,37 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.play.services.auth)
+
+    // Network / backend
+    implementation(libs.supabase.gotrue)
+    implementation(libs.supabase.core)
+    implementation(libs.ktor.client.android)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+
+    // Unit tests
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.inline)
+
+    // Instrumentation tests
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+
+    // Debug only
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Annotation processors
+    kapt(libs.androidx.room.compiler)
+
 }

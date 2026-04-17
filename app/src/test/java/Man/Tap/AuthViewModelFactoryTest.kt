@@ -1,0 +1,44 @@
+package man.tap.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.CreationExtras
+import man.tap.model.repository.IAuthRepository
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.mockito.kotlin.mock
+
+class AuthViewModelFactoryTest {
+
+    private class AnotherViewModel : ViewModel()
+
+    private val repository: IAuthRepository = mock()
+    private val factory = AuthViewModelFactory(repository)
+
+    @Test
+    fun testCreateReturnsAuthViewModelWhenClassMatches() {
+        val viewModel: ViewModel = factory.create(AuthViewModel::class.java)
+
+        assertTrue(viewModel is AuthViewModel)
+    }
+
+    @Test
+    fun testCreateWithCreationExtrasReturnsAuthViewModel() {
+        val viewModel: ViewModel = factory.create(AuthViewModel::class.java, CreationExtras.Empty)
+
+        assertTrue(viewModel is AuthViewModel)
+    }
+
+    @Test
+    fun testCreateThrowsWhenClassIsUnknown() {
+        val exception = try {
+            factory.create(AnotherViewModel::class.java)
+            null
+        } catch (e: IllegalArgumentException) {
+            e
+        }
+
+        assertTrue(exception != null)
+        assertEquals("Unknown ViewModel class", exception?.message)
+    }
+}
