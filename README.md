@@ -1,34 +1,18 @@
 # ManTap
 
-
-
 Aplicación móvil nativa para Android que permite a los usuarios de Manta, Manabí, Ecuador reportar incidentes urbanos y dar seguimiento a su resolución mediante la interacción con administradores y agencias responsables.
 
-
-
 ---
-
-
 
 ## Descripción
 
-
-
 ManTap es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
-
-
 
 El sistema está diseñado con un enfoque escalable, permitiendo su evolución hacia un backend centralizado y un panel web administrativo.
 
-
-
 ---
 
-
-
 ## Especificaciones del Proyecto
-
-
 
 - **Ubicación:** Manta, Manabí, Ecuador  
 
@@ -44,10 +28,7 @@ El sistema está diseñado con un enfoque escalable, permitiendo su evolución h
 
 ---
 
-
 ## Stack Tecnológico
-
-
 
 ### Core
 
@@ -57,15 +38,11 @@ El sistema está diseñado con un enfoque escalable, permitiendo su evolución h
 
 - Android Architecture Components (ViewModel, StateFlow)  
 
-
-
 ### Persistencia
 
 - Room Database (fuente local)  
 
 - Preparado para integración con backend remoto (API REST o servicios como Firebase/Supabase)  
-
-
 
 ### Mapas y Geolocalización
 
