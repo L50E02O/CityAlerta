@@ -6,6 +6,6 @@ sealed class Routes(val route: String, val authRequired: Boolean = false){
     object Home: Routes("home")
     object Explore: Routes("explore")
     object Post: Routes("post", authRequired = true)
-    object Map: Routes("map")
+    object Map: Routes("map/{ciudadId}")
 
 }
