@@ -55,9 +55,9 @@ erDiagram
         boolean activo ""
     }
 
-    usuarios ||--o{ reportes : crea
-    ciudades ||--o{ barrios : contiene
-    ciudades ||--o{ reportes : registra
-    reportes ||--|| reporte_ubicaciones : se ubica en
-    reportes ||--o{ reporte_imagenes : contiene
+    usuarios ||--o{ reportes : "crea"
+    ciudades ||--o{ barrios : "contiene"
+    ciudades ||--o{ reportes : "registra"
+    reportes ||--|| reporte_ubicaciones : "se ubica en"
+    reportes ||--o{ reporte_imagenes : "contiene"
 ```
