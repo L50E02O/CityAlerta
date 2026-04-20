@@ -68,8 +68,8 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
                 latitude = latLng.latitude,
                 longitude = latLng.longitude,
                 title = "Marcador ${repository.getMarkers().size + 1}",
-                description = "Lat: ${String.format("%.4f", latLng.latitude)}, " +
-                    "Lng: ${String.format("%.4f", latLng.longitude)}"
+                description = "Lat: ${String.format(Locale.US, "%.4f", latLng.latitude)}, " +
+                    "Lng: ${String.format(Locale.US, "%.4f", latLng.longitude)}"
             )
 
             // Agregar marcador validado
