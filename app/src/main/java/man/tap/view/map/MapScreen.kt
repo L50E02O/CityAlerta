@@ -1,9 +1,9 @@
 package man.tap.view.map
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -13,14 +13,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
@@ -41,20 +45,19 @@ fun MapScreen(
     viewModel: MapViewModel
 ) {
     val uiState = viewModel.uiState
-    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(ciudadId) {
         viewModel.loadCiudad(ciudadId)
     }
 
-    // Mostrar Toast si punto está fuera del polígono
+    // Mostrar Snackbar si punto está fuera del polígono
     LaunchedEffect(uiState.isPointValid) {
         if (uiState.isPointValid == false) {
-            Toast.makeText(
-                context,
-                "El punto debe estar dentro del área permitida",
-                Toast.LENGTH_SHORT
-            ).show()
+            snackbarHostState.showSnackbar(
+                message = "El punto debe estar dentro del area permitida",
+                duration = SnackbarDuration.Short
+            )
         }
     }
 
@@ -64,7 +67,7 @@ fun MapScreen(
                 title = { Text(uiState.ciudad?.nombre ?: "Mapa") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Atras")
                     }
                 },
                 actions = {
@@ -75,7 +78,8 @@ fun MapScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier

@@ -62,13 +62,17 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
         uiState = uiState.copy(isPointValid = isPointInside)
 
         if (isPointInside) {
-            // Agregar marcador
+            // Crear marcador con validación
             val marker = MapMarker(
                 id = "marker_${System.currentTimeMillis()}",
                 latitude = latLng.latitude,
                 longitude = latLng.longitude,
-                title = "Marcador ${repository.getMarkers().size + 1}"
+                title = "Marcador ${repository.getMarkers().size + 1}",
+                description = "Lat: ${String.format("%.4f", latLng.latitude)}, " +
+                    "Lng: ${String.format("%.4f", latLng.longitude)}"
             )
+
+            // Agregar marcador validado
             repository.addMarker(marker)
             uiState = uiState.copy(marcadores = repository.getMarkers())
         }

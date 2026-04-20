@@ -183,6 +183,7 @@ dependencies {
 
     // Unit tests
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.core)
