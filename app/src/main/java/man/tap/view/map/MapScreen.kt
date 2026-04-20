@@ -109,7 +109,7 @@ fun MapScreen(
                 }
                 uiState.errorMessage != null -> {
                     Text(
-                        text = uiState.errorMessage!!,
+                        text = uiState.errorMessage,
                         modifier = Modifier.padding(16.dp)
                     )
                 }
