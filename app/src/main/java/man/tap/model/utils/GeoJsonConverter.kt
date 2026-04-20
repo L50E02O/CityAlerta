@@ -39,23 +39,28 @@ object GeoJsonConverter {
         for (i in 1..polygon.size) {
             val p2 = polygon[i % polygon.size]
 
-            if (point.longitude > minOf(p1.longitude, p2.longitude)) {
-                if (point.longitude <= maxOf(p1.longitude, p2.longitude)) {
-                    if (point.latitude <= maxOf(p1.latitude, p2.latitude)) {
-                        if (p1.longitude != p2.longitude) {
-                            val xinters =
-                                (point.longitude - p1.longitude) * (p2.latitude - p1.latitude) / (p2.longitude - p1.longitude) + p1.latitude
-                            if (p1.latitude == p2.latitude || point.latitude <= xinters) {
-                                inside = !inside
-                            }
-                        }
-                    }
+            if (shouldCheckIntersection(point, p1, p2)) {
+                if (hasRayIntersection(point, p1, p2)) {
+                    inside = !inside
                 }
             }
             p1 = p2
         }
 
         return inside
+    }
+
+    private fun shouldCheckIntersection(point: LatLng, p1: LatLng, p2: LatLng): Boolean {
+        return point.longitude > minOf(p1.longitude, p2.longitude) &&
+                point.longitude <= maxOf(p1.longitude, p2.longitude) &&
+                point.latitude <= maxOf(p1.latitude, p2.latitude) &&
+                p1.longitude != p2.longitude
+    }
+
+    private fun hasRayIntersection(point: LatLng, p1: LatLng, p2: LatLng): Boolean {
+        val xinters = (point.longitude - p1.longitude) * (p2.latitude - p1.latitude) /
+                      (p2.longitude - p1.longitude) + p1.latitude
+        return p1.latitude == p2.latitude || point.latitude <= xinters
     }
 
     fun extractPolygonPoints(geometry: Geometry): List<LatLng> {
