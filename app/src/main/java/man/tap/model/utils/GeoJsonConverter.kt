@@ -39,10 +39,8 @@ object GeoJsonConverter {
         for (i in 1..polygon.size) {
             val p2 = polygon[i % polygon.size]
 
-            if (shouldCheckIntersection(point, p1, p2)) {
-                if (hasRayIntersection(point, p1, p2)) {
-                    inside = !inside
-                }
+            if (shouldCheckIntersection(point, p1, p2) && hasRayIntersection(point, p1, p2)) {
+                inside = !inside
             }
             p1 = p2
         }
