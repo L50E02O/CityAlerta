@@ -47,8 +47,24 @@ fun MapScreen(
     val uiState = viewModel.uiState
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Inicializar cameraPositionState fuera del when para evitar recomposiciones innecesarias
+    val defaultLocation = LatLng(-0.95, -80.73)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
+    }
+
     LaunchedEffect(ciudadId) {
         viewModel.loadCiudad(ciudadId)
+    }
+
+    // Actualizar posicion de camara cuando cambia la ciudad
+    LaunchedEffect(uiState.ciudad) {
+        uiState.ciudad?.let { ciudad ->
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                LatLng(ciudad.centro_lat, ciudad.centro_lng),
+                uiState.cameraZoom
+            )
+        }
     }
 
     // Mostrar Snackbar si punto esta fuera del poligono
@@ -99,14 +115,6 @@ fun MapScreen(
                 }
                 uiState.ciudad != null -> {
                     val ciudad = uiState.ciudad
-
-                    // Centrar camara en las coordenadas de la ciudad
-                    val cameraPositionState = rememberCameraPositionState {
-                        position = CameraPosition.fromLatLngZoom(
-                            LatLng(ciudad.centro_lat, ciudad.centro_lng),
-                            uiState.cameraZoom
-                        )
-                    }
 
                     // Extraer puntos del poligono
                     val polygonPoints = GeoJsonConverter.extractPolygonPoints(
