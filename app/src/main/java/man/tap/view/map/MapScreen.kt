@@ -83,7 +83,7 @@ fun MapScreen(
                 title = { Text(uiState.ciudad?.nombre ?: "Mapa") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Atras")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atras")
                     }
                 },
                 actions = {
