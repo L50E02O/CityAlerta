@@ -17,9 +17,11 @@ class AppViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
                 AuthViewModel(authRepository) as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
                 MapViewModel(mapRepository) as T
             }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
