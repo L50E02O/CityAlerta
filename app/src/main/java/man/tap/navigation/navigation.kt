@@ -18,7 +18,7 @@ import man.tap.viewmodel.AppViewModelFactory
 
 
 @Composable
-fun AppNavigation(context: Context) {
+fun AppNavigation() {
 
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
