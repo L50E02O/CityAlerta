@@ -51,7 +51,7 @@ fun MapScreen(
         viewModel.loadCiudad(ciudadId)
     }
 
-    // Mostrar Snackbar si punto está fuera del polígono
+    // Mostrar Snackbar si punto esta fuera del poligono
     LaunchedEffect(uiState.isPointValid) {
         if (uiState.isPointValid == false) {
             snackbarHostState.showSnackbar(
@@ -100,7 +100,7 @@ fun MapScreen(
                 uiState.ciudad != null -> {
                     val ciudad = uiState.ciudad
 
-                    // Centrar cámara en las coordenadas de la ciudad
+                    // Centrar camara en las coordenadas de la ciudad
                     val cameraPositionState = rememberCameraPositionState {
                         position = CameraPosition.fromLatLngZoom(
                             LatLng(ciudad.centro_lat, ciudad.centro_lng),
@@ -108,7 +108,7 @@ fun MapScreen(
                         )
                     }
 
-                    // Extraer puntos del polígono
+                    // Extraer puntos del poligono
                     val polygonPoints = GeoJsonConverter.extractPolygonPoints(
                         ciudad.geojson.features.firstOrNull()?.geometry
                             ?: return@Box
@@ -121,7 +121,7 @@ fun MapScreen(
                             viewModel.onMapClicked(latLng)
                         }
                     ) {
-                        // Renderizar polígono del área permitida
+                        // Renderizar poligono del area permitida
                         if (polygonPoints.isNotEmpty()) {
                             Polygon(
                                 points = polygonPoints,

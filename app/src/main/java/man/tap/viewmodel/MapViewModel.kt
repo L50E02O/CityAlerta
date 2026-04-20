@@ -32,7 +32,7 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
         try {
             val ciudad = repository.getCiudadById(ciudadId)
             if (ciudad != null) {
-                // Extraer puntos del polígono para validación
+                // Extraer puntos del poligono para validacion
                 polygonPoints = GeoJsonConverter.extractPolygonPoints(
                     ciudad.geojson.features.firstOrNull()?.geometry ?: return
                 )
@@ -57,12 +57,12 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
     }
 
     fun onMapClicked(latLng: LatLng) {
-        // Validar si el punto está dentro del polígono
+        // Validar si el punto esta dentro del poligono
         val isPointInside = GeoJsonConverter.pointInPolygon(latLng, polygonPoints)
         uiState = uiState.copy(isPointValid = isPointInside)
 
         if (isPointInside) {
-            // Crear marcador con validación
+            // Crear marcador con validacion
             val marker = MapMarker(
                 id = "marker_${System.currentTimeMillis()}",
                 latitude = latLng.latitude,
