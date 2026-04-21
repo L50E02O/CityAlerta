@@ -13,7 +13,7 @@ class AuthViewModelFactoryTest {
     private class AnotherViewModel : ViewModel()
 
     private val repository: IAuthRepository = mock()
-    private val factory = AuthViewModelFactory(repository)
+    private val factory = AppViewModelFactory(repository)
 
     @Test
     fun testCreateReturnsAuthViewModelWhenClassMatches() {
@@ -39,6 +39,6 @@ class AuthViewModelFactoryTest {
         }
 
         assertTrue(exception != null)
-        assertEquals("Unknown ViewModel class", exception?.message)
+        assertTrue(exception?.message?.startsWith("Unknown ViewModel class:") ?: false)
     }
 }

@@ -3,16 +3,28 @@ package man.tap.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import man.tap.model.repository.IAuthRepository
+import man.tap.model.repository.IMapRepository
+import man.tap.model.repository.MapRepository
 
-class AuthViewModelFactory(
-    private val repository: IAuthRepository
+class AppViewModelFactory(
+    private val authRepository: IAuthRepository
 ) : ViewModelProvider.Factory {
 
+    private val mapRepository: IMapRepository by lazy {
+        MapRepository()
+    }
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(AuthViewModel::class.java)) {
-            return modelClass.cast(AuthViewModel(repository))
-                ?: throw IllegalArgumentException("AuthViewModel cast returned null")
+        return when {
+            modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                AuthViewModel(authRepository) as T
+            }
+            modelClass.isAssignableFrom(MapViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                MapViewModel(mapRepository) as T
+            }
+            else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

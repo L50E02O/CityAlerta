@@ -44,12 +44,24 @@ android {
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
+        val googleMapsApiKey = providers.gradleProperty("GOOGLE_MAPS_API_KEY")
+            .orElse(properties.getProperty("GOOGLE_MAPS_API_KEY") ?: "")
+            .getOrElse("")
+
         if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
             project.logger.warn("WARNING: Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties. Build tasks that require Supabase will fail.")
         }
 
+        if (googleMapsApiKey.isEmpty()) {
+            project.logger.warn("WARNING: Missing Google Maps API Key. Define GOOGLE_MAPS_API_KEY in local.properties or gradle.properties. Maps will not display.")
+        }
+
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
+        buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsApiKey\"")
+        
+        // Inyectar API Key al manifest
+        manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
     }
 
     buildTypes {
@@ -157,6 +169,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.auth)
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
 
     // Network / backend
     implementation(libs.supabase.gotrue)
@@ -169,6 +183,7 @@ dependencies {
 
     // Unit tests
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.core)
