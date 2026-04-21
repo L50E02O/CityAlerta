@@ -9,6 +9,7 @@ import man.tap.model.data.Ciudad
 import man.tap.model.data.MapMarker
 import man.tap.model.repository.IMapRepository
 import man.tap.model.utils.GeoJsonConverter
+import java.util.Locale
 
 data class MapUiState(
     val ciudad: Ciudad? = null,
