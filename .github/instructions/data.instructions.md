@@ -1,6 +1,6 @@
 ---
 applyTo: "app/src/main/**/*.kt"
-description: Reglas de datos y persistencia para ManTap
+description: Reglas de datos y persistencia para CityAlerta
 ---
 
 # Reglas de datos

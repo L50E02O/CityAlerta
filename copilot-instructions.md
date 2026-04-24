@@ -2,10 +2,10 @@
 applyTo: "**"
 ---
 
-# Instrucciones base de ManTap
+# Instrucciones base de CityAlerta
 
 ## Contexto del proyecto
-- App: ManTap.
+- App: CityAlerta.
 - Plataforma: Android nativo con Kotlin y Jetpack Compose.
 - Arquitectura: MVVM.
 - Persistencia local: Room.

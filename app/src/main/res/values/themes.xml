@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.ManTap" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.CityAlerta" parent="android:Theme.Material.Light.NoActionBar" />
 
     <style name="Theme.App.init" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/personalizado
 </item>
         <item name="windowSplashScreenAnimationDuration">300</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_background</item>
-        <item name="postSplashScreenTheme">@style/Theme.ManTap</item>
+        <item name="postSplashScreenTheme">@style/Theme.CityAlerta</item>
     </style>
 </resources>
