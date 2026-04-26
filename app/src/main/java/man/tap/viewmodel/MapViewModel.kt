@@ -33,10 +33,17 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
         try {
             val ciudad = repository.getCiudadById(ciudadId)
             if (ciudad != null) {
+                val geometry = ciudad.geojson.features.firstOrNull()?.geometry
+                if (geometry == null) {
+                    uiState = uiState.copy(
+                        isLoading = false,
+                        errorMessage = "Geometria de ciudad no disponible"
+                    )
+                    return
+                }
+
                 // Extraer puntos del poligono para validacion
-                polygonPoints = GeoJsonConverter.extractPolygonPoints(
-                    ciudad.geojson.features.firstOrNull()?.geometry ?: return
-                )
+                polygonPoints = GeoJsonConverter.extractPolygonPoints(geometry)
 
                 uiState = uiState.copy(
                     ciudad = ciudad,
