@@ -1,6 +1,5 @@
 package man.tap.navigation
 
-import android.content.Context
 import man.tap.model.repository.AuthRepository
 import man.tap.view.authView.LoginScreen
 import man.tap.view.authView.RegisterScreen
