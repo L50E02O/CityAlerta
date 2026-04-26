@@ -7,38 +7,46 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import man.tap.navigation.Routes
 import man.tap.view.home.HomeScreen
+import man.tap.view.map.MapScreen
 import man.tap.viewmodel.AuthViewModel
+import man.tap.viewmodel.MapViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import man.tap.viewmodel.AuthViewModelFactory
+import man.tap.viewmodel.AppViewModelFactory
 
 
-// -----------------------------------//
 @Composable
-fun AppNavigation(){
+fun AppNavigation() {
 
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
-    val factory = remember { AuthViewModelFactory(authRepository) }
+    val factory = remember { AppViewModelFactory(authRepository) }
 
-    val viewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+    val authViewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
+
+    val mapViewModel: MapViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
 
     NavHost(
-
         navController = navController,
         startDestination = Routes.Login.route
     ){
         composable(Routes.Login.route){
-            LoginScreen(navController, viewModel)
+            LoginScreen(navController, authViewModel)
         }
         composable(Routes.Register.route){
-            RegisterScreen(navController, viewModel)
+            RegisterScreen(navController, authViewModel)
         }
         composable(Routes.Home.route){
-            HomeScreen()
+            HomeScreen(navController)
+        }
+        composable(Routes.Map.route){ backStackEntry ->
+            val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
+            MapScreen(navController, ciudadId, mapViewModel)
         }
     }
 

@@ -1,4 +1,4 @@
-# ManTap
+# CityAlerta
 
 Aplicación móvil nativa para Android que permite a los usuarios de Manta, Manabí, Ecuador reportar incidentes urbanos y dar seguimiento a su resolución mediante la interacción con administradores y agencias responsables.
 
@@ -6,7 +6,7 @@ Aplicación móvil nativa para Android que permite a los usuarios de Manta, Mana
 
 ## Descripción
 
-ManTap es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
+CityAlerta es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
 
 El sistema está diseñado con un enfoque escalable, permitiendo su evolución hacia un backend centralizado y un panel web administrativo.
 
@@ -89,64 +89,69 @@ El proyecto implementa **MVVM + Clean Architecture**, separando responsabilidade
 
 ## Modelo de Datos (Alineado con ERD)
 
-### Usuario
+```mermaid
+erDiagram
+    direction TB
+    ciudades {
+        uuid id PK ""
+        varchar nombre ""
+        varchar pais ""
+        jsonb geojson "Límites de la ciudad"
+        decimal centroLat ""
+        decimal centroLng ""
+        timestamp created_at ""
+    }
 
-    id (UUID) - PK
-    nombreCompleto (String)
-    email (String)
-    passwordHash (String)
-    rol (Enum)
-    activo (Boolean)
+    barrios {
+        uuid id PK ""
+        uuid ciudad_id FK ""
+        varchar nombre ""
+        varchar nivel_peligrosidad ""
+        geometry perimetro ""
+    }
 
-### Ciudad
+    reportes {
+        uuid id PK ""
+        uuid usuario_id FK ""
+        uuid ciudad_id FK ""
+        uuid ubicacion_id FK ""
+        text descripcion ""
+        varchar estado_slug ""
+        timestamp fecha_reporte ""
+        varchar categoria ""
+        timestamp updated_at ""
+    }
 
-    id (UUID) - PK
-    nombre (String)
-    pais (String)
-    centroLat (Double)
-    centroLng (Double)
+    reporte_ubicaciones {
+        uuid id PK ""
+        decimal lat ""
+        decimal lng ""
+        varchar direccion_aproximada ""
+    }
 
-### Barrio
+    reporte_imagenes {
+        uuid id PK ""
+        uuid reporte_id FK ""
+        uuid storage_uuid ""
+        varchar url_path ""
+        timestamp created_at ""
+    }
 
-    id (UUID) - PK
-    ciudadId (UUID) - FK
-    nombre (String)
-    nivelPeligrosidad (String)
-    perimetro (Geometry)
+    usuarios {
+        uuid id PK ""
+        varchar nombre_completo ""
+        varchar email UK ""
+        varchar password_hash ""
+        varchar rol_slug ""
+        boolean activo ""
+    }
 
-### Reporte
-
-    id (UUID) - PK
-    usuarioId (UUID) - FK
-    ciudadId (UUID) - FK
-    ubicacionId (UUID) - FK
-    agenciaId (UUID) - FK (nullable)
-    descripcion (String)
-    estado (Enum)
-    fechaReporte (Timestamp)
-    updatedAt (Timestamp)
-
-### ReporteUbicacion
-
-    id (UUID) - PK
-    lat (Double)
-    lng (Double)
-    direccionAproximada (String)
-
-### ReporteImagen
-
-    id (UUID) - PK
-    reporteId (UUID) - FK
-    urlPath (String)
-    createdAt (Timestamp)
-
-### Agencia
-
-    id (UUID) - PK
-    nombre (String)
-    tipo (String)
-    contacto (String)
-
+    usuarios ||--o{ reportes : "crea"
+    ciudades ||--o{ barrios : "contiene"
+    ciudades ||--o{ reportes : "registra"
+    reportes ||--|| reporte_ubicaciones : "se ubica en"
+    reportes ||--o{ reporte_imagenes : "contiene"
+```
 ---
 
 ## Estados del Reporte
@@ -274,7 +279,7 @@ Buenas Prácticas:
   Pasos:
   
     git clone <repositorio>
-    cd ManTap
+    cd CityAlerta
     ./gradlew build
     ./gradlew installDebug
 
