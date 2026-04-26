@@ -97,8 +97,8 @@ erDiagram
         varchar nombre ""
         varchar pais ""
         jsonb geojson "Límites de la ciudad"
-        decimal centro_lat ""
-        decimal centro_lng ""
+        decimal centroLat ""
+        decimal centroLng ""
         timestamp created_at ""
     }
 

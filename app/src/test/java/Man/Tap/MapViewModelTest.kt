@@ -183,8 +183,8 @@ class MapViewModelTest {
             nombre = "Manta",
             pais = "Ecuador",
             geojson = geoJson,
-            centro_lat = -0.95,
-            centro_lng = -80.73
+            centroLat = -0.95,
+            centroLng = -80.73
         )
     }
 

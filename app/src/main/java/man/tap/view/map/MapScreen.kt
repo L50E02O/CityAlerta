@@ -62,7 +62,7 @@ fun MapScreen(
     LaunchedEffect(uiState.ciudad) {
         uiState.ciudad?.let { ciudad ->
             cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                LatLng(ciudad.centro_lat, ciudad.centro_lng),
+                LatLng(ciudad.centroLat, ciudad.centroLng),
                 uiState.cameraZoom
             )
         }
