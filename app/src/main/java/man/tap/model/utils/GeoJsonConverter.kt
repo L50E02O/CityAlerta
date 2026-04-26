@@ -12,12 +12,8 @@ object GeoJsonConverter {
         if (geometry.coordinates.isNotEmpty()) {
             val ring = geometry.coordinates[0]
 
-            val points = ring.map { coord ->
-                if (coord.size >= 2) {
-                    LatLng(coord[1], coord[0])
-                } else {
-                    LatLng(0.0, 0.0)
-                }
+            val points = ring.mapNotNull { coord ->
+                if (coord.size >= 2) LatLng(coord[1], coord[0]) else null
             }
 
             polygonOptions.addAll(points)
@@ -66,12 +62,8 @@ object GeoJsonConverter {
 
         if (geometry.coordinates.isNotEmpty()) {
             val ring = geometry.coordinates[0]
-            points.addAll(ring.map { coord ->
-                if (coord.size >= 2) {
-                    LatLng(coord[1], coord[0])
-                } else {
-                    LatLng(0.0, 0.0)
-                }
+            points.addAll(ring.mapNotNull { coord ->
+                if (coord.size >= 2) LatLng(coord[1], coord[0]) else null
             })
         }
 
