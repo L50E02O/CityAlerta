@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -141,14 +142,16 @@ fun MapScreen(
 
                         // Renderizar marcadores agregados por el usuario
                         uiState.marcadores.forEach { marker ->
-                            val markerState = rememberMarkerState(
-                                position = LatLng(marker.latitude, marker.longitude)
-                            )
-                            Marker(
-                                state = markerState,
-                                title = marker.title,
-                                snippet = marker.description
-                            )
+                            key(marker.id) {
+                                val markerState = rememberMarkerState(
+                                    position = LatLng(marker.latitude, marker.longitude)
+                                )
+                                Marker(
+                                    state = markerState,
+                                    title = marker.title,
+                                    snippet = marker.description
+                                )
+                            }
                         }
                     }
                 }
