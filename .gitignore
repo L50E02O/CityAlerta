@@ -99,3 +99,6 @@ androidTest-results/
 
 # Reportes de cobertura
 coverage-reports/
+
+# VSC
+.vscode/settings.json
