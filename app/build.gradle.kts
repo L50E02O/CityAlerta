@@ -14,11 +14,11 @@ jacoco {
 }
 
 android {
-    namespace = "man.tap"
+    namespace = "ec.cityalerta.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "man.tap"
+        applicationId = "ec.cityalerta.app"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
