@@ -20,7 +20,7 @@ ktor = "2.3.7"
 room = "2.6.1"
 playServicesMaps = "18.2.0"
 mapsCompose = "4.1.1"
-kotlinTest = "1.9.21"
+kotlinTest = "2.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

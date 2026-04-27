@@ -1,4 +1,4 @@
-# ManTap
+# CityAlerta
 
 Aplicación móvil nativa para Android que permite a los usuarios de Manta, Manabí, Ecuador reportar incidentes urbanos y dar seguimiento a su resolución mediante la interacción con administradores y agencias responsables.
 
@@ -6,7 +6,7 @@ Aplicación móvil nativa para Android que permite a los usuarios de Manta, Mana
 
 ## Descripción
 
-ManTap es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
+CityAlerta es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
 
 El sistema está diseñado con un enfoque escalable, permitiendo su evolución hacia un backend centralizado y un panel web administrativo.
 
@@ -97,8 +97,8 @@ erDiagram
         varchar nombre ""
         varchar pais ""
         jsonb geojson "Límites de la ciudad"
-        decimal centro_lat ""
-        decimal centro_lng ""
+        decimal centroLat ""
+        decimal centroLng ""
         timestamp created_at ""
     }
 
@@ -279,7 +279,7 @@ Buenas Prácticas:
   Pasos:
   
     git clone <repositorio>
-    cd ManTap
+    cd CityAlerta
     ./gradlew build
     ./gradlew installDebug
 

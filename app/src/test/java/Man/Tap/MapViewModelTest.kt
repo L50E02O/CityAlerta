@@ -70,17 +70,17 @@ class MapViewModelTest {
 
     @Test
     fun testLoadCiudad_Exception() {
-        // Arrange - Simular ciudad null que causa excepcion en loadCiudad
-        whenever(mapRepository.getCiudadById("inexistente")).thenReturn(null)
+        // Arrange - Simular excepcion lanzada por el repositorio
+        whenever(mapRepository.getCiudadById("error")).thenThrow(RuntimeException("connection failed"))
 
         // Act
-        viewModel.loadCiudad("inexistente")
+        viewModel.loadCiudad("error")
 
         // Assert
         assertFalse(viewModel.uiState.isLoading)
         assertNull(viewModel.uiState.ciudad)
         assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage!!.contains("Ciudad no encontrada"))
+        assertTrue(viewModel.uiState.errorMessage!!.contains("Error cargando ciudad:"))
     }
 
     @Test
@@ -183,8 +183,8 @@ class MapViewModelTest {
             nombre = "Manta",
             pais = "Ecuador",
             geojson = geoJson,
-            centro_lat = -0.95,
-            centro_lng = -80.73
+            centroLat = -0.95,
+            centroLng = -80.73
         )
     }
 

@@ -102,8 +102,8 @@ class GeoJsonConverterTest {
         // Act
         val result = GeoJsonConverter.pointInPolygon(pointOnEdge, polygon)
 
-        // Assert - Punto en el borde pueden variar segun implementacion ray casting
-        assertTrue(result || !result) // Comportamiento valido en ambos casos
+        // Assert - El algoritmo ray casting trata puntos en el borde como fuera del poligono
+        assertFalse(result)
     }
 
     @Test

@@ -6,8 +6,8 @@ data class Ciudad(
     val nombre: String,
     val pais: String,
     val geojson: GeoJson,
-    val centro_lat: Double,
-    val centro_lng: Double
+    val centroLat: Double,
+    val centroLng: Double
 )
 
 // Modelos GeoJSON
