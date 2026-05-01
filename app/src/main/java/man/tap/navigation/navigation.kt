@@ -5,7 +5,6 @@ import man.tap.view.authView.LoginScreen
 import man.tap.view.authView.RegisterScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import man.tap.navigation.Routes
 import man.tap.view.home.HomeScreen
 import man.tap.view.map.MapScreen
 import man.tap.viewmodel.AuthViewModel
@@ -14,6 +13,29 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import man.tap.viewmodel.AppViewModelFactory
+import androidx.compose.material3.*
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.sp
+import man.tap.view.explore.ExploreScreen
+import man.tap.view.add.AddScreen
+import androidx.navigation.NavController
 
 
 @Composable
@@ -31,23 +53,128 @@ fun AppNavigation() {
         factory = factory
     )
 
-    NavHost(
-        navController = navController,
-        startDestination = Routes.Login.route
-    ){
-        composable(Routes.Login.route){
-            LoginScreen(navController, authViewModel)
-        }
-        composable(Routes.Register.route){
-            RegisterScreen(navController, authViewModel)
-        }
-        composable(Routes.Home.route){
-            HomeScreen(navController)
-        }
-        composable(Routes.Map.route){ backStackEntry ->
-            val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
-            MapScreen(navController, ciudadId, mapViewModel)
+    Scaffold(
+        bottomBar = { BottomNavigationBar(navController) }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Routes.Login.route,
+            modifier = Modifier.padding(top = innerPadding.calculateTopPadding())
+        ){
+            composable(Routes.Login.route){
+                LoginScreen(navController, authViewModel)
+            }
+            composable(Routes.Register.route){
+                RegisterScreen(navController, authViewModel)
+            }
+            composable(Routes.Home.route){
+                HomeScreen(navController)
+            }
+            composable(Routes.Explore.route){
+                ExploreScreen()
+            }
+            composable(Routes.Post.route){
+                AddScreen()
+            }
+            composable(Routes.Map.route){ backStackEntry ->
+                val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
+                MapScreen(navController, ciudadId, mapViewModel)
+            }
         }
     }
+}
 
+@Composable
+fun BottomNavigationBar(navController: NavController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val bottomBarRoutes = listOf(
+        Routes.Home.route,
+        Routes.Explore.route,
+        Routes.Post.route,
+        Routes.Map.route
+    )
+
+    if (currentRoute in bottomBarRoutes) {
+        Surface(
+            color = Color(0xFF1B2633),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            NavigationBar(
+                modifier = Modifier.height(84.dp),
+                containerColor = Color.Transparent,
+                contentColor = Color.White,
+                tonalElevation = 0.dp
+            ) {
+                NavigationBarItem(
+                    selected = currentRoute == Routes.Explore.route || currentRoute == Routes.Home.route,
+                    onClick = {
+                        navController.navigate(Routes.Explore.route) {
+                            popUpTo(Routes.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = { Icon(Icons.Default.Explore, contentDescription = "EXPLORE", modifier = Modifier.size(22.dp)) },
+                    label = { Text("EXPLORE", fontSize = 9.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        selectedTextColor = Color.White,
+                        unselectedIconColor = Color.Gray,
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
+                    )
+                )
+                NavigationBarItem(
+                    selected = currentRoute == Routes.Post.route,
+                    onClick = {
+                        navController.navigate(Routes.Post.route) {
+                            popUpTo(Routes.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = {
+                        Box(
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF3B5B7A)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = "REPORT", tint = Color.White, modifier = Modifier.size(18.dp))
+                        }
+                    },
+                    label = { Text("REPORT", fontSize = 9.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        selectedTextColor = Color.White,
+                        unselectedIconColor = Color.White,
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
+                    )
+                )
+                NavigationBarItem(
+                    selected = currentRoute == Routes.Map.route,
+                    onClick = {
+                        navController.navigate("map/manta") {
+                            popUpTo(Routes.Home.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    icon = { Icon(Icons.Default.Map, contentDescription = "MAP", modifier = Modifier.size(22.dp)) },
+                    label = { Text("MAP", fontSize = 9.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = Color.White,
+                        selectedTextColor = Color.White,
+                        unselectedIconColor = Color.Gray,
+                        unselectedTextColor = Color.Gray,
+                        indicatorColor = Color.Transparent
+                    )
+                )
+            }
+        }
+    }
 }

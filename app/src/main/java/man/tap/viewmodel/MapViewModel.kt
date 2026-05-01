@@ -7,6 +7,9 @@ import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.LatLng
 import man.tap.model.data.Ciudad
 import man.tap.model.data.MapMarker
+import man.tap.model.data.MockData
+import man.tap.model.data.Report
+import man.tap.model.data.ReportType
 import man.tap.model.repository.IMapRepository
 import man.tap.model.utils.GeoJsonConverter
 import java.util.Locale
@@ -14,6 +17,10 @@ import java.util.Locale
 data class MapUiState(
     val ciudad: Ciudad? = null,
     val marcadores: List<MapMarker> = emptyList(),
+    val reports: List<Report> = emptyList(),
+    val selectedCategory: ReportType? = null,
+    val selectedReport: Report? = null,
+    val categories: List<ReportType> = ReportType.entries,
     val cameraZoom: Float = 15f,
     val errorMessage: String? = null,
     val isLoading: Boolean = false,
@@ -48,7 +55,8 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
                 uiState = uiState.copy(
                     ciudad = ciudad,
                     isLoading = false,
-                    marcadores = emptyList()
+                    marcadores = emptyList(),
+                    reports = MockData.getMockReports()
                 )
             } else {
                 uiState = uiState.copy(
@@ -98,6 +106,18 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
     fun clearMarkers() {
         repository.clearMarkers()
         uiState = uiState.copy(marcadores = emptyList())
+    }
+
+    fun onCategorySelected(category: ReportType) {
+        val newCategory = if (uiState.selectedCategory == category) null else category
+        uiState = uiState.copy(selectedCategory = newCategory)
+    }
+
+    fun onReportClicked(report: Report){
+        uiState = uiState.copy(selectedReport = report)
+    }
+    fun onDismissReport(report: Report){
+        uiState = uiState.copy(selectedReport = null)
     }
 }
 

@@ -40,4 +40,3 @@ data class MapMarker(
     val title: String,
     val description: String? = null
 )
-
