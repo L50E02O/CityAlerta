@@ -29,7 +29,8 @@ fun ReportDetailCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .offset(y = (-20).dp),
         shape = RoundedCornerShape(32.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4F8).copy(alpha = 0.95f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)

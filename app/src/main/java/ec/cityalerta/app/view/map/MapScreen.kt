@@ -88,7 +88,13 @@ fun MapScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.ciudad?.nombre ?: "Mapa") },
+                modifier = Modifier.height(56.dp),
+                windowInsets = WindowInsets(0, 0, 0, 0),
+                title = {
+                    Box(modifier = Modifier.padding(top = 10.dp)) {
+                        Text(uiState.ciudad?.nombre ?: "Mapa")
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
@@ -122,12 +128,12 @@ fun MapScreen(
                 }
                 uiState.errorMessage != null -> {
                     Text(
-                        text = uiState.errorMessage!!,
+                        text = uiState.errorMessage,
                         modifier = Modifier.align(Alignment.Center).padding(16.dp)
                     )
                 }
                 uiState.ciudad != null -> {
-                    val ciudad = uiState.ciudad!!
+                    val ciudad = uiState.ciudad
                     val polygonPoints = remember(ciudad) {
                         GeoJsonConverter.extractPolygonPoints(
                             ciudad.geojson.features.firstOrNull()?.geometry ?: return@remember emptyList()
@@ -150,7 +156,7 @@ fun MapScreen(
                             mapToolbarEnabled = false
                         ),
                         onMapClick = { latLng -> viewModel.onMapClicked(latLng) },
-                        contentPadding = PaddingValues(top = 80.dp, bottom = 100.dp)
+                        contentPadding = PaddingValues(top = 110.dp, bottom = 165.dp)
                     ) {
                         if (polygonPoints.isNotEmpty()) {
                             Polygon(
@@ -197,9 +203,9 @@ fun MapScreen(
 
                     if (uiState.selectedReport != null) {
                         ReportDetailCard(
-                            report = uiState.selectedReport!!,
+                            report = uiState.selectedReport,
                             onDetailClick = {},
-                            onCloseClick = { viewModel.onDismissReport(uiState.selectedReport!!) },
+                            onCloseClick = { viewModel.onDismissReport(uiState.selectedReport) },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 32.dp)
