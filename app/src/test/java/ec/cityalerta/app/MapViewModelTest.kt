@@ -1,14 +1,15 @@
 package ec.cityalerta.app
 
 import com.google.android.gms.maps.model.LatLng
+import ec.cityalerta.app.viewmodel.MapUiState
+import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.model.data.Ciudad
 import ec.cityalerta.app.model.data.Feature
 import ec.cityalerta.app.model.data.GeoJson
 import ec.cityalerta.app.model.data.Geometry
 import ec.cityalerta.app.model.data.Properties
 import ec.cityalerta.app.model.repository.IMapRepository
-import ec.cityalerta.app.viewmodel.MapUiState
-import ec.cityalerta.app.viewmodel.MapViewModel
+
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock

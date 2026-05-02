@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.sp
 import ec.cityalerta.app.view.explore.ExploreScreen
 import ec.cityalerta.app.view.add.AddScreen
 import androidx.navigation.NavController
-import ec.cityalerta.app.navigation.Routes
 
 
 @Composable

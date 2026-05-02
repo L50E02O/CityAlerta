@@ -2,6 +2,7 @@ package ec.cityalerta.app
 
 import ec.cityalerta.app.model.data.MapMarker
 import ec.cityalerta.app.model.repository.MapRepository
+
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
