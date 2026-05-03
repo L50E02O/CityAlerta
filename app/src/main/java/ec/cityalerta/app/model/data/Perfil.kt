@@ -1,10 +1,10 @@
 package ec.cityalerta.app.model.data
 
-data class ReporteImagen(
+data class Perfil(
     val id: String,
-    val reporteId: String,
-    val storageUuid: String,
-    val urlPath: String,
+    val nombreCompleto: String,
+    val rolSlug: String,
+    val activo: Boolean,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )

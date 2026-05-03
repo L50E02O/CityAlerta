@@ -1,5 +1,7 @@
 package ec.cityalerta.app.model.data
 
+import ec.cityalerta.app.model.data.geoJson.GeoJson
+
 data class Ciudad(
     val id: String,
     val nombre: String,
@@ -7,5 +9,6 @@ data class Ciudad(
     val geojson: GeoJson,
     val centroLat: Double,
     val centroLng: Double,
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )

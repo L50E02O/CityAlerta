@@ -178,6 +178,8 @@ dependencies {
     // Network / backend
     implementation(libs.supabase.gotrue)
     implementation(libs.supabase.core)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
 
     // Room
