@@ -3,7 +3,7 @@ package ec.cityalerta.app
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import ec.cityalerta.app.model.repository.IAuthRepository
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import ec.cityalerta.app.view.authView.AuthFormComponent
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Rule

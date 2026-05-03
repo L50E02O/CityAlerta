@@ -8,7 +8,7 @@ import ec.cityalerta.app.model.data.geoJson.Feature
 import ec.cityalerta.app.model.data.geoJson.GeoJson
 import ec.cityalerta.app.model.data.geoJson.Geometry
 import ec.cityalerta.app.model.data.geoJson.Properties
-import ec.cityalerta.app.model.repository.IMapRepository
+import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 
 import org.junit.Before
 import org.junit.Test

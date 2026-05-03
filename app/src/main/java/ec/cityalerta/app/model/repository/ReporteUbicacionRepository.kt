@@ -2,6 +2,11 @@ package ec.cityalerta.app.model.repository
 
 import ec.cityalerta.app.model.data.ReporteUbicacion
 import ec.cityalerta.app.model.remote.SupabaseProvider
+import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.utils.doubleOrZero
+import ec.cityalerta.app.model.utils.nullableString
+import ec.cityalerta.app.model.utils.safeSupabaseCall
+import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.JsonNull
@@ -12,19 +17,21 @@ class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion> {
 
     private val tableName = "reporte_ubicaciones"
 
-    override suspend fun create(entity: ReporteUbicacion): Result<ReporteUbicacion> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).insert(entity.toJson())
-        entity
-    }
-
-    override suspend fun update(entity: ReporteUbicacion): Result<ReporteUbicacion> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).update(entity.toJson()) {
-            filter {
-                eq("id", entity.id)
-            }
+    override suspend fun create(entity: ReporteUbicacion): Result<ReporteUbicacion> =
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName).insert(entity.toJson())
+            entity
         }
-        entity
-    }
+
+    override suspend fun update(entity: ReporteUbicacion): Result<ReporteUbicacion> =
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName).update(entity.toJson()) {
+                filter {
+                    eq("id", entity.id)
+                }
+            }
+            entity
+        }
 
     override suspend fun getAll(): Result<List<ReporteUbicacion>> = safeSupabaseCall {
         SupabaseProvider.client.from(tableName)

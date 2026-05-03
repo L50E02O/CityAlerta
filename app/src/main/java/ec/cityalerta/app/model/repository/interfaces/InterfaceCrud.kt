@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.repository
+package ec.cityalerta.app.model.repository.interfaces
 
 interface ICrudRepository<T> {
     suspend fun create(entity: T): Result<T>

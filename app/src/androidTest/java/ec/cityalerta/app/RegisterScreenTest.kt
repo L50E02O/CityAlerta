@@ -5,7 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import ec.cityalerta.app.model.repository.IAuthRepository
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import ec.cityalerta.app.view.authView.RegisterScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Rule

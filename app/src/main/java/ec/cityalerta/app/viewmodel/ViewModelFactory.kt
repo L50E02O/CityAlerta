@@ -2,8 +2,8 @@ package ec.cityalerta.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import ec.cityalerta.app.model.repository.IAuthRepository
-import ec.cityalerta.app.model.repository.IMapRepository
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 import ec.cityalerta.app.model.repository.MapRepository
 
 class AppViewModelFactory(

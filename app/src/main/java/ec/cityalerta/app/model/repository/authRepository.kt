@@ -1,6 +1,7 @@
 package ec.cityalerta.app.model.repository
 
 import ec.cityalerta.app.model.remote.SupabaseProvider
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import kotlin.coroutines.cancellation.CancellationException

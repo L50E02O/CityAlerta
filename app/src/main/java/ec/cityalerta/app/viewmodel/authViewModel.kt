@@ -1,6 +1,6 @@
 package ec.cityalerta.app.viewmodel
 
-import ec.cityalerta.app.model.repository.IAuthRepository
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue

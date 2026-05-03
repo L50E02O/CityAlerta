@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.repository
+package ec.cityalerta.app.model.utils
 
 import ec.cityalerta.app.model.data.ReporteEstado
 import ec.cityalerta.app.model.data.geoJson.Feature

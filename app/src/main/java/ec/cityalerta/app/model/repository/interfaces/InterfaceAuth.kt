@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.repository
+package ec.cityalerta.app.model.repository.interfaces
 
 interface IAuthRepository {
     suspend fun signUp(email: String, password: String): Result<Unit>

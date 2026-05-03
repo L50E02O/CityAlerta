@@ -2,7 +2,7 @@ package ec.cityalerta.app
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.CreationExtras
-import ec.cityalerta.app.model.repository.IAuthRepository
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import ec.cityalerta.app.viewmodel.AppViewModelFactory
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Assert.assertTrue

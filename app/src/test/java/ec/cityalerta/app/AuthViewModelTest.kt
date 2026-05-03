@@ -1,6 +1,6 @@
 package ec.cityalerta.app
 
-import ec.cityalerta.app.model.repository.IAuthRepository
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

@@ -2,6 +2,10 @@ package ec.cityalerta.app.model.repository
 
 import ec.cityalerta.app.model.data.ReporteImagen
 import ec.cityalerta.app.model.remote.SupabaseProvider
+import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.utils.nullableString
+import ec.cityalerta.app.model.utils.safeSupabaseCall
+import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.JsonNull
