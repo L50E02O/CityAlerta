@@ -2,7 +2,7 @@ package ec.cityalerta.app.model.utils
 
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolygonOptions
-import ec.cityalerta.app.model.data.Geometry
+import ec.cityalerta.app.model.data.geoJson.Geometry
 
 object GeoJsonConverter {
 

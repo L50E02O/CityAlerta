@@ -1,5 +1,10 @@
 package ec.cityalerta.app.model.data
 
+import ec.cityalerta.app.model.data.geoJson.Feature
+import ec.cityalerta.app.model.data.geoJson.GeoJson
+import ec.cityalerta.app.model.data.geoJson.Geometry
+import ec.cityalerta.app.model.data.geoJson.Properties
+
 /**
  * Mock Data para pruebas de la app.
  * Contiene datos hardcodeados que solo existen en memoria durante la ejecución.

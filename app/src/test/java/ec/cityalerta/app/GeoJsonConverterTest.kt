@@ -1,7 +1,7 @@
 package ec.cityalerta.app.model.utils
 
 import com.google.android.gms.maps.model.LatLng
-import ec.cityalerta.app.model.data.Geometry
+import ec.cityalerta.app.model.data.geoJson.Geometry
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
