@@ -1,14 +1,11 @@
 package ec.cityalerta.app
 
 import com.google.android.gms.maps.model.LatLng
+import ec.cityalerta.app.model.data.ciudad.Ciudad
+import ec.cityalerta.app.model.data.geoJson.Geometry
+import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 import ec.cityalerta.app.viewmodel.MapUiState
 import ec.cityalerta.app.viewmodel.MapViewModel
-import ec.cityalerta.app.model.data.ciudad.Ciudad
-import ec.cityalerta.app.model.data.geoJson.Feature
-import ec.cityalerta.app.model.data.geoJson.GeoJson
-import ec.cityalerta.app.model.data.geoJson.Geometry
-import ec.cityalerta.app.model.data.geoJson.Properties
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 
 import org.junit.Before
 import org.junit.Test
@@ -168,33 +165,16 @@ class MapViewModelTest {
             )
         )
 
-        val feature = Feature(
-            type = "Feature",
-            properties = Properties(name = "Manta", country = "Ecuador"),
-            geometry = geometry
-        )
-
-        val geoJson = GeoJson(
-            type = "FeatureCollection",
-            features = listOf(feature)
-        )
-
         return Ciudad(
             id = "manta",
             nombre = "Manta",
             pais = "Ecuador",
-            geojson = geoJson,
+            geojson = geometry,
             centroLat = -0.95,
             centroLng = -80.73
         )
     }
 
-    /**
-     * Companion para evitar cambios de estado entre tests.
-     */
-    private companion object {
-        val initialState = MapUiState()
-    }
 }
 
 

@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.LatLng
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.MapMarker
-import ec.cityalerta.app.model.data.MockData
 import ec.cityalerta.app.model.data.reporte.Report
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.repository.interfaces.IMapRepository
@@ -40,8 +39,8 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
         try {
             val ciudad = repository.getCiudadById(ciudadId)
             if (ciudad != null) {
-                val geometry = ciudad.geojson.features.firstOrNull()?.geometry
-                if (geometry == null) {
+                val geometry = ciudad.geojson
+                if (geometry.coordinates.isEmpty()) {
                     uiState = uiState.copy(
                         isLoading = false,
                         errorMessage = "Geometria de ciudad no disponible"
@@ -56,7 +55,7 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
                     ciudad = ciudad,
                     isLoading = false,
                     marcadores = emptyList(),
-                    reports = MockData.getMockReports()
+                    reports = ec.cityalerta.app.model.data.MockData.getMockReports()
                 )
             } else {
                 uiState = uiState.copy(
@@ -116,7 +115,7 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
     fun onReportClicked(report: Report){
         uiState = uiState.copy(selectedReport = report)
     }
-    fun onDismissReport(report: Report){
+    fun onDismissReport(){
         uiState = uiState.copy(selectedReport = null)
     }
 }

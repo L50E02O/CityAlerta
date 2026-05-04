@@ -136,7 +136,7 @@ fun MapScreen(
                     val ciudad = uiState.ciudad
                     val polygonPoints = remember(ciudad) {
                         GeoJsonConverter.extractPolygonPoints(
-                            ciudad.geojson.features.firstOrNull()?.geometry ?: return@remember emptyList()
+                            ciudad.geojson
                         )
                     }
 
@@ -205,7 +205,7 @@ fun MapScreen(
                         ReportDetailCard(
                             report = uiState.selectedReport,
                             onDetailClick = {},
-                            onCloseClick = { viewModel.onDismissReport(uiState.selectedReport) },
+                            onCloseClick = { viewModel.onDismissReport() },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 32.dp)
