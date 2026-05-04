@@ -1,9 +1,12 @@
 package ec.cityalerta.app.model.data
 
+import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.geoJson.Feature
 import ec.cityalerta.app.model.data.geoJson.GeoJson
 import ec.cityalerta.app.model.data.geoJson.Geometry
 import ec.cityalerta.app.model.data.geoJson.Properties
+import ec.cityalerta.app.model.data.reporte.Report
+import ec.cityalerta.app.model.data.reporte.ReportType
 
 /**
  * Mock Data para pruebas de la app.
@@ -96,10 +99,38 @@ object MockData {
 
     fun getMockReports(): List<Report> {
         return listOf(
-            Report("1", ReportType.RISK_ZONE, -0.947, -80.735, "Suceso Armado en Via San Mateo", "Hecho Violento en Via San Mateo"),
-            Report("2", ReportType.LIGHT, -0.990, -80.800, "Poste caido en Via San Mateo", "Fallo de infraestructura electrica en Via San Mateo"),
-            Report("3", ReportType.POTHOLE, -0.947, -80.715, "Bache en Via San Mateo", "Bache detectado en Via San Mateo"),
-            Report("4", ReportType.WATER, -0.983, -80.701, "Fuga de Agua en Via San Mateo", "Fallo en sistema de Agua en Via San Mateo")
+            Report(
+                "1",
+                ReportType.RISK_ZONE,
+                -0.947,
+                -80.735,
+                "Suceso Armado en Via San Mateo",
+                "Hecho Violento en Via San Mateo"
+            ),
+            Report(
+                "2",
+                ReportType.LIGHT,
+                -0.990,
+                -80.800,
+                "Poste caido en Via San Mateo",
+                "Fallo de infraestructura electrica en Via San Mateo"
+            ),
+            Report(
+                "3",
+                ReportType.POTHOLE,
+                -0.947,
+                -80.715,
+                "Bache en Via San Mateo",
+                "Bache detectado en Via San Mateo"
+            ),
+            Report(
+                "4",
+                ReportType.WATER,
+                -0.983,
+                -80.701,
+                "Fuga de Agua en Via San Mateo",
+                "Fallo en sistema de Agua en Via San Mateo"
+            )
 
 
         )

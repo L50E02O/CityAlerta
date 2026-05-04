@@ -1,6 +1,8 @@
 package ec.cityalerta.app.model.repository
 
-import ec.cityalerta.app.model.data.Perfil
+import ec.cityalerta.app.model.data.perfil.Perfil
+import ec.cityalerta.app.model.data.perfil.PerfilCreateDto
+import ec.cityalerta.app.model.data.perfil.PerfilUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
 import ec.cityalerta.app.model.utils.booleanOrFalse
@@ -9,26 +11,30 @@ import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonElement
 
-class PerfilRepository : ICrudRepository<Perfil> {
+class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDto> {
 
     private val tableName = "perfil"
 
-    override suspend fun create(entity: Perfil): Result<Perfil> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).insert(entity.toJson())
-        entity
+    override suspend fun create(entity: PerfilCreateDto): Result<Perfil> = safeSupabaseCall {
+        val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+            .decodeList<JsonObject>()
+            .firstOrNull()
+        response?.toPerfil() ?: throw Exception("Error al crear perfil")
     }
 
-    override suspend fun update(entity: Perfil): Result<Perfil> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).update(entity.toJson()) {
+    override suspend fun update(entity: PerfilUpdateDto, id: String): Result<Perfil> = safeSupabaseCall {
+        val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
             filter {
-                eq("id", entity.id)
+                eq("id", id)
             }
         }
-        entity
+            .decodeList<JsonObject>()
+            .firstOrNull()
+        response?.toPerfil() ?: throw Exception("Error al actualizar perfil")
     }
 
     override suspend fun getAll(): Result<List<Perfil>> = safeSupabaseCall {
@@ -59,19 +65,6 @@ class PerfilRepository : ICrudRepository<Perfil> {
         Unit
     }
 
-    private fun Perfil.toJson(): JsonObject {
-        return JsonObject(
-            mapOf(
-                "id" to JsonPrimitive(id),
-                "nombre_completo" to JsonPrimitive(nombreCompleto),
-                "rol_slug" to JsonPrimitive(rolSlug),
-                "activo" to JsonPrimitive(activo),
-                "created_at" to (createdAt?.let { JsonPrimitive(it) } ?: JsonNull),
-                "updated_at" to (updatedAt?.let { JsonPrimitive(it) } ?: JsonNull)
-            )
-        )
-    }
-
     private fun JsonObject.toPerfil(): Perfil {
         return Perfil(
             id = stringOrEmpty("id"),
@@ -81,6 +74,24 @@ class PerfilRepository : ICrudRepository<Perfil> {
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
             updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
         )
+    }
+
+    private fun PerfilCreateDto.toCreateJson(): JsonObject {
+        return JsonObject(
+            mapOf(
+                "nombre_completo" to JsonPrimitive(nombreCompleto),
+                "rol_slug" to JsonPrimitive(rolSlug),
+                "activo" to JsonPrimitive(activo)
+            )
+        )
+    }
+
+    private fun PerfilUpdateDto.toUpdateJson(): JsonObject {
+        val map = mutableMapOf<String, JsonElement>()
+        nombreCompleto?.let { map["nombre_completo"] = JsonPrimitive(it) }
+        rolSlug?.let { map["rol_slug"] = JsonPrimitive(it) }
+        activo?.let { map["activo"] = JsonPrimitive(it) }
+        return JsonObject(map)
     }
 }
 

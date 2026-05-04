@@ -1,6 +1,8 @@
 package ec.cityalerta.app.model.repository
 
-import ec.cityalerta.app.model.data.ReporteUbicacion
+import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacion
+import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionCreateDto
+import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
 import ec.cityalerta.app.model.utils.doubleOrZero
@@ -9,28 +11,32 @@ import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonElement
 
-class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion> {
+class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion, ReporteUbicacionCreateDto, ReporteUbicacionUpdateDto> {
 
-    private val tableName = "reporte_ubicaciones"
+    private val tableName = "reporte_ubicacion"
 
-    override suspend fun create(entity: ReporteUbicacion): Result<ReporteUbicacion> =
+    override suspend fun create(entity: ReporteUbicacionCreateDto): Result<ReporteUbicacion> =
         safeSupabaseCall {
-            SupabaseProvider.client.from(tableName).insert(entity.toJson())
-            entity
+            val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+                .decodeList<JsonObject>()
+                .firstOrNull()
+            response?.toReporteUbicacion() ?: throw Exception("Error al crear reporte ubicacion")
         }
 
-    override suspend fun update(entity: ReporteUbicacion): Result<ReporteUbicacion> =
+    override suspend fun update(entity: ReporteUbicacionUpdateDto, id: String): Result<ReporteUbicacion> =
         safeSupabaseCall {
-            SupabaseProvider.client.from(tableName).update(entity.toJson()) {
+            val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
                 filter {
-                    eq("id", entity.id)
+                    eq("id", id)
                 }
             }
-            entity
+                .decodeList<JsonObject>()
+                .firstOrNull()
+            response?.toReporteUbicacion() ?: throw Exception("Error al actualizar reporte ubicacion")
         }
 
     override suspend fun getAll(): Result<List<ReporteUbicacion>> = safeSupabaseCall {
@@ -61,19 +67,6 @@ class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion> {
         Unit
     }
 
-    private fun ReporteUbicacion.toJson(): JsonObject {
-        return JsonObject(
-            mapOf(
-                "id" to JsonPrimitive(id),
-                "lat" to JsonPrimitive(lat),
-                "lng" to JsonPrimitive(lng),
-                "direccion_aproximada" to JsonPrimitive(direccionAproximada),
-                "created_at" to (createdAt?.let { JsonPrimitive(it) } ?: JsonNull),
-                "updated_at" to (updatedAt?.let { JsonPrimitive(it) } ?: JsonNull)
-            )
-        )
-    }
-
     private fun JsonObject.toReporteUbicacion(): ReporteUbicacion {
         return ReporteUbicacion(
             id = stringOrEmpty("id"),
@@ -83,6 +76,24 @@ class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion> {
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
             updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
         )
+    }
+
+    private fun ReporteUbicacionCreateDto.toCreateJson(): JsonObject {
+        return JsonObject(
+            mapOf(
+                "lat" to JsonPrimitive(lat),
+                "lng" to JsonPrimitive(lng),
+                "direccion_aproximada" to JsonPrimitive(direccionAproximada)
+            )
+        )
+    }
+
+    private fun ReporteUbicacionUpdateDto.toUpdateJson(): JsonObject {
+        val map = mutableMapOf<String, JsonElement>()
+        lat?.let { map["lat"] = JsonPrimitive(it) }
+        lng?.let { map["lng"] = JsonPrimitive(it) }
+        direccionAproximada?.let { map["direccion_aproximada"] = JsonPrimitive(it) }
+        return JsonObject(map)
     }
 }
 

@@ -5,11 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.LatLng
-import ec.cityalerta.app.model.data.Ciudad
+import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.MapMarker
 import ec.cityalerta.app.model.data.MockData
-import ec.cityalerta.app.model.data.Report
-import ec.cityalerta.app.model.data.ReportType
+import ec.cityalerta.app.model.data.reporte.Report
+import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import java.util.Locale

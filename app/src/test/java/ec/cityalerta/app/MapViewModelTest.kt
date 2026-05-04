@@ -3,7 +3,7 @@ package ec.cityalerta.app
 import com.google.android.gms.maps.model.LatLng
 import ec.cityalerta.app.viewmodel.MapUiState
 import ec.cityalerta.app.viewmodel.MapViewModel
-import ec.cityalerta.app.model.data.Ciudad
+import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.geoJson.Feature
 import ec.cityalerta.app.model.data.geoJson.GeoJson
 import ec.cityalerta.app.model.data.geoJson.Geometry

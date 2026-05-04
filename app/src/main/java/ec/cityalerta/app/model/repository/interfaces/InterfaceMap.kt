@@ -1,6 +1,6 @@
 package ec.cityalerta.app.model.repository.interfaces
 
-import ec.cityalerta.app.model.data.Ciudad
+import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.MapMarker
 
 interface IMapRepository {

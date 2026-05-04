@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data
+package ec.cityalerta.app.model.data.reporteubicacion
 
 data class ReporteUbicacion(
     val id: String,

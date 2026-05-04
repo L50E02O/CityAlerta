@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data
+package ec.cityalerta.app.model.data.perfil
 
 data class Perfil(
     val id: String,

@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data
+package ec.cityalerta.app.model.data.reporteimagen
 
 data class ReporteImagen(
     val id: String,

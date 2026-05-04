@@ -1,4 +1,6 @@
-package ec.cityalerta.app.model.data
+package ec.cityalerta.app.model.data.reporte
+
+import ec.cityalerta.app.model.data.reporte.ReporteEstado
 
 data class Reporte(
     val id: String,

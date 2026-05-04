@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data
+package ec.cityalerta.app.model.data.reporte
 
 enum class ReporteEstado {
     PENDIENTE,

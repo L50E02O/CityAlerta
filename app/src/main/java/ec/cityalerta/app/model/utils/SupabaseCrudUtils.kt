@@ -1,6 +1,6 @@
 package ec.cityalerta.app.model.utils
 
-import ec.cityalerta.app.model.data.ReporteEstado
+import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.geoJson.Feature
 import ec.cityalerta.app.model.data.geoJson.GeoJson
 import ec.cityalerta.app.model.data.geoJson.Geometry

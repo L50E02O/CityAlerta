@@ -1,6 +1,8 @@
 package ec.cityalerta.app.model.repository
 
-import ec.cityalerta.app.model.data.ReporteImagen
+import ec.cityalerta.app.model.data.reporteimagen.ReporteImagen
+import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
+import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
 import ec.cityalerta.app.model.utils.nullableString
@@ -8,26 +10,30 @@ import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonElement
 
-class ReporteImagenRepository : ICrudRepository<ReporteImagen> {
+class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCreateDto, ReporteImagenUpdateDto> {
 
     private val tableName = "reporte_imagen"
 
-    override suspend fun create(entity: ReporteImagen): Result<ReporteImagen> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).insert(entity.toJson())
-        entity
+    override suspend fun create(entity: ReporteImagenCreateDto): Result<ReporteImagen> = safeSupabaseCall {
+        val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+            .decodeList<JsonObject>()
+            .firstOrNull()
+        response?.toReporteImagen() ?: throw Exception("Error al crear reporte imagen")
     }
 
-    override suspend fun update(entity: ReporteImagen): Result<ReporteImagen> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).update(entity.toJson()) {
+    override suspend fun update(entity: ReporteImagenUpdateDto, id: String): Result<ReporteImagen> = safeSupabaseCall {
+        val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
             filter {
-                eq("id", entity.id)
+                eq("id", id)
             }
         }
-        entity
+            .decodeList<JsonObject>()
+            .firstOrNull()
+        response?.toReporteImagen() ?: throw Exception("Error al actualizar reporte imagen")
     }
 
     override suspend fun getAll(): Result<List<ReporteImagen>> = safeSupabaseCall {
@@ -58,19 +64,6 @@ class ReporteImagenRepository : ICrudRepository<ReporteImagen> {
         Unit
     }
 
-    private fun ReporteImagen.toJson(): JsonObject {
-        return JsonObject(
-            mapOf(
-                "id" to JsonPrimitive(id),
-                "reporte_id" to JsonPrimitive(reporteId),
-                "storage_uuid" to JsonPrimitive(storageUuid),
-                "url_path" to JsonPrimitive(urlPath),
-                "created_at" to (createdAt?.let { JsonPrimitive(it) } ?: JsonNull),
-                "updated_at" to (updatedAt?.let { JsonPrimitive(it) } ?: JsonNull)
-            )
-        )
-    }
-
     private fun JsonObject.toReporteImagen(): ReporteImagen {
         return ReporteImagen(
             id = stringOrEmpty("id"),
@@ -80,6 +73,24 @@ class ReporteImagenRepository : ICrudRepository<ReporteImagen> {
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
             updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
         )
+    }
+
+    private fun ReporteImagenCreateDto.toCreateJson(): JsonObject {
+        return JsonObject(
+            mapOf(
+                "reporte_id" to JsonPrimitive(reporteId),
+                "storage_uuid" to JsonPrimitive(storageUuid),
+                "url_path" to JsonPrimitive(urlPath)
+            )
+        )
+    }
+
+    private fun ReporteImagenUpdateDto.toUpdateJson(): JsonObject {
+        val map = mutableMapOf<String, JsonElement>()
+        reporteId?.let { map["reporte_id"] = JsonPrimitive(it) }
+        storageUuid?.let { map["storage_uuid"] = JsonPrimitive(it) }
+        urlPath?.let { map["url_path"] = JsonPrimitive(it) }
+        return JsonObject(map)
     }
 }
 

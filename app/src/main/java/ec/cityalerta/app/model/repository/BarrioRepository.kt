@@ -1,6 +1,8 @@
 package ec.cityalerta.app.model.repository
 
-import ec.cityalerta.app.model.data.Barrio
+import ec.cityalerta.app.model.data.barrio.Barrio
+import ec.cityalerta.app.model.data.barrio.BarrioCreateDto
+import ec.cityalerta.app.model.data.barrio.BarrioUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
 import ec.cityalerta.app.model.utils.geoJsonFromJson
@@ -10,26 +12,30 @@ import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonElement
 
-class BarrioRepository : ICrudRepository<Barrio> {
+class BarrioRepository : ICrudRepository<Barrio, BarrioCreateDto, BarrioUpdateDto> {
 
     private val tableName = "barrio"
 
-    override suspend fun create(entity: Barrio): Result<Barrio> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).insert(entity.toJson())
-        entity
+    override suspend fun create(entity: BarrioCreateDto): Result<Barrio> = safeSupabaseCall {
+        val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+            .decodeList<JsonObject>()
+            .firstOrNull()
+        response?.toBarrio() ?: throw Exception("Error al crear barrio")
     }
 
-    override suspend fun update(entity: Barrio): Result<Barrio> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).update(entity.toJson()) {
+    override suspend fun update(entity: BarrioUpdateDto, id: String): Result<Barrio> = safeSupabaseCall {
+        val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
             filter {
-                eq("id", entity.id)
+                eq("id", id)
             }
         }
-        entity
+            .decodeList<JsonObject>()
+            .firstOrNull()
+        response?.toBarrio() ?: throw Exception("Error al actualizar barrio")
     }
 
     override suspend fun getAll(): Result<List<Barrio>> = safeSupabaseCall {
@@ -60,20 +66,6 @@ class BarrioRepository : ICrudRepository<Barrio> {
         Unit
     }
 
-    private fun Barrio.toJson(): JsonObject {
-        return JsonObject(
-            mapOf(
-                "id" to JsonPrimitive(id),
-                "ciudad_id" to JsonPrimitive(ciudadId),
-                "nombre" to JsonPrimitive(nombre),
-                "nivel_peligrosidad" to JsonPrimitive(nivelPeligrosidad),
-                "perimetro" to geoJsonToJson(perimetro),
-                "created_at" to (createdAt?.let { JsonPrimitive(it) } ?: JsonNull),
-                "updated_at" to (updatedAt?.let { JsonPrimitive(it) } ?: JsonNull)
-            )
-        )
-    }
-
     private fun JsonObject.toBarrio(): Barrio {
         return Barrio(
             id = stringOrEmpty("id"),
@@ -84,6 +76,26 @@ class BarrioRepository : ICrudRepository<Barrio> {
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
             updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
         )
+    }
+
+    private fun BarrioCreateDto.toCreateJson(): JsonObject {
+        return JsonObject(
+            mapOf(
+                "ciudad_id" to JsonPrimitive(ciudadId),
+                "nombre" to JsonPrimitive(nombre),
+                "nivel_peligrosidad" to JsonPrimitive(nivelPeligrosidad),
+                "perimetro" to geoJsonToJson(perimetro)
+            )
+        )
+    }
+
+    private fun BarrioUpdateDto.toUpdateJson(): JsonObject {
+        val map = mutableMapOf<String, JsonElement>()
+        ciudadId?.let { map["ciudad_id"] = JsonPrimitive(it) }
+        nombre?.let { map["nombre"] = JsonPrimitive(it) }
+        nivelPeligrosidad?.let { map["nivel_peligrosidad"] = JsonPrimitive(it) }
+        perimetro?.let { map["perimetro"] = geoJsonToJson(it) }
+        return JsonObject(map)
     }
 }
 

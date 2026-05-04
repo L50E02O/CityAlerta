@@ -1,14 +1,13 @@
-package ec.cityalerta.app.model.data
+package ec.cityalerta.app.model.data.barrio
 
 import ec.cityalerta.app.model.data.geoJson.GeoJson
 
-data class Ciudad(
+data class Barrio(
     val id: String,
+    val ciudadId: String,
     val nombre: String,
-    val pais: String,
-    val geojson: GeoJson,
-    val centroLat: Double,
-    val centroLng: Double,
+    val nivelPeligrosidad: String,
+    val perimetro: GeoJson,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )
