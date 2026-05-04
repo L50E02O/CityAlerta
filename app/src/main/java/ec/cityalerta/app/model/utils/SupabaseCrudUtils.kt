@@ -128,5 +128,3 @@ internal fun geoJsonFromJson(element: JsonElement?): GeoJson {
 
     return GeoJson(type = type, features = features)
 }
-
-

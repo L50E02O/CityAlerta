@@ -17,7 +17,7 @@ import kotlinx.serialization.json.JsonElement
 
 class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion, ReporteUbicacionCreateDto, ReporteUbicacionUpdateDto> {
 
-    private val tableName = "reporte_ubicacion"
+    private val tableName = "reporte_ubicaciones"
 
     override suspend fun create(entity: ReporteUbicacionCreateDto): Result<ReporteUbicacion> =
         safeSupabaseCall {

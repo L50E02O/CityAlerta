@@ -11,5 +11,6 @@ data class Reporte(
     val estado: ReporteEstado,
     val fechaReporte: String,
     val categoria: String,
+    val createdAt: String? = null,
     val updatedAt: String? = null
 )
