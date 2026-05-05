@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.LatLng
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.MapMarker
-import ec.cityalerta.app.model.data.reporte.Report
 import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import java.util.Locale
@@ -16,9 +16,10 @@ import java.util.Locale
 data class MapUiState(
     val ciudad: Ciudad? = null,
     val marcadores: List<MapMarker> = emptyList(),
-    val reports: List<Report> = emptyList(),
+    val reportMarkers: List<MapMarker> = emptyList(),
+    val reports: List<Reporte> = emptyList(),
     val selectedCategory: ReportType? = null,
-    val selectedReport: Report? = null,
+    val selectedReport: Reporte? = null,
     val categories: List<ReportType> = ReportType.entries,
     val cameraZoom: Float = 15f,
     val errorMessage: String? = null,
@@ -55,6 +56,7 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
                     ciudad = ciudad,
                     isLoading = false,
                     marcadores = emptyList(),
+                    reportMarkers = ec.cityalerta.app.model.data.MockData.getMockReportMarkers(),
                     reports = ec.cityalerta.app.model.data.MockData.getMockReports()
                 )
             } else {
@@ -112,9 +114,11 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
         uiState = uiState.copy(selectedCategory = newCategory)
     }
 
-    fun onReportClicked(report: Report){
+    fun onReportClicked(reportId: String) {
+        val report = uiState.reports.firstOrNull { it.id == reportId }
         uiState = uiState.copy(selectedReport = report)
     }
+
     fun onDismissReport(){
         uiState = uiState.copy(selectedReport = null)
     }

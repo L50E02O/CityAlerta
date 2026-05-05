@@ -27,7 +27,7 @@
 		},
 		"supabase": {
 			"type": "http",
-			"url": "https://mcp.supabase.com/mcp?project_ref=xzfenjxeghaygstptvus"
+			"url": "https://mcp.supabase.com/mcp?project_ref=xzfenjxeghaygstptvus&features=docs,account,database,development,debugging,functions,branching,storage"
 		}
 	},
 	"inputs": [
