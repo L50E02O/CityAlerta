@@ -79,7 +79,7 @@ fun MapScreen(
     LaunchedEffect(uiState.isPointValid) {
         if (uiState.isPointValid == false) {
             snackbarHostState.showSnackbar(
-                message = "El punto debe estar dentro del área permitida",
+                message = "El punto debe estar dentro del area permitida",
                 duration = SnackbarDuration.Short
             )
         }
@@ -99,7 +99,7 @@ fun MapScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás"
+                            contentDescription = "Atras"
                         )
                     }
                 },
@@ -142,8 +142,12 @@ fun MapScreen(
 
                     val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
                         uiState.reports.filter {
-                            uiState.selectedCategory == null || it.type == uiState.selectedCategory
+                            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory.name
                         }
+                    }
+
+                    val visibleReportIds = remember(filteredReports) {
+                        filteredReports.map { it.id }.toSet()
                     }
 
                     GoogleMap(
@@ -167,27 +171,31 @@ fun MapScreen(
                             )
                         }
 
-                        uiState.marcadores.forEach { marker ->
-                            key(marker.id) {
-                                Marker(
-                                    state = rememberMarkerState(position = LatLng(marker.latitude, marker.longitude)),
-                                    title = marker.title,
-                                    snippet = marker.description ?: ""
-                                )
+                            uiState.marcadores.forEach { marker ->
+                                key(marker.id) {
+                                    Marker(
+                                        state = rememberMarkerState(position = LatLng(marker.latitude, marker.longitude)),
+                                        title = marker.title,
+                                        snippet = marker.description ?: ""
+                                    )
+                                }
                             }
-                        }
 
-                        filteredReports.forEach { report ->
-                            key(report.id) {
-                                Marker(
-                                    state = rememberMarkerState(position = LatLng(report.latitude, report.longitude)),
-                                    title = report.title,
-                                    snippet = report.description,
-                                    onClick = {
-                                        viewModel.onReportClicked(report)
-                                        true
+                            uiState.reportMarkers
+                                .filter { it.id in visibleReportIds }
+                                .forEach { marker ->
+                                    key(marker.id) {
+                                        Marker(
+                                            state = rememberMarkerState(position = LatLng(marker.latitude, marker.longitude)),
+                                            title = marker.title,
+                                            snippet = marker.description ?: "",
+                                            onClick = {
+                                                viewModel.onReportClicked(marker.id)
+                                                true
+                                            }
+                                        )
                                     }
-                                )
+                                }
                             }
                         }
                     }
