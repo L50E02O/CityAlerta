@@ -10,6 +10,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -140,11 +143,13 @@ fun MapScreen(
                     val polygonPoints = remember(ciudad) {
                         GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
                     }
-                    val cityBounds = remember(polygonPoints) {
-                        buildCityBounds(polygonPoints) ?: LatLngBounds(
+                    val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(context, ciudadId) }
+
+                    val cityBounds = remember(polygonPoints, assetBounds) {
+                        assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(
                             LatLng(ciudad.centroLat - 0.12, ciudad.centroLng - 0.12),
                             LatLng(ciudad.centroLat + 0.12, ciudad.centroLng + 0.12)
-                        )
+                        ))
                     }
 
                     val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
@@ -259,3 +264,26 @@ private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
         LatLng(maxLat, maxLng)
     )
 }
+
+    private fun loadCityBboxFromAssets(context: Context, ciudadId: String): LatLngBounds? {
+        return try {
+            val input = context.assets.open("cities.json")
+            val json = input.bufferedReader().use { it.readText() }
+            val arr = JSONArray(json)
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val id = obj.optString("id", obj.optString("name", "")).lowercase()
+                if (id == ciudadId.lowercase()) {
+                    val bbox = obj.getJSONObject("bbox")
+                    val minLat = bbox.getDouble("minLat")
+                    val maxLat = bbox.getDouble("maxLat")
+                    val minLng = bbox.getDouble("minLng")
+                    val maxLng = bbox.getDouble("maxLng")
+                    return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng))
+                }
+            }
+            null
+        } catch (e: Exception) {
+            null
+        }
+    }

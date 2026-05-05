@@ -1,0 +1,14 @@
+[
+  {
+    "id": "manta",
+    "name": "Manta",
+    "bbox": {
+      "minLat": -1.020626,
+      "maxLat": -0.9295352,
+      "minLng": -80.8367908,
+      "maxLng": -80.6581590
+    },
+    "source": "nominatim_osm",
+    "notes": "bbox obtenido de OpenStreetMap Nominatim (consulta ciudad)"
+  }
+]
