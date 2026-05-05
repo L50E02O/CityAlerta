@@ -95,19 +95,19 @@ fun ReportDetailCard(
                 }
             }
 
-        IconButton(
-            onClick = onCloseClick,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(y = (-6).dp)
-                .padding(8.dp)
-                .size(32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Cerrar",
-                tint = Color.Gray,
-                modifier = Modifier.size(20.dp)
+            IconButton(
+                onClick = onCloseClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(y = (-6).dp)
+                    .padding(8.dp)
+                    .size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Cerrar",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -122,5 +122,4 @@ private fun categoryLabel(category: String): String {
         "LIGHT" -> "Luz"
         else -> category
     }
-}
 }

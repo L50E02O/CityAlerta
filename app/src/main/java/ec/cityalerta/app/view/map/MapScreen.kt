@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import ec.cityalerta.app.view.map.components.CategoryFilter
@@ -126,17 +127,23 @@ fun MapScreen(
                 uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
+
                 uiState.errorMessage != null -> {
                     Text(
                         text = uiState.errorMessage,
                         modifier = Modifier.align(Alignment.Center).padding(16.dp)
                     )
                 }
+
                 uiState.ciudad != null -> {
                     val ciudad = uiState.ciudad
                     val polygonPoints = remember(ciudad) {
-                        GeoJsonConverter.extractPolygonPoints(
-                            ciudad.geojson
+                        GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
+                    }
+                    val cityBounds = remember(polygonPoints) {
+                        buildCityBounds(polygonPoints) ?: LatLngBounds(
+                            LatLng(ciudad.centroLat - 0.12, ciudad.centroLng - 0.12),
+                            LatLng(ciudad.centroLat + 0.12, ciudad.centroLng + 0.12)
                         )
                     }
 
@@ -153,7 +160,12 @@ fun MapScreen(
                     GoogleMap(
                         modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState,
-                        properties = MapProperties(isMyLocationEnabled = locationPermissionGranted),
+                        properties = MapProperties(
+                            isMyLocationEnabled = locationPermissionGranted,
+                            latLngBoundsForCameraTarget = cityBounds,
+                            minZoomPreference = 12f,
+                            maxZoomPreference = 18f
+                        ),
                         uiSettings = MapUiSettings(
                             zoomControlsEnabled = true,
                             myLocationButtonEnabled = locationPermissionGranted,
@@ -171,33 +183,35 @@ fun MapScreen(
                             )
                         }
 
-                            uiState.marcadores.forEach { marker ->
+                        uiState.marcadores.forEach { marker ->
+                            key(marker.id) {
+                                Marker(
+                                    state = rememberMarkerState(
+                                        position = LatLng(marker.latitude, marker.longitude)
+                                    ),
+                                    title = marker.title,
+                                    snippet = marker.description ?: ""
+                                )
+                            }
+                        }
+
+                        uiState.reportMarkers
+                            .filter { it.id in visibleReportIds }
+                            .forEach { marker ->
                                 key(marker.id) {
                                     Marker(
-                                        state = rememberMarkerState(position = LatLng(marker.latitude, marker.longitude)),
+                                        state = rememberMarkerState(
+                                            position = LatLng(marker.latitude, marker.longitude)
+                                        ),
                                         title = marker.title,
-                                        snippet = marker.description ?: ""
+                                        snippet = marker.description ?: "",
+                                        onClick = {
+                                            viewModel.onReportClicked(marker.id)
+                                            true
+                                        }
                                     )
                                 }
                             }
-
-                            uiState.reportMarkers
-                                .filter { it.id in visibleReportIds }
-                                .forEach { marker ->
-                                    key(marker.id) {
-                                        Marker(
-                                            state = rememberMarkerState(position = LatLng(marker.latitude, marker.longitude)),
-                                            title = marker.title,
-                                            snippet = marker.description ?: "",
-                                            onClick = {
-                                                viewModel.onReportClicked(marker.id)
-                                                true
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
                     }
 
                     CategoryFilter(
@@ -223,4 +237,25 @@ fun MapScreen(
             }
         }
     }
+}
+
+private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
+    if (points.isEmpty()) return null
+
+    var minLat = points.first().latitude
+    var maxLat = points.first().latitude
+    var minLng = points.first().longitude
+    var maxLng = points.first().longitude
+
+    points.forEach { point ->
+        minLat = minOf(minLat, point.latitude)
+        maxLat = maxOf(maxLat, point.latitude)
+        minLng = minOf(minLng, point.longitude)
+        maxLng = maxOf(maxLng, point.longitude)
+    }
+
+    return LatLngBounds(
+        LatLng(minLat, minLng),
+        LatLng(maxLat, maxLng)
+    )
 }

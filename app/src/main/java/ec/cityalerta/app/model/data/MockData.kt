@@ -90,7 +90,7 @@ object MockData {
                 descripcion = "Hecho violento en via San Mateo",
                 estado = ReporteEstado.PENDIENTE,
                 fechaReporte = "2026-05-05T08:15:00Z",
-                categoria = "RISK_ZONE"
+                categoria = "ZONA_DE_RIESGO"
             ),
             Reporte(
                 id = "reporte_2",
@@ -100,7 +100,7 @@ object MockData {
                 descripcion = "Fallo de infraestructura electrica en via San Mateo",
                 estado = ReporteEstado.EN_PROCESO,
                 fechaReporte = "2026-05-05T09:00:00Z",
-                categoria = "LIGHT"
+                categoria = "LUZ"
             ),
             Reporte(
                 id = "reporte_3",
@@ -110,7 +110,7 @@ object MockData {
                 descripcion = "Bache detectado en via San Mateo",
                 estado = ReporteEstado.PENDIENTE,
                 fechaReporte = "2026-05-05T09:25:00Z",
-                categoria = "POTHOLE"
+                categoria = "BACHE"
             ),
             Reporte(
                 id = "reporte_4",
@@ -120,7 +120,7 @@ object MockData {
                 descripcion = "Fallo en sistema de agua en via San Mateo",
                 estado = ReporteEstado.RESUELTO,
                 fechaReporte = "2026-05-05T10:10:00Z",
-                categoria = "WATER"
+                categoria = "AGUA"
             )
         )
     }

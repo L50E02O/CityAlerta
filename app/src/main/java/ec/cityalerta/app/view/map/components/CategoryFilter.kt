@@ -42,10 +42,10 @@ fun CategoryFilter(
 @Composable
 fun CategoryCard(category: ReportType, isSelected: Boolean, onClick: () -> Unit) {
     val (icon, label, color) = when (category) {
-        ReportType.RISK_ZONE -> Triple(Icons.Default.Warning, "Zona\nDe Riesgo", Color(0xFFD32F2F))
-        ReportType.POTHOLE -> Triple(Icons.Default.Build, "Bache", Color(0xFF1976D2))
-        ReportType.WATER -> Triple(Icons.Default.WaterDrop, "Agua", Color(0xFF0288D1))
-        ReportType.LIGHT -> Triple(Icons.Default.Lightbulb, "Luz", Color(0xFFFBC02D))
+        ReportType.ZONA_DE_RIESGO -> Triple(Icons.Default.Warning, "Zona\nDe Riesgo", Color(0xFFD32F2F))
+        ReportType.BACHE -> Triple(Icons.Default.Build, "Bache", Color(0xFF1976D2))
+        ReportType.AGUA -> Triple(Icons.Default.WaterDrop, "Agua", Color(0xFF0288D1))
+        ReportType.LUZ -> Triple(Icons.Default.Lightbulb, "Luz", Color(0xFFFBC02D))
     }
 
     Card(
