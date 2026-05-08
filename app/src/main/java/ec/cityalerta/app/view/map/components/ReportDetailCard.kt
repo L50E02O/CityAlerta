@@ -17,12 +17,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ec.cityalerta.app.model.data.reporte.Report
+import ec.cityalerta.app.model.data.reporte.Reporte
 
 @Composable
 fun ReportDetailCard(
-    report: Report,
-    onDetailClick: (Report) -> Unit,
+    report: Reporte,
+    onDetailClick: (Reporte) -> Unit,
     onCloseClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -42,72 +42,84 @@ fun ReportDetailCard(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-            // Left Icon Box
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color(0xFFFFEAEA)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = Color(0xFFB71C1C),
-                    modifier = Modifier.size(30.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFFFFEAEA)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFB71C1C),
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Reporte activo",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0D1B2A)
+                    )
+                    Text(
+                        text = categoryLabel(report.categoria),
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = report.descripcion,
+                        fontSize = 12.sp,
+                        color = Color(0xFF5D6B78),
+                        maxLines = 2
+                    )
+                }
+
+                IconButton(
+                    onClick = { onDetailClick(report) },
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF6B1111))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = "Detalles",
+                        tint = Color.White
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Text Info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Active Report",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0D1B2A)
-                )
-                Text(
-                    text = report.title,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    maxLines = 1
-                )
-            }
-
-            // Right Button
             IconButton(
-                onClick = { onDetailClick(report) },
+                onClick = onCloseClick,
                 modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF6B1111))
+                    .align(Alignment.TopEnd)
+                    .offset(y = (-6).dp)
+                    .padding(8.dp)
+                    .size(32.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "Details",
-                    tint = Color.White
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Cerrar",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-        }
-
-        // Botón de cerrar (X)
-        IconButton(
-            onClick = onCloseClick,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(y = (-6).dp)
-                .padding(8.dp)
-                .size(32.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Cerrar",
-                tint = Color.Gray,
-                modifier = Modifier.size(20.dp)
-            )
         }
     }
 }
+
+private fun categoryLabel(category: String): String {
+    return when (category) {
+        "RISK_ZONE" -> "Zona de riesgo"
+        "POTHOLE" -> "Bache"
+        "WATER" -> "Agua"
+        "LIGHT" -> "Luz"
+        else -> category
+    }
 }

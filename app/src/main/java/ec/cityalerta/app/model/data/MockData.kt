@@ -2,8 +2,8 @@ package ec.cityalerta.app.model.data
 
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.geoJson.Geometry
-import ec.cityalerta.app.model.data.reporte.Report
-import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.model.data.reporte.Reporte
+import ec.cityalerta.app.model.data.reporte.ReporteEstado
 
 /**
  * Mock Data para pruebas de la app.
@@ -80,12 +80,81 @@ object MockData {
         )
     }
 
-    fun getMockReports(): List<Report> {
+    fun getMockReports(): List<Reporte> {
         return listOf(
-            Report("1", ReportType.RISK_ZONE, -0.947, -80.735, "Suceso Armado en Via San Mateo", "Hecho Violento en Via San Mateo"),
-            Report("2", ReportType.LIGHT, -0.990, -80.800, "Poste caido en Via San Mateo", "Fallo de infraestructura electrica en Via San Mateo"),
-            Report("3", ReportType.POTHOLE, -0.947, -80.715, "Bache en Via San Mateo", "Bache detectado en Via San Mateo"),
-            Report("4", ReportType.WATER, -0.983, -80.701, "Fuga de Agua en Via San Mateo", "Fallo en sistema de Agua en Via San Mateo")
+            Reporte(
+                id = "reporte_1",
+                usuarioId = "perfil_1",
+                ciudadId = "manta",
+                ubicacionId = "ubicacion_1",
+                descripcion = "Hecho violento en via San Mateo",
+                estado = ReporteEstado.PENDIENTE,
+                fechaReporte = "2026-05-05T08:15:00Z",
+                categoria = "ZONA_DE_RIESGO"
+            ),
+            Reporte(
+                id = "reporte_2",
+                usuarioId = "perfil_1",
+                ciudadId = "manta",
+                ubicacionId = "ubicacion_2",
+                descripcion = "Fallo de infraestructura electrica en via San Mateo",
+                estado = ReporteEstado.EN_PROCESO,
+                fechaReporte = "2026-05-05T09:00:00Z",
+                categoria = "LUZ"
+            ),
+            Reporte(
+                id = "reporte_3",
+                usuarioId = "perfil_2",
+                ciudadId = "manta",
+                ubicacionId = "ubicacion_3",
+                descripcion = "Bache detectado en via San Mateo",
+                estado = ReporteEstado.PENDIENTE,
+                fechaReporte = "2026-05-05T09:25:00Z",
+                categoria = "BACHE"
+            ),
+            Reporte(
+                id = "reporte_4",
+                usuarioId = "perfil_2",
+                ciudadId = "manta",
+                ubicacionId = "ubicacion_4",
+                descripcion = "Fallo en sistema de agua en via San Mateo",
+                estado = ReporteEstado.RESUELTO,
+                fechaReporte = "2026-05-05T10:10:00Z",
+                categoria = "AGUA"
+            )
+        )
+    }
+
+    fun getMockReportMarkers(): List<MapMarker> {
+        return listOf(
+            MapMarker(
+                id = "reporte_1",
+                latitude = -0.947,
+                longitude = -80.735,
+                title = "Zona de riesgo en via San Mateo",
+                description = "Hecho violento en via San Mateo"
+            ),
+            MapMarker(
+                id = "reporte_2",
+                latitude = -0.990,
+                longitude = -80.800,
+                title = "Poste caido en via San Mateo",
+                description = "Fallo de infraestructura electrica en via San Mateo"
+            ),
+            MapMarker(
+                id = "reporte_3",
+                latitude = -0.947,
+                longitude = -80.715,
+                title = "Bache en via San Mateo",
+                description = "Bache detectado en via San Mateo"
+            ),
+            MapMarker(
+                id = "reporte_4",
+                latitude = -0.983,
+                longitude = -80.701,
+                title = "Fuga de agua en via San Mateo",
+                description = "Fallo en sistema de agua en via San Mateo"
+            )
         )
     }
 }

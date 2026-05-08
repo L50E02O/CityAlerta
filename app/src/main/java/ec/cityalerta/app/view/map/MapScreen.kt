@@ -14,6 +14,9 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +29,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import ec.cityalerta.app.view.map.components.CategoryFilter
@@ -89,7 +93,7 @@ fun MapScreen(
     LaunchedEffect(uiState.isPointValid) {
         if (uiState.isPointValid == false) {
             snackbarHostState.showSnackbar(
-                message = "El punto debe estar dentro del área permitida",
+                message = "El punto debe estar dentro del area permitida",
                 duration = SnackbarDuration.Short
             )
         }
@@ -109,7 +113,7 @@ fun MapScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atrás"
+                            contentDescription = "Atras"
                         )
                     }
                 },
@@ -136,30 +140,50 @@ fun MapScreen(
                 uiState.isLoading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
+
                 uiState.errorMessage != null -> {
                     Text(
                         text = uiState.errorMessage,
                         modifier = Modifier.align(Alignment.Center).padding(16.dp)
                     )
                 }
+
                 uiState.ciudad != null -> {
                     val ciudad = uiState.ciudad
                     val polygonPoints = remember(ciudad) {
                         GeoJsonConverter.extractPolygonPoints(
                             geometry = ciudad.geojson
                         )
+                        GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
+                    }
+                    val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(context, ciudadId) }
+
+                    val cityBounds = remember(polygonPoints, assetBounds) {
+                        assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(
+                            LatLng(ciudad.centroLat - 0.12, ciudad.centroLng - 0.12),
+                            LatLng(ciudad.centroLat + 0.12, ciudad.centroLng + 0.12)
+                        ))
                     }
 
                     val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
                         uiState.reports.filter {
-                            uiState.selectedCategory == null || it.type == uiState.selectedCategory
+                            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory.name
                         }
+                    }
+
+                    val visibleReportIds = remember(filteredReports) {
+                        filteredReports.map { it.id }.toSet()
                     }
 
                     GoogleMap(
                         modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState,
-                        properties = MapProperties(isMyLocationEnabled = locationPermissionGranted),
+                        properties = MapProperties(
+                            isMyLocationEnabled = locationPermissionGranted,
+                            latLngBoundsForCameraTarget = cityBounds,
+                            minZoomPreference = 12f,
+                            maxZoomPreference = 18f
+                        ),
                         uiSettings = MapUiSettings(
                             zoomControlsEnabled = false,
                             myLocationButtonEnabled = false,
@@ -180,26 +204,32 @@ fun MapScreen(
                         uiState.marcadores.forEach { marker ->
                             key(marker.id) {
                                 Marker(
-                                    state = rememberMarkerState(position = LatLng(marker.latitude, marker.longitude)),
+                                    state = rememberMarkerState(
+                                        position = LatLng(marker.latitude, marker.longitude)
+                                    ),
                                     title = marker.title,
                                     snippet = marker.description ?: ""
                                 )
                             }
                         }
 
-                        filteredReports.forEach { report ->
-                            key(report.id) {
-                                Marker(
-                                    state = rememberMarkerState(position = LatLng(report.latitude, report.longitude)),
-                                    title = report.title,
-                                    snippet = report.description,
-                                    onClick = {
-                                        viewModel.onReportClicked(report)
-                                        true
-                                    }
-                                )
+                        uiState.reportMarkers
+                            .filter { it.id in visibleReportIds }
+                            .forEach { marker ->
+                                key(marker.id) {
+                                    Marker(
+                                        state = rememberMarkerState(
+                                            position = LatLng(marker.latitude, marker.longitude)
+                                        ),
+                                        title = marker.title,
+                                        snippet = marker.description ?: "",
+                                        onClick = {
+                                            viewModel.onReportClicked(marker.id)
+                                            true
+                                        }
+                                    )
+                                }
                             }
-                        }
                     }
 
                     CategoryFilter(
@@ -303,3 +333,46 @@ fun MapControlButton(
         }
     }
 }
+private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
+    if (points.isEmpty()) return null
+
+    var minLat = points.first().latitude
+    var maxLat = points.first().latitude
+    var minLng = points.first().longitude
+    var maxLng = points.first().longitude
+
+    points.forEach { point ->
+        minLat = minOf(minLat, point.latitude)
+        maxLat = maxOf(maxLat, point.latitude)
+        minLng = minOf(minLng, point.longitude)
+        maxLng = maxOf(maxLng, point.longitude)
+    }
+
+    return LatLngBounds(
+        LatLng(minLat, minLng),
+        LatLng(maxLat, maxLng)
+    )
+}
+
+    private fun loadCityBboxFromAssets(context: Context, ciudadId: String): LatLngBounds? {
+        return try {
+            val input = context.assets.open("cities.json")
+            val json = input.bufferedReader().use { it.readText() }
+            val arr = JSONArray(json)
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val id = obj.optString("id", obj.optString("name", "")).lowercase()
+                if (id == ciudadId.lowercase()) {
+                    val bbox = obj.getJSONObject("bbox")
+                    val minLat = bbox.getDouble("minLat")
+                    val maxLat = bbox.getDouble("maxLat")
+                    val minLng = bbox.getDouble("minLng")
+                    val maxLng = bbox.getDouble("maxLng")
+                    return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng))
+                }
+            }
+            null
+        } catch (e: Exception) {
+            null
+        }
+    }
