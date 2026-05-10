@@ -4,7 +4,7 @@ data class ReporteUbicacion(
     val id: String,
     val lat: Double,
     val lng: Double,
-    val direccionAproximada: String,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    val direccion_aproximada: String,
+    val created_at: String? = null,
+    val updated_at: String? = null
 )

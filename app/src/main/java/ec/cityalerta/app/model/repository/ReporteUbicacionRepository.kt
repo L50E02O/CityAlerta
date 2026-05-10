@@ -17,11 +17,14 @@ import kotlinx.serialization.json.JsonElement
 
 class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion, ReporteUbicacionCreateDto, ReporteUbicacionUpdateDto> {
 
-    private val tableName = "reporte_ubicaciones"
+    private val tableName = "reporte_ubicacion"
 
     override suspend fun create(entity: ReporteUbicacionCreateDto): Result<ReporteUbicacion> =
         safeSupabaseCall {
-            val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+            val response = SupabaseProvider.client.from(tableName)
+                .insert(entity.toCreateJson()){
+                select()
+                }
                 .decodeList<JsonObject>()
                 .firstOrNull()
             response?.toReporteUbicacion() ?: throw Exception("Error al crear reporte ubicacion")
@@ -72,9 +75,9 @@ class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion, ReporteUbic
             id = stringOrEmpty("id"),
             lat = doubleOrZero("lat"),
             lng = doubleOrZero("lng"),
-            direccionAproximada = nullableString("direccion_aproximada") ?: stringOrEmpty("direccionAproximada"),
-            createdAt = nullableString("created_at") ?: nullableString("createdAt"),
-            updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
+            direccion_aproximada = nullableString("direccion_aproximada") ?: stringOrEmpty("direccionAproximada"),
+            created_at = nullableString("created_at") ?: nullableString("createdAt"),
+            updated_at = nullableString("updated_at") ?: nullableString("updatedAt")
         )
     }
 
@@ -83,7 +86,7 @@ class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion, ReporteUbic
             mapOf(
                 "lat" to JsonPrimitive(lat),
                 "lng" to JsonPrimitive(lng),
-                "direccion_aproximada" to JsonPrimitive(direccionAproximada)
+                "direccion_aproximada" to JsonPrimitive(direccion_aproximada)
             )
         )
     }
@@ -92,7 +95,7 @@ class ReporteUbicacionRepository : ICrudRepository<ReporteUbicacion, ReporteUbic
         val map = mutableMapOf<String, JsonElement>()
         lat?.let { map["lat"] = JsonPrimitive(it) }
         lng?.let { map["lng"] = JsonPrimitive(it) }
-        direccionAproximada?.let { map["direccion_aproximada"] = JsonPrimitive(it) }
+        direccion_aproximada?.let { map["direccion_aproximada"] = JsonPrimitive(it) }
         return JsonObject(map)
     }
 }

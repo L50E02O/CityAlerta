@@ -1,12 +1,12 @@
 package ec.cityalerta.app.model.data.reporte
 
 data class ReporteCreateDto(
-    val usuarioId: String,
-    val ciudadId: String,
-    val ubicacionId: String,
+    val usuario_id: String,
+    val ciudad_id: String,
+    val ubicacion_id: String,
     val descripcion: String,
     val estado: ReporteEstado,
-    val fechaReporte: String,
-    val categoria: String
+    val fecha_reporte: String,
+    val categoria: ReportType
 )
 

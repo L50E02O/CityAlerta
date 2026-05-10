@@ -5,6 +5,7 @@ import ec.cityalerta.app.view.authView.LoginScreen
 import ec.cityalerta.app.view.authView.RegisterScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import ec.cityalerta.app.view.home.HomeScreen
 import ec.cityalerta.app.view.map.MapScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
@@ -34,22 +35,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.sp
 import ec.cityalerta.app.view.explore.ExploreScreen
-import ec.cityalerta.app.view.add.AddScreen
 import androidx.navigation.NavController
-
+import ec.cityalerta.app.view.camera.PhotoScreen
+import ec.cityalerta.app.view.reporte.ReporteScreen
+import ec.cityalerta.app.viewmodel.ReporteViewModel
 
 @Composable
 fun AppNavigation() {
 
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
-    val factory = remember { AppViewModelFactory(authRepository) }
+    val context = LocalContext.current
+    val factory = remember { AppViewModelFactory(authRepository, context) }
 
     val authViewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
-
     val mapViewModel: MapViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
+
+    val reporteViewModel: ReporteViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
 
@@ -60,23 +66,44 @@ fun AppNavigation() {
             navController = navController,
             startDestination = Routes.Login.route,
             modifier = Modifier.padding(top = innerPadding.calculateTopPadding())
-        ){
-            composable(Routes.Login.route){
+        ) {
+            composable(Routes.Login.route) {
                 LoginScreen(navController, authViewModel)
             }
-            composable(Routes.Register.route){
+            composable(Routes.Register.route) {
                 RegisterScreen(navController, authViewModel)
             }
-            composable(Routes.Home.route){
+            composable(Routes.Home.route) {
                 HomeScreen(navController)
             }
-            composable(Routes.Explore.route){
+            composable(Routes.Explore.route) {
                 ExploreScreen()
             }
-            composable(Routes.Post.route){
-                AddScreen()
+
+
+            composable(Routes.Post.route) {
+                PhotoScreen(
+                    viewModel = reporteViewModel,
+                    onPhotoCaptured = {
+                        navController.navigate(Routes.ReporteForm.route)
+                    }
+                )
             }
-            composable(Routes.Map.route){ backStackEntry ->
+
+            composable(Routes.ReporteForm.route) {
+                ReporteScreen(
+                    viewModel = reporteViewModel,
+                    onReportSent = {
+                        // Limpiar el back stack hasta Post y navegar a Explore
+                        navController.navigate(Routes.Explore.route) {
+                            popUpTo(Routes.Post.route) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(Routes.Map.route) { backStackEntry ->
                 val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
                 MapScreen(navController, ciudadId, mapViewModel)
             }
@@ -116,7 +143,13 @@ fun BottomNavigationBar(navController: NavController) {
                             restoreState = true
                         }
                     },
-                    icon = { Icon(Icons.Default.Explore, contentDescription = "EXPLORE", modifier = Modifier.size(22.dp)) },
+                    icon = {
+                        Icon(
+                            Icons.Default.Explore,
+                            contentDescription = "EXPLORE",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    },
                     label = { Text("EXPLORE", fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
@@ -143,7 +176,12 @@ fun BottomNavigationBar(navController: NavController) {
                                 .background(Color(0xFF3B5B7A)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "REPORT", tint = Color.White, modifier = Modifier.size(18.dp))
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "REPORT",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     },
                     label = { Text("REPORT", fontSize = 9.sp) },
@@ -164,7 +202,13 @@ fun BottomNavigationBar(navController: NavController) {
                             restoreState = true
                         }
                     },
-                    icon = { Icon(Icons.Default.Map, contentDescription = "MAP", modifier = Modifier.size(22.dp)) },
+                    icon = {
+                        Icon(
+                            Icons.Default.Map,
+                            contentDescription = "MAP",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    },
                     label = { Text("MAP", fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
