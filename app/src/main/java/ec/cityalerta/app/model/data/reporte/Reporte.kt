@@ -10,5 +10,6 @@ data class Reporte(
     val fecha_reporte: String,
     val categoria: ReportType,
     val created_at: String? = null,
-    val updated_at: String? = null
+    val updated_at: String? = null,
+    val barrio_id: String
 )

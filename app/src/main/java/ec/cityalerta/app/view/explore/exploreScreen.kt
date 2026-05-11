@@ -1,6 +1,5 @@
 package ec.cityalerta.app.view.explore
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +12,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,8 +33,8 @@ fun ExploreScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    if (viewModel!=null){
-        Log.d("ExploreScreen", "Cargando datos...")
+    LaunchedEffect(Unit) {
+        viewModel.loadData()
     }
 
     Scaffold(
@@ -76,7 +76,7 @@ fun ExploreScreen(
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(bottom = 32.dp)
+                    contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
                     items(state.reportes) { reporte ->
                         ReporteCard(reporte = reporte)

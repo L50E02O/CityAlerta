@@ -1,5 +1,6 @@
 package ec.cityalerta.app.view.explore
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,8 +46,10 @@ fun ReporteCard(reporte: ReporteUI) {
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
+                Log.d("ReporteCard", "URL de la imagen: ${reporte.imageUrl}")
                 AsyncImage(
                     model = reporte.imageUrl,
+                    // model = "https://xzfenjxeghaygstptvus.supabase.co/storage/v1/object/sign/report_imagen/0c8e3986-5d32-44aa-bf13-5db61fd599bf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mM2U0ZTZjOC03NmRiLTQxMWYtYmE5Yi01NWU2YzgzMTVhMTkiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJyZXBvcnRfaW1hZ2VuLzBjOGUzOTg2LTVkMzItNDRhYS1iZjEzLTVkYjYxZmQ1OTliZiIsImlhdCI6MTc3ODQ3MjY4MywiZXhwIjoxNzc5MDc3NDgzfQ.xyRTkFcLEbwkstsyPCTTZz9hb4Dk6bKCsQHHgL494JE",
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -71,7 +74,7 @@ fun ReporteCard(reporte: ReporteUI) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Tag(text = reporte.categoria, backgroundColor = Color(0xFFE53935))
-                    Tag(text = "HACE 15 MIN", backgroundColor = Color.Black.copy(alpha = 0.4f))
+                    Tag(text = reporte.timeAgo.uppercase(), backgroundColor = Color.Black.copy(alpha = 0.4f))
                 }
             }
 

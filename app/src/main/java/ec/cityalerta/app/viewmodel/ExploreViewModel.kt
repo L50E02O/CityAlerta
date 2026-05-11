@@ -3,10 +3,12 @@ package ec.cityalerta.app.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
+import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.PerfilRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
@@ -15,6 +17,8 @@ import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 data class ReporteUI(
     val id: String,
@@ -24,7 +28,8 @@ data class ReporteUI(
     val direccion: String,
     val descripcion: String,
     val estado: String,
-    val fecha: String
+    val fecha: String,
+    val timeAgo: String
 )
 
 data class ExploreState(
@@ -38,6 +43,7 @@ class ExploreViewModel(
     private val reporteRepository: ReporteRepository = ReporteRepository(),
     private val reporteImagenRepository: ReporteImagenRepository = ReporteImagenRepository(),
     private val reporteUbicacionRepository: ReporteUbicacionRepository = ReporteUbicacionRepository(),
+    private val reporteStorageRepository: ReporteStorageRepository = ReporteStorageRepository(),
     private val perfilRepository: PerfilRepository = PerfilRepository(),
     private val ciudadRepository: CiudadRepository = CiudadRepository(),
     private val barrioRepository: BarrioRepository = BarrioRepository()
@@ -46,18 +52,40 @@ class ExploreViewModel(
     private val _state = MutableStateFlow(ExploreState())
     val state: StateFlow<ExploreState> = _state
 
-    init {
-        Log.d("ExploreViewModel", "Inicializando ExploreViewModel")
-        loadData()
+    private fun calculateTimeAgo(createdAt: String?): String {
+        if (createdAt.isNullOrBlank()) {
+            return "Hace poco"
+        }
+
+        return try {
+            val createdAtInstant = Instant.parse(createdAt)
+            val now = Instant.now()
+
+            val minutes = ChronoUnit.MINUTES.between(createdAtInstant, now)
+            val hours = ChronoUnit.HOURS.between(createdAtInstant, now)
+            val days = ChronoUnit.DAYS.between(createdAtInstant, now)
+
+            Log.d("ExploreViewModel", "Minutos: $minutes, Horas: $hours, Días: $days")
+
+            when {
+                days > 0 -> "Hace $days dia${if (days > 1) "s" else ""}"
+                hours > 0 -> "Hace $hours hora${if (hours > 1) "s" else ""}"
+                minutes > 0 -> "Hace $minutes minuto${if (minutes > 1) "s" else ""}"
+                else -> "Hace poco"
+            }
+        } catch (e: Exception) {
+            Log.e("ExploreViewModel", "Error calculando tiempo: ${e.message}")
+            "Hace poco"
+        }
     }
 
-    fun loadData() {
+    public fun loadData() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             Log.d("ExploreViewModel", "Cargando datos...")
             try {
-                var userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
-                userId = "e9d0104d-be61-4b5d-aa26-4b2be1a796c1"
+                val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
+                Log.d("ExploreViewModel", "ID del usuario: $userId")
                 if (userId == null) {
                     _state.value = _state.value.copy(isLoading = false, error = "Usuario no autenticado")
                     Log.d("ExploreViewModel", "Usuario no autenticado")
@@ -66,33 +94,47 @@ class ExploreViewModel(
                 Log.d("ExploreViewModel", "Usuario autenticado")
                 val perfilResult = perfilRepository.getById(userId)
                 val perfil = perfilResult.getOrNull()
+                Log.d("ExploreViewModel", "Perfil obtenido: $perfil")
                 if (perfil == null) {
                     _state.value = _state.value.copy(isLoading = false, error = "Perfil no encontrado")
+                    Log.d("ExploreViewModel", "Perfil no encontrado")
                     return@launch
                 }
 
                 val ciudadResult = ciudadRepository.getById(perfil.ciudadId)
                 val ciudad = ciudadResult.getOrNull()
                 _state.value = _state.value.copy(ciudadNombre = ciudad?.nombre ?: "Ubicación desconocida")
+                Log.d("ExploreViewModel", "Ciudad obtenida: ${ciudad?.nombre ?: "Ubicación desconocida"}")
 
-                val reportesResult = reporteRepository.getAll()
-                val allReportes = reportesResult.getOrNull() ?: emptyList()
-                
-                // Filtrar por ciudad del perfil
-                val reportesCiudad = allReportes.filter { it.ciudadId == perfil.ciudadId }
+                // Obtener reportes solo de la ciudad del usuario
+                val reportesResult = reporteRepository.getReporteByCiudadId(perfil.ciudadId)
+                val reportesCiudad = reportesResult.getOrNull() ?: emptyList()
+                Log.d("ExploreViewModel", "Reportes de la ciudad: $reportesCiudad")
 
                 val reportesUI = reportesCiudad.map { reporte ->
-                    // Obtener imagen
-                    val imagenes = reporteImagenRepository.getAll().getOrNull() ?: emptyList()
-                    val firstImage = imagenes.firstOrNull { it.reporteId == reporte.id }?.urlPath
+                    // Obtener primera imagen del reporte
+                    val primerImagen = reporteImagenRepository.getFirstImagenByReporteId(reporte.id).getOrNull()
+
+                    // Convertir UUID a URL firmada
+                    val imageUrl = if (primerImagen != null) {
+                        val signedPath = reporteStorageRepository.generateSignedImageUrl(primerImagen.url_path).getOrNull()
+                        if (signedPath != null) {
+                            "${BuildConfig.STORAGE_BASE_URL}$signedPath"
+                        } else {
+                            null
+                        }
+                    } else {
+                        null
+                    }
+                    Log.d("ExploreViewModel", "URL generada para imagen: $imageUrl")
 
                     // Obtener ubicación
-                    val ubicacion = reporteUbicacionRepository.getById(reporte.ubicacionId).getOrNull()
+                    val ubicacion = reporteUbicacionRepository.getById(reporte.ubicacion_id).getOrNull()
                     
-                    // Encontrar barrio (Placeholder por ahora, ya que no hay link directo claro en los modelos actuales)
-                    // En una app real, esto vendría de un join en el backend o una query espacial.
-                    // Para cumplir con el requerimiento UI, usaremos el nombre del barrio si lo encontramos o un valor por defecto.
-                    val barrioNombre = "Sector " + (ubicacion?.direccionAproximada?.split(",")?.firstOrNull() ?: "General")
+                    // Obtener nombre del barrio usando barrio_id
+                    val barrio = barrioRepository.getById(reporte.barrio_id).getOrNull()
+                    Log.d("ExploreViewModel", "Barrio obtenido: $barrio")
+                    val barrioNombre = barrio?.nombre ?: "Barrio desconocido"
 
                     ReporteUI(
                         id = reporte.id,
@@ -103,16 +145,17 @@ class ExploreViewModel(
                             ec.cityalerta.app.model.data.reporte.ReportType.LUZ -> "Luz"
                             else -> "General"
                         },
-                        imageUrl = firstImage,
+                        imageUrl = imageUrl,
                         barrio = barrioNombre,
-                        direccion = ubicacion?.direccionAproximada ?: "Dirección no disponible",
+                        direccion = ubicacion?.direccion_aproximada ?: "Dirección no disponible",
                         descripcion = reporte.descripcion,
                         estado = when(reporte.estado) {
                             ec.cityalerta.app.model.data.reporte.ReporteEstado.PENDIENTE -> "Pendiente"
                             ec.cityalerta.app.model.data.reporte.ReporteEstado.EN_PROCESO -> "En Proceso"
                             ec.cityalerta.app.model.data.reporte.ReporteEstado.RESUELTO -> "Resuelto"
                         },
-                        fecha = reporte.fechaReporte
+                        fecha = reporte.fecha_reporte,
+                        timeAgo = calculateTimeAgo(reporte.created_at)
                     )
                 }
 

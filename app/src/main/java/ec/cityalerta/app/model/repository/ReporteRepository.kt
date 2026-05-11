@@ -70,6 +70,17 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
         Unit
     }
 
+    suspend fun getReporteByCiudadId(ciudadId: String): Result<List<Reporte>> = safeSupabaseCall {
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("ciudad_id", ciudadId)
+                }
+            }
+            .decodeList<JsonObject>()
+            .map { it.toReporte() }
+    }
+
     private fun JsonObject.toReporte(): Reporte {
         return Reporte(
             id = stringOrEmpty("id"),
@@ -86,7 +97,9 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
             }catch (e: Exception){
                 ReportType.ZONA_DE_RIESGO
             },
-            updated_at = nullableString("updated_at") ?: nullableString("updatedAt")
+            created_at = nullableString("created_at") ?: nullableString("createdAt"),
+            updated_at = nullableString("updated_at") ?: nullableString("updatedAt"),
+            barrio_id = nullableString("barrio_id") ?: stringOrEmpty("barrioId")
         )
     }
 
@@ -99,7 +112,8 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
                 "descripcion" to JsonPrimitive(descripcion),
                 "estado" to JsonPrimitive(estado.name),
                 "fecha_reporte" to JsonPrimitive(fecha_reporte),
-                "categoria" to JsonPrimitive(categoria.name)
+                "categoria" to JsonPrimitive(categoria.name),
+                "barrio_id" to JsonPrimitive(barrio_id)
             )
         )
     }
@@ -113,6 +127,7 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
         estado?.let { map["estado"] = JsonPrimitive(it.name) }
         fecha_reporte?.let { map["fecha_reporte"] = JsonPrimitive(it) }
         categoria?.let { map["categoria"] = JsonPrimitive(it.name) }
+        barrio_id?.let { map["barrio_id"] = JsonPrimitive(it) }
         return JsonObject(map)
     }
 }
