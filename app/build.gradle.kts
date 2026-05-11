@@ -15,7 +15,7 @@ jacoco {
 
 android {
     namespace = "ec.cityalerta.app"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ec.cityalerta.app"
@@ -59,7 +59,7 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsApiKey\"")
-        
+
         // Inyectar API Key al manifest
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
     }
@@ -172,7 +172,9 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.auth)
+    implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
     implementation(libs.maps.compose)
     implementation(libs.coil.compose)
 
@@ -180,6 +182,7 @@ dependencies {
     implementation(libs.supabase.gotrue)
     implementation(libs.supabase.core)
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.storage)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
 
@@ -209,5 +212,8 @@ dependencies {
 
     // Annotation processors
     kapt(libs.androidx.room.compiler)
+
+    // Camera
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
 }

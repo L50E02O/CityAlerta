@@ -19,7 +19,10 @@ class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCrea
     private val tableName = "reporte_imagen"
 
     override suspend fun create(entity: ReporteImagenCreateDto): Result<ReporteImagen> = safeSupabaseCall {
-        val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+        val response = SupabaseProvider.client.from(tableName)
+            .insert(entity.toCreateJson()){
+                select()
+            }
             .decodeList<JsonObject>()
             .firstOrNull()
         response?.toReporteImagen() ?: throw Exception("Error al crear reporte imagen")
@@ -67,29 +70,29 @@ class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCrea
     private fun JsonObject.toReporteImagen(): ReporteImagen {
         return ReporteImagen(
             id = stringOrEmpty("id"),
-            reporteId = nullableString("reporte_id") ?: stringOrEmpty("reporteId"),
-            storageUuid = nullableString("storage_uuid") ?: stringOrEmpty("storageUuid"),
-            urlPath = nullableString("url_path") ?: stringOrEmpty("urlPath"),
-            createdAt = nullableString("created_at") ?: nullableString("createdAt"),
-            updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
+            reporte_id = nullableString("reporte_id") ?: stringOrEmpty("reporteId"),
+            storage_uuid = nullableString("storage_uuid") ?: stringOrEmpty("storageUuid"),
+            url_path = nullableString("url_path") ?: stringOrEmpty("urlPath"),
+            created_at = nullableString("created_at") ?: nullableString("createdAt"),
+            updated_at = nullableString("updated_at") ?: nullableString("updatedAt")
         )
     }
 
     private fun ReporteImagenCreateDto.toCreateJson(): JsonObject {
         return JsonObject(
             mapOf(
-                "reporte_id" to JsonPrimitive(reporteId),
-                "storage_uuid" to JsonPrimitive(storageUuid),
-                "url_path" to JsonPrimitive(urlPath)
+                "reporte_id" to JsonPrimitive(reporte_id),
+                "storage_uuid" to JsonPrimitive(storage_uuid),
+                "url_path" to JsonPrimitive(url_path)
             )
         )
     }
 
     private fun ReporteImagenUpdateDto.toUpdateJson(): JsonObject {
         val map = mutableMapOf<String, JsonElement>()
-        reporteId?.let { map["reporte_id"] = JsonPrimitive(it) }
-        storageUuid?.let { map["storage_uuid"] = JsonPrimitive(it) }
-        urlPath?.let { map["url_path"] = JsonPrimitive(it) }
+        reporte_id?.let { map["reporte_id"] = JsonPrimitive(it) }
+        storage_uuid?.let { map["storage_uuid"] = JsonPrimitive(it) }
+        url_path?.let { map["url_path"] = JsonPrimitive(it) }
         return JsonObject(map)
     }
 }

@@ -1,5 +1,6 @@
 package ec.cityalerta.app.model.repository
 
+import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
 import ec.cityalerta.app.model.data.reporte.ReporteUpdateDto
@@ -21,7 +22,10 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
     private val tableName = "reporte"
 
     override suspend fun create(entity: ReporteCreateDto): Result<Reporte> = safeSupabaseCall {
-        val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+        val response = SupabaseProvider.client.from(tableName)
+            .insert(entity.toCreateJson()){
+                select()
+            }
             .decodeList<JsonObject>()
             .firstOrNull()
         response?.toReporte() ?: throw Exception("Error al crear reporte")
@@ -69,26 +73,32 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
     private fun JsonObject.toReporte(): Reporte {
         return Reporte(
             id = stringOrEmpty("id"),
-            usuarioId = nullableString("usuario_id") ?: stringOrEmpty("usuarioId"),
-            ciudadId = nullableString("ciudad_id") ?: stringOrEmpty("ciudadId"),
-            ubicacionId = nullableString("ubicacion_id") ?: stringOrEmpty("ubicacionId"),
+            usuario_id = nullableString("usuario_id") ?: stringOrEmpty("usuarioId"),
+            ciudad_id = nullableString("ciudad_id") ?: stringOrEmpty("ciudadId"),
+            ubicacion_id = nullableString("ubicacion_id") ?: stringOrEmpty("ubicacionId"),
             descripcion = stringOrEmpty("descripcion"),
-            estado = toReporteEstadoOrDefault("estado_slug"),
-            fechaReporte = nullableString("fecha_reporte") ?: stringOrEmpty("fechaReporte"),
-            categoria = toReportTypeOrDefault("categoria"),
-            updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
+            estado = toReporteEstadoOrDefault("estado")
+                .takeIf { stringOrEmpty("estado").isNotBlank() }
+                ?: toReporteEstadoOrDefault("estado_slug"),
+            fecha_reporte = nullableString("fecha_reporte") ?: stringOrEmpty("fechaReporte"),
+            categoria = try{
+                ReportType.valueOf(stringOrEmpty("categoria"))
+            }catch (e: Exception){
+                ReportType.ZONA_DE_RIESGO
+            },
+            updated_at = nullableString("updated_at") ?: nullableString("updatedAt")
         )
     }
 
     private fun ReporteCreateDto.toCreateJson(): JsonObject {
         return JsonObject(
             mapOf(
-                "usuario_id" to JsonPrimitive(usuarioId),
-                "ciudad_id" to JsonPrimitive(ciudadId),
-                "ubicacion_id" to JsonPrimitive(ubicacionId),
+                "usuario_id" to JsonPrimitive(usuario_id),
+                "ciudad_id" to JsonPrimitive(ciudad_id),
+                "ubicacion_id" to JsonPrimitive(ubicacion_id),
                 "descripcion" to JsonPrimitive(descripcion),
-                "estado_slug" to JsonPrimitive(estado.name),
-                "fecha_reporte" to JsonPrimitive(fechaReporte),
+                "estado" to JsonPrimitive(estado.name),
+                "fecha_reporte" to JsonPrimitive(fecha_reporte),
                 "categoria" to JsonPrimitive(categoria.name)
             )
         )
@@ -96,12 +106,12 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
 
     private fun ReporteUpdateDto.toUpdateJson(): JsonObject {
         val map = mutableMapOf<String, JsonElement>()
-        usuarioId?.let { map["usuario_id"] = JsonPrimitive(it) }
-        ciudadId?.let { map["ciudad_id"] = JsonPrimitive(it) }
-        ubicacionId?.let { map["ubicacion_id"] = JsonPrimitive(it) }
+        usuario_id?.let { map["usuario_id"] = JsonPrimitive(it) }
+        ciudad_id?.let { map["ciudad_id"] = JsonPrimitive(it) }
+        ubicacion_id?.let { map["ubicacion_id"] = JsonPrimitive(it) }
         descripcion?.let { map["descripcion"] = JsonPrimitive(it) }
-        estado?.let { map["estado_slug"] = JsonPrimitive(it.name) }
-        fechaReporte?.let { map["fecha_reporte"] = JsonPrimitive(it) }
+        estado?.let { map["estado"] = JsonPrimitive(it.name) }
+        fecha_reporte?.let { map["fecha_reporte"] = JsonPrimitive(it) }
         categoria?.let { map["categoria"] = JsonPrimitive(it.name) }
         return JsonObject(map)
     }

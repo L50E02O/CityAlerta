@@ -5,9 +5,13 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import android.content.Context
@@ -16,10 +20,13 @@ import org.json.JSONObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -28,6 +35,7 @@ import ec.cityalerta.app.model.utils.GeoJsonConverter
 import ec.cityalerta.app.view.map.components.CategoryFilter
 import ec.cityalerta.app.view.map.components.ReportDetailCard
 import ec.cityalerta.app.viewmodel.MapViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +47,8 @@ fun MapScreen(
     val uiState = viewModel.uiState
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     // Gestión de permisos de ubicación
     var locationPermissionGranted by remember {
@@ -80,10 +90,10 @@ fun MapScreen(
         }
     }
 
-    LaunchedEffect(uiState.isPointValid) {
-        if (uiState.isPointValid == false) {
+    LaunchedEffect(uiState.errorMessage) {
+        if (uiState.errorMessage != null) {
             snackbarHostState.showSnackbar(
-                message = "El punto debe estar dentro del area permitida",
+                message = uiState.errorMessage,
                 duration = SnackbarDuration.Short
             )
         }
@@ -105,16 +115,6 @@ fun MapScreen(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Atras"
                         )
-                    }
-                },
-                actions = {
-                    if (uiState.marcadores.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.clearMarkers() }) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Limpiar marcadores"
-                            )
-                        }
                     }
                 }
             )
@@ -141,6 +141,9 @@ fun MapScreen(
                 uiState.ciudad != null -> {
                     val ciudad = uiState.ciudad
                     val polygonPoints = remember(ciudad) {
+                        GeoJsonConverter.extractPolygonPoints(
+                            geometry = ciudad.geojson
+                        )
                         GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
                     }
                     val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(context, ciudadId) }
@@ -154,7 +157,7 @@ fun MapScreen(
 
                     val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
                         uiState.reports.filter {
-                            uiState.selectedCategory == null || it.categoria.name == uiState.selectedCategory.name
+                            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory
                         }
                     }
 
@@ -172,11 +175,10 @@ fun MapScreen(
                             maxZoomPreference = 18f
                         ),
                         uiSettings = MapUiSettings(
-                            zoomControlsEnabled = true,
-                            myLocationButtonEnabled = locationPermissionGranted,
+                            zoomControlsEnabled = false,
+                            myLocationButtonEnabled = false,
                             mapToolbarEnabled = false
                         ),
-                        onMapClick = { latLng -> viewModel.onMapClicked(latLng) },
                         contentPadding = PaddingValues(top = 110.dp, bottom = 165.dp)
                     ) {
                         if (polygonPoints.isNotEmpty()) {
@@ -186,18 +188,6 @@ fun MapScreen(
                                 strokeColor = Color(0xFF287FCC),
                                 strokeWidth = 2f
                             )
-                        }
-
-                        uiState.marcadores.forEach { marker ->
-                            key(marker.id) {
-                                Marker(
-                                    state = rememberMarkerState(
-                                        position = LatLng(marker.latitude, marker.longitude)
-                                    ),
-                                    title = marker.title,
-                                    snippet = marker.description ?: ""
-                                )
-                            }
                         }
 
                         uiState.reportMarkers
@@ -228,6 +218,61 @@ fun MapScreen(
                             .padding(top = 8.dp)
                     )
 
+                    // MyLocation Button
+                    MapControlButton(
+                        icon = Icons.Default.MyLocation,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 124.dp, end = 16.dp),
+                        containerColor = Color(0xFF051C3F),
+                        contentColor = Color.White,
+                        onClick = {
+                            if (locationPermissionGranted) {
+                                try {
+                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                        location?.let {
+                                            scope.launch {
+                                                cameraPositionState.animate(
+                                                    CameraUpdateFactory.newLatLngZoom(
+                                                        LatLng(it.latitude, it.longitude),
+                                                        15f
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                } catch (_: SecurityException) {
+                                    // Handle exception if needed
+                                }
+                            }
+                        }
+                    )
+
+                    // Zoom Controls
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(bottom = 180.dp, end = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MapControlButton(
+                            icon = Icons.Default.Add,
+                            onClick = {
+                                scope.launch {
+                                    cameraPositionState.animate(CameraUpdateFactory.zoomIn())
+                                }
+                            }
+                        )
+                        MapControlButton(
+                            icon = Icons.Default.Remove,
+                            onClick = {
+                                scope.launch {
+                                    cameraPositionState.animate(CameraUpdateFactory.zoomOut())
+                                }
+                            }
+                        )
+                    }
+
                     if (uiState.selectedReport != null) {
                         ReportDetailCard(
                             report = uiState.selectedReport,
@@ -244,6 +289,27 @@ fun MapScreen(
     }
 }
 
+@Composable
+fun MapControlButton(
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = Color(0xFFE3E9F0),
+    contentColor: Color = Color(0xFF051C3F)
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.size(56.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+        contentColor = contentColor,
+        shadowElevation = 2.dp
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
+        }
+    }
+}
 private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
     if (points.isEmpty()) return null
 

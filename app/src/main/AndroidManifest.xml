@@ -15,12 +15,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CityAlerta">
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Google Maps API Key (will be injected from BuildConfig.GOOGLE_MAPS_API_KEY) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${GOOGLE_MAPS_API_KEY}" />
-
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
