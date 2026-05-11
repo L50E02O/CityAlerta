@@ -90,10 +90,10 @@ fun MapScreen(
         }
     }
 
-    LaunchedEffect(uiState.isPointValid) {
-        if (uiState.isPointValid == false) {
+    LaunchedEffect(uiState.errorMessage) {
+        if (uiState.errorMessage != null) {
             snackbarHostState.showSnackbar(
-                message = "El punto debe estar dentro del area permitida",
+                message = uiState.errorMessage,
                 duration = SnackbarDuration.Short
             )
         }
@@ -115,16 +115,6 @@ fun MapScreen(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Atras"
                         )
-                    }
-                },
-                actions = {
-                    if (uiState.marcadores.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.clearMarkers() }) {
-                            Icon(
-                                Icons.Default.Delete,
-                                contentDescription = "Limpiar marcadores"
-                            )
-                        }
                     }
                 }
             )
@@ -167,7 +157,7 @@ fun MapScreen(
 
                     val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
                         uiState.reports.filter {
-                            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory.name
+                            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory
                         }
                     }
 
@@ -189,7 +179,6 @@ fun MapScreen(
                             myLocationButtonEnabled = false,
                             mapToolbarEnabled = false
                         ),
-                        onMapClick = { latLng -> viewModel.onMapClicked(latLng) },
                         contentPadding = PaddingValues(top = 110.dp, bottom = 165.dp)
                     ) {
                         if (polygonPoints.isNotEmpty()) {
@@ -199,18 +188,6 @@ fun MapScreen(
                                 strokeColor = Color(0xFF287FCC),
                                 strokeWidth = 2f
                             )
-                        }
-
-                        uiState.marcadores.forEach { marker ->
-                            key(marker.id) {
-                                Marker(
-                                    state = rememberMarkerState(
-                                        position = LatLng(marker.latitude, marker.longitude)
-                                    ),
-                                    title = marker.title,
-                                    snippet = marker.description ?: ""
-                                )
-                            }
                         }
 
                         uiState.reportMarkers

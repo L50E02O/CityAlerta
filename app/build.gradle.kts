@@ -15,7 +15,7 @@ jacoco {
 
 android {
     namespace = "ec.cityalerta.app"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ec.cityalerta.app"
@@ -174,12 +174,14 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
     implementation(libs.maps.compose)
 
     // Network / backend
     implementation(libs.supabase.gotrue)
     implementation(libs.supabase.core)
     implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.storage)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
 
@@ -209,5 +211,8 @@ dependencies {
 
     // Annotation processors
     kapt(libs.androidx.room.compiler)
+
+    // Camera
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
 }

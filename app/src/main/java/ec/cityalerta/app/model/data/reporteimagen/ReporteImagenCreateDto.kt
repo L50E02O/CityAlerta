@@ -1,8 +1,8 @@
 package ec.cityalerta.app.model.data.reporteimagen
 
 data class ReporteImagenCreateDto(
-    val reporteId: String,
-    val storageUuid: String,
-    val urlPath: String
+    val reporte_id: String,
+    val storage_uuid: String,
+    val url_path: String
 )
 

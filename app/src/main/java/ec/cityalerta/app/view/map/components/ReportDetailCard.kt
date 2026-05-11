@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 
 @Composable
@@ -67,7 +68,7 @@ fun ReportDetailCard(
                         color = Color(0xFF0D1B2A)
                     )
                     Text(
-                        text = categoryLabel(report.categoria),
+                        text = report.categoria.toDisplayName(),
                         fontSize = 14.sp,
                         color = Color.Gray,
                         maxLines = 1

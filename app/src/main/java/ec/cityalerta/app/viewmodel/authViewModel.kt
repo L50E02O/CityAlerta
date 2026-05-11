@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 data class AuthState(
     val email: String = "",
     val password: String = "",
+    val ciudadNombre: String = "",
+    val ciudadId: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null
 )
@@ -29,6 +31,14 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
 
     fun onPasswordChange(password: String){
         uiState = uiState.copy(password = password)
+    }
+
+    fun onCiudadChange(nombre: String) {
+        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = "") // resetea ID al escribir
+    }
+
+    fun onCiudadSelected(nombre: String, id: String) {
+        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = id) // cuando confirma selección
     }
 
     fun onLoginClick(onSuccess: () -> Unit) {
@@ -73,6 +83,11 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
             return
         }
 
+        if (uiState.ciudadId.isEmpty()){
+            uiState = uiState.copy(errorMessage = "Selecciona tu ciudad")
+            return
+        }
+
         if (uiState.isLoading) return
         uiState = uiState.copy(isLoading = true)
 
@@ -80,7 +95,7 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
            uiState = uiState.copy(errorMessage = null)
 
             try {
-                val result = repository.signUp(uiState.email, uiState.password)
+                val result = repository.signUp(uiState.email, uiState.password, uiState.ciudadId)
 
                 result.fold(
                     onSuccess = {

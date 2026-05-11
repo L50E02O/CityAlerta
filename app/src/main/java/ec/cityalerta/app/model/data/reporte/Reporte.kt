@@ -4,13 +4,13 @@ import ec.cityalerta.app.model.data.reporte.ReporteEstado
 
 data class Reporte(
     val id: String,
-    val usuarioId: String,
-    val ciudadId: String,
-    val ubicacionId: String,
+    val usuario_id: String,
+    val ciudad_id: String,
+    val ubicacion_id: String,
     val descripcion: String,
     val estado: ReporteEstado,
-    val fechaReporte: String,
-    val categoria: String,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    val fecha_reporte: String,
+    val categoria: ReportType,
+    val created_at: String? = null,
+    val updated_at: String? = null
 )

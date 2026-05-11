@@ -9,15 +9,20 @@ import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 
 class CiudadRepository : ICrudRepository<Ciudad, CiudadCreateDto, CiudadUpdateDto> {
+
+    private val tableName = "ciudad"
 
     override suspend fun create(entity: CiudadCreateDto): Result<Ciudad> = safeSupabaseCall {
         val newId = SupabaseProvider.client.postgrest.rpc(
@@ -56,6 +61,17 @@ class CiudadRepository : ICrudRepository<Ciudad, CiudadCreateDto, CiudadUpdateDt
             .map { it.toCiudad() }
     }
 
+    suspend fun getAllByCountry(country: String): Result<List<Ciudad>> = safeSupabaseCall {
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("pais", country)
+                }
+            }
+            .decodeList<JsonObject>()
+            .map { it.toCiudad() }
+    }
+
     override suspend fun getById(id: String): Result<Ciudad?> = safeSupabaseCall {
         SupabaseProvider.client.postgrest.rpc(
             "get_ciudad_by_id",
@@ -79,7 +95,11 @@ class CiudadRepository : ICrudRepository<Ciudad, CiudadCreateDto, CiudadUpdateDt
             nombre = stringOrEmpty("nombre"),
             pais = stringOrEmpty("pais"),
             geojson = this["geojson"]?.let { jsonElement ->
-                (jsonElement as JsonObject).toGeometry()
+                if (jsonElement is JsonObject) {
+                    jsonElement.toGeometry()
+                } else {
+                    null
+                }
             } ?: Geometry("FeatureCollection", emptyList()),
             centroLat = this["centro_lat"]?.jsonPrimitive?.content?.toDoubleOrNull()
                 ?: this["centroLat"]?.jsonPrimitive?.content?.toDoubleOrNull()
