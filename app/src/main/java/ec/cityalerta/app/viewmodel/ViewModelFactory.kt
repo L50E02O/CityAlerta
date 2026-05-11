@@ -49,7 +49,12 @@ class AppViewModelFactory(
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                MapViewModel(mapRepository) as T
+                MapViewModel(
+                    mapRepository,
+                    reporteRepository,
+                    ubicacionReporte,
+                    authRepository
+                ) as T
             }
 
             modelClass.isAssignableFrom(ReporteViewModel::class.java) -> {

@@ -188,7 +188,6 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.material3)
 
     // Unit tests
     testImplementation(libs.junit)

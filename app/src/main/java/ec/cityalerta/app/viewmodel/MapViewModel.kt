@@ -4,18 +4,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.MapMarker
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
+import ec.cityalerta.app.model.repository.ReporteRepository
+import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
+import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 import ec.cityalerta.app.model.utils.GeoJsonConverter
-import java.util.Locale
+import kotlinx.coroutines.launch
 
 data class MapUiState(
     val ciudad: Ciudad? = null,
-    val marcadores: List<MapMarker> = emptyList(),
     val reportMarkers: List<MapMarker> = emptyList(),
     val reports: List<Reporte> = emptyList(),
     val selectedCategory: ReportType? = null,
@@ -23,11 +26,15 @@ data class MapUiState(
     val categories: List<ReportType> = ReportType.entries,
     val cameraZoom: Float = 15f,
     val errorMessage: String? = null,
-    val isLoading: Boolean = false,
-    val isPointValid: Boolean? = null
+    val isLoading: Boolean = false
 )
 
-class MapViewModel(private val repository: IMapRepository) : ViewModel() {
+class MapViewModel(
+    private val repository: IMapRepository,
+    private val reporteRepository: ReporteRepository,
+    private val ubicacionRepository: ReporteUbicacionRepository,
+    private val authRepository: IAuthRepository
+) : ViewModel() {
 
     var uiState by mutableStateOf(MapUiState())
         private set
@@ -37,76 +44,71 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
     fun loadCiudad(ciudadId: String) {
         uiState = uiState.copy(isLoading = true, errorMessage = null)
 
-        try {
-            val ciudad = repository.getCiudadById(ciudadId)
-            if (ciudad != null) {
-                val geometry = ciudad.geojson
-                if (geometry.coordinates.isEmpty()) {
+        viewModelScope.launch {
+            try {
+                val realCiudadId = if (ciudadId.length != 36) {
+                    authRepository.buscarCiudadPorNombre(ciudadId).getOrNull() ?: ciudadId
+                } else {
+                    ciudadId
+                }
+                
+                val ciudad = repository.getCiudadById(realCiudadId)
+                if (ciudad != null) {
+                    val geometry = ciudad.geojson
+                    polygonPoints = GeoJsonConverter.extractPolygonPoints(geometry)
+
+                    val reportesResult = reporteRepository.getAll()
+                    val ubicacionesResult = ubicacionRepository.getAll()
+
+                    if (reportesResult.isSuccess && ubicacionesResult.isSuccess) {
+                        val allReportes = reportesResult.getOrThrow()
+                        val allUbicaciones = ubicacionesResult.getOrThrow().associateBy { it.id }
+
+                        val filteredReports = allReportes.filter { it.ciudad_id == realCiudadId }
+
+                        // Convertir a marcadores de mapa
+                        val markers = filteredReports.mapNotNull { report ->
+                            allUbicaciones[report.ubicacion_id]?.let { loc ->
+                                MapMarker(
+                                    id = report.id,
+                                    latitude = loc.lat,
+                                    longitude = loc.lng,
+                                    title = report.categoria.name.replace("_", " "),
+                                    description = report.descripcion
+                                )
+                            }
+                        }
+
+                        uiState = uiState.copy(
+                            ciudad = ciudad,
+                            isLoading = false,
+                            reportMarkers = markers,
+                            reports = filteredReports
+                        )
+                    } else {
+                        uiState = uiState.copy(
+                            ciudad = ciudad,
+                            isLoading = false,
+                            errorMessage = "Error al obtener reportes de la base de datos"
+                        )
+                    }
+                } else {
                     uiState = uiState.copy(
                         isLoading = false,
-                        errorMessage = "Geometria de ciudad no disponible"
+                        errorMessage = "Ciudad no encontrada en el sistema"
                     )
-                    return
                 }
-
-                // Extraer puntos del poligono para validacion
-                polygonPoints = GeoJsonConverter.extractPolygonPoints(geometry)
-
-                uiState = uiState.copy(
-                    ciudad = ciudad,
-                    isLoading = false,
-                    marcadores = emptyList(),
-                    reportMarkers = ec.cityalerta.app.model.data.MockData.getMockReportMarkers(),
-//                    reports = ec.cityalerta.app.model.data.MockData.getMockReports()
-                )
-            } else {
+            } catch (e: Exception) {
                 uiState = uiState.copy(
                     isLoading = false,
-                    errorMessage = "Ciudad no encontrada: $ciudadId"
+                    errorMessage = "Error cargando ciudad: ${e.message}"
                 )
             }
-        } catch (e: Exception) {
-            uiState = uiState.copy(
-                isLoading = false,
-                errorMessage = "Error cargando ciudad: ${e.message}"
-            )
         }
-    }
-
-    fun onMapClicked(latLng: LatLng) {
-        // Validar si el punto esta dentro del poligono
-        val isPointInside = GeoJsonConverter.pointInPolygon(latLng, polygonPoints)
-        uiState = uiState.copy(isPointValid = isPointInside)
-
-        if (isPointInside) {
-            // Crear marcador con validacion
-            val marker = MapMarker(
-                id = "marker_${System.currentTimeMillis()}",
-                latitude = latLng.latitude,
-                longitude = latLng.longitude,
-                title = "Marcador ${repository.getMarkers().size + 1}",
-                description = "Lat: ${String.format(Locale.US, "%.4f", latLng.latitude)}, " +
-                    "Lng: ${String.format(Locale.US, "%.4f", latLng.longitude)}"
-            )
-
-            // Agregar marcador validado
-            repository.addMarker(marker)
-            uiState = uiState.copy(marcadores = repository.getMarkers())
-        }
-    }
-
-    fun removeMarker(markerId: String) {
-        repository.removeMarker(markerId)
-        uiState = uiState.copy(marcadores = repository.getMarkers())
     }
 
     fun updateCameraZoom(zoom: Float) {
         uiState = uiState.copy(cameraZoom = zoom)
-    }
-
-    fun clearMarkers() {
-        repository.clearMarkers()
-        uiState = uiState.copy(marcadores = emptyList())
     }
 
     fun onCategorySelected(category: ReportType) {
