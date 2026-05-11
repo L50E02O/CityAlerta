@@ -57,7 +57,7 @@ class MapViewModel(private val repository: IMapRepository) : ViewModel() {
                     isLoading = false,
                     marcadores = emptyList(),
                     reportMarkers = ec.cityalerta.app.model.data.MockData.getMockReportMarkers(),
-                    reports = ec.cityalerta.app.model.data.MockData.getMockReports()
+//                    reports = ec.cityalerta.app.model.data.MockData.getMockReports()
                 )
             } else {
                 uiState = uiState.copy(
