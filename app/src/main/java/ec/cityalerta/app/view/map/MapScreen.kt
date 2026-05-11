@@ -154,7 +154,7 @@ fun MapScreen(
 
                     val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
                         uiState.reports.filter {
-                            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory.name
+                            uiState.selectedCategory == null || it.categoria.name == uiState.selectedCategory.name
                         }
                     }
 

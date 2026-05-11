@@ -6,5 +6,6 @@ data class Perfil(
     val rolSlug: String,
     val activo: Boolean,
     val createdAt: String? = null,
-    val updatedAt: String? = null
+    val updatedAt: String? = null,
+    val ciudadId: String
 )

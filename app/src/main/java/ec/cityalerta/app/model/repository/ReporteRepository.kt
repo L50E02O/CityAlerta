@@ -8,6 +8,7 @@ import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
+import ec.cityalerta.app.model.utils.toReportTypeOrDefault
 import ec.cityalerta.app.model.utils.toReporteEstadoOrDefault
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -74,7 +75,7 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
             descripcion = stringOrEmpty("descripcion"),
             estado = toReporteEstadoOrDefault("estado_slug"),
             fechaReporte = nullableString("fecha_reporte") ?: stringOrEmpty("fechaReporte"),
-            categoria = stringOrEmpty("categoria"),
+            categoria = toReportTypeOrDefault("categoria"),
             updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
         )
     }
@@ -88,7 +89,7 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
                 "descripcion" to JsonPrimitive(descripcion),
                 "estado_slug" to JsonPrimitive(estado.name),
                 "fecha_reporte" to JsonPrimitive(fechaReporte),
-                "categoria" to JsonPrimitive(categoria)
+                "categoria" to JsonPrimitive(categoria.name)
             )
         )
     }
@@ -101,7 +102,7 @@ class ReporteRepository : ICrudRepository<Reporte, ReporteCreateDto, ReporteUpda
         descripcion?.let { map["descripcion"] = JsonPrimitive(it) }
         estado?.let { map["estado_slug"] = JsonPrimitive(it.name) }
         fechaReporte?.let { map["fecha_reporte"] = JsonPrimitive(it) }
-        categoria?.let { map["categoria"] = JsonPrimitive(it) }
+        categoria?.let { map["categoria"] = JsonPrimitive(it.name) }
         return JsonObject(map)
     }
 }

@@ -114,12 +114,12 @@ fun ReportDetailCard(
     }
 }
 
-private fun categoryLabel(category: String): String {
+private fun categoryLabel(category: ec.cityalerta.app.model.data.reporte.ReportType): String {
     return when (category) {
-        "RISK_ZONE" -> "Zona de riesgo"
-        "POTHOLE" -> "Bache"
-        "WATER" -> "Agua"
-        "LIGHT" -> "Luz"
-        else -> category
+        ec.cityalerta.app.model.data.reporte.ReportType.ZONA_DE_RIESGO -> "Zona de riesgo"
+        ec.cityalerta.app.model.data.reporte.ReportType.BACHE -> "Bache"
+        ec.cityalerta.app.model.data.reporte.ReportType.AGUA -> "Agua"
+        ec.cityalerta.app.model.data.reporte.ReportType.LUZ -> "Luz"
+        else -> category.name
     }
 }

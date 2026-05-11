@@ -24,6 +24,10 @@ class AppViewModelFactory(
                 @Suppress("UNCHECKED_CAST")
                 MapViewModel(mapRepository) as T
             }
+            modelClass.isAssignableFrom(ExploreViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                ExploreViewModel() as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }
     }

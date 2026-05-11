@@ -2,6 +2,7 @@ package ec.cityalerta.app.model.data
 
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.geoJson.Geometry
+import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 
@@ -90,7 +91,7 @@ object MockData {
                 descripcion = "Hecho violento en via San Mateo",
                 estado = ReporteEstado.PENDIENTE,
                 fechaReporte = "2026-05-05T08:15:00Z",
-                categoria = "ZONA_DE_RIESGO"
+                categoria = ReportType.ZONA_DE_RIESGO
             ),
             Reporte(
                 id = "reporte_2",
@@ -100,7 +101,7 @@ object MockData {
                 descripcion = "Fallo de infraestructura electrica en via San Mateo",
                 estado = ReporteEstado.EN_PROCESO,
                 fechaReporte = "2026-05-05T09:00:00Z",
-                categoria = "LUZ"
+                categoria = ReportType.LUZ
             ),
             Reporte(
                 id = "reporte_3",
@@ -110,7 +111,7 @@ object MockData {
                 descripcion = "Bache detectado en via San Mateo",
                 estado = ReporteEstado.PENDIENTE,
                 fechaReporte = "2026-05-05T09:25:00Z",
-                categoria = "BACHE"
+                categoria = ReportType.BACHE
             ),
             Reporte(
                 id = "reporte_4",
@@ -120,7 +121,7 @@ object MockData {
                 descripcion = "Fallo en sistema de agua en via San Mateo",
                 estado = ReporteEstado.RESUELTO,
                 fechaReporte = "2026-05-05T10:10:00Z",
-                categoria = "AGUA"
+                categoria = ReportType.AGUA
             )
         )
     }

@@ -7,6 +7,6 @@ data class ReporteCreateDto(
     val descripcion: String,
     val estado: ReporteEstado,
     val fechaReporte: String,
-    val categoria: String
+    val categoria: ReportType
 )
 

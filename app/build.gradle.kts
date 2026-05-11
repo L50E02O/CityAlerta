@@ -174,6 +174,7 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
+    implementation(libs.coil.compose)
 
     // Network / backend
     implementation(libs.supabase.gotrue)
