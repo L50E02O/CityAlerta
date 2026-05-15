@@ -54,6 +54,30 @@ class AuthRepository: IAuthRepository {
         }
     }
 
+    override suspend fun sendPasswordRecovery(email: String): Result<Unit> {
+        return try {
+            SupabaseProvider.client.auth.resetPasswordForEmail(email)
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updatePassword(newPassword: String): Result<Unit> {
+        return try {
+            SupabaseProvider.client.auth.updateUser {
+                password = newPassword
+            }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getUserId(): Result<String>{
         return try{
             val session = SupabaseProvider.client.auth.currentSessionOrNull()

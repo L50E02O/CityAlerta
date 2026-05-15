@@ -11,6 +11,7 @@ import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
+import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
 
 class AppViewModelFactory(
     private val authRepository: IAuthRepository,
@@ -46,6 +47,10 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
                 AuthViewModel(authRepository) as T
+            }
+            modelClass.isAssignableFrom(PasswordRecoveryViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                PasswordRecoveryViewModel(authRepository) as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")

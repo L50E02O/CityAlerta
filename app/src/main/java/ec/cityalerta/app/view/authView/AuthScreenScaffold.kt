@@ -39,7 +39,8 @@ fun AuthScreenScaffold(
     ciudades: List<Ciudad> = emptyList(),
     cityLoadError: String? = null,
     onPrimaryAction: () -> Unit,
-    onSecondaryAction: () -> Unit
+    onSecondaryAction: () -> Unit,
+    bottomContent: (@Composable () -> Unit)? = null
 ) {
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
     val isPasswordValid = viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
@@ -114,6 +115,11 @@ fun AuthScreenScaffold(
             textDecoration = TextDecoration.Underline,
             modifier = Modifier.clickable(onClick = onSecondaryAction)
         )
+
+        if (bottomContent != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            bottomContent()
+        }
     }
 }
 

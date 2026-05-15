@@ -2,6 +2,7 @@ package ec.cityalerta.app.navigation
 
 import ec.cityalerta.app.model.repository.AuthRepository
 import ec.cityalerta.app.view.authView.LoginScreen
+import ec.cityalerta.app.view.authView.RecoverPasswordScreen
 import ec.cityalerta.app.view.authView.RegisterScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -11,6 +12,7 @@ import ec.cityalerta.app.view.map.MapScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
+import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -42,7 +44,7 @@ import ec.cityalerta.app.view.reporte.ReporteScreen
 import ec.cityalerta.app.viewmodel.ReporteViewModel
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(startDestination: String = Routes.Login.route) {
 
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
@@ -63,13 +65,16 @@ fun AppNavigation() {
     val reporteViewModel: ReporteViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
+    val recoveryViewModel: PasswordRecoveryViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Routes.Login.route,
+            startDestination = startDestination,
             modifier = Modifier.padding(top = innerPadding.calculateTopPadding())
         ) {
             composable(Routes.Login.route) {
@@ -77,6 +82,9 @@ fun AppNavigation() {
             }
             composable(Routes.Register.route) {
                 RegisterScreen(navController, authViewModel)
+            }
+            composable(Routes.RecoverPassword.route) {
+                RecoverPasswordScreen(navController, recoveryViewModel)
             }
             composable(Routes.Home.route) {
                 HomeScreen(navController)
