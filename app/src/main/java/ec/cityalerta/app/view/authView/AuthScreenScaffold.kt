@@ -37,6 +37,7 @@ fun AuthScreenScaffold(
     viewModel: AuthViewModel,
     showCitySection: Boolean = false,
     ciudades: List<Ciudad> = emptyList(),
+    fixedCity: Ciudad? = null,
     cityLoadError: String? = null,
     onPrimaryAction: () -> Unit,
     onSecondaryAction: () -> Unit,
@@ -44,7 +45,7 @@ fun AuthScreenScaffold(
 ) {
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
     val isPasswordValid = viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
-    val isCiudadValid = !showCitySection || (ciudades.isNotEmpty() && viewModel.uiState.ciudadId.isNotEmpty())
+    val isCiudadValid = !showCitySection || (fixedCity != null || (ciudades.isNotEmpty() && viewModel.uiState.ciudadId.isNotEmpty()))
     val isFormValid = isEmailValid && isPasswordValid && isCiudadValid
 
     Column(
@@ -66,7 +67,9 @@ fun AuthScreenScaffold(
             Spacer(modifier = Modifier.height(8.dp))
             CountryField(country = "Ecuador")
             Spacer(modifier = Modifier.height(8.dp))
-            if (ciudades.isNotEmpty()) {
+            if (fixedCity != null) {
+                FixedCityField(city = fixedCity)
+            } else if (ciudades.isNotEmpty()) {
                 CiudadDropdown(
                     ciudades = ciudades,
                     query = viewModel.uiState.ciudadNombre,
@@ -133,6 +136,20 @@ fun CountryField(
         onValueChange = {},
         readOnly = true,
         label = { Text("Pais") },
+        modifier = modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+fun FixedCityField(
+    city: Ciudad,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = city.nombre,
+        onValueChange = {},
+        readOnly = true,
+        label = { Text("Ciudad") },
         modifier = modifier.fillMaxWidth()
     )
 }

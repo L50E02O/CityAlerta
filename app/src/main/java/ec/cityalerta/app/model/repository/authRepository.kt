@@ -27,6 +27,9 @@ class AuthRepository: IAuthRepository {
                     put("nombre_completo", "Usuario")
                 }
             }
+            if (SupabaseProvider.client.auth.currentSessionOrNull() != null) {
+                SupabaseProvider.client.auth.signOut()
+            }
             Result.success(Unit)
         }catch (e: CancellationException){
             throw e

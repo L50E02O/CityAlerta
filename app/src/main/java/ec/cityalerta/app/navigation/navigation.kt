@@ -7,7 +7,6 @@ import ec.cityalerta.app.view.authView.RegisterScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import ec.cityalerta.app.view.home.HomeScreen
 import ec.cityalerta.app.view.map.MapScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
@@ -87,7 +86,7 @@ fun AppNavigation(startDestination: String = Routes.Login.route) {
                 RecoverPasswordScreen(navController, recoveryViewModel)
             }
             composable(Routes.Home.route) {
-                HomeScreen(navController)
+                ExploreScreen(exploreViewModel)
             }
             composable(Routes.Explore.route){
                 ExploreScreen(exploreViewModel)
