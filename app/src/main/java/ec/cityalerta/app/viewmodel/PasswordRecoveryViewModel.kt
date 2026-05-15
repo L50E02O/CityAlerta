@@ -10,9 +10,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 data class PasswordRecoveryState(
-    val email: String = '',
-    val newPassword: String = '',
-    val confirmPassword: String = '',
+    val email: String = "",
+    val newPassword: String = "",
+    val confirmPassword: String = "",
     val isLoading: Boolean = false,
     val isPasswordResetReady: Boolean = false,
     val successMessage: String? = null,

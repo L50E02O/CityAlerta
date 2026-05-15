@@ -3,6 +3,12 @@ package ec.cityalerta.app.model.repository
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import io.github.jan.supabase.gotrue.auth
+import ec.cityalerta.app.BuildConfig
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.json.JsonObject
@@ -67,10 +73,28 @@ class AuthRepository: IAuthRepository {
 
     override suspend fun updatePassword(newPassword: String): Result<Unit> {
         return try {
-            SupabaseProvider.client.auth.updateUser {
-                password = newPassword
+            val session = SupabaseProvider.client.auth.currentSessionOrNull()
+                ?: return Result.failure(Exception("No hay usuario logueado"))
+
+            val accessToken = session.accessToken
+
+            val httpClient = HttpClient(Android)
+            try {
+                val resp: HttpResponse = httpClient.patch("${BuildConfig.SUPABASE_URL.trimEnd('/')}/auth/v1/user") {
+                    header("Authorization", "Bearer $accessToken")
+                    contentType(ContentType.Application.Json)
+                    setBody("{\"password\":\"$newPassword\"}")
+                }
+
+                if (resp.status.value in 200..299) {
+                    Result.success(Unit)
+                } else {
+                    val body = resp.bodyAsText()
+                    Result.failure(Exception("Failed to update password: ${resp.status.value} $body"))
+                }
+            } finally {
+                httpClient.close()
             }
-            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

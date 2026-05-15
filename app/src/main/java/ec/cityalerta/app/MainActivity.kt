@@ -10,7 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.android.gms.maps.MapsInitializer
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import io.github.jan.supabase.auth.handleDeeplinks
+import io.github.jan.supabase.gotrue.handleDeeplinks
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
