@@ -7,6 +7,7 @@ data class ReporteUpdateDto(
     val descripcion: String? = null,
     val estado: ReporteEstado? = null,
     val fecha_reporte: String? = null,
-    val categoria: ReportType? = null
+    val categoria: ReportType? = null,
+    val barrio_id: String? = null
 )
 

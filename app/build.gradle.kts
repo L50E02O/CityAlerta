@@ -44,6 +44,10 @@ android {
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
+        val storageBaseUrl = providers.gradleProperty("STORAGE_BASE_URL")
+            .orElse(properties.getProperty("STORAGE_BASE_URL") ?: "")
+            .getOrElse("")
+
         val googleMapsApiKey = providers.gradleProperty("GOOGLE_MAPS_API_KEY")
             .orElse(properties.getProperty("GOOGLE_MAPS_API_KEY") ?: "")
             .getOrElse("")
@@ -58,6 +62,7 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
+        buildConfigField("String", "STORAGE_BASE_URL", "\"$storageBaseUrl\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsApiKey\"")
 
         // Inyectar API Key al manifest
@@ -176,6 +181,7 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
     implementation(libs.maps.compose)
+    implementation(libs.coil.compose)
 
     // Network / backend
     implementation(libs.supabase.gotrue)

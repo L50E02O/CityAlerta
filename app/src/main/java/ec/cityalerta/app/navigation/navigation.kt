@@ -10,6 +10,7 @@ import ec.cityalerta.app.view.home.HomeScreen
 import ec.cityalerta.app.view.map.MapScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
+import ec.cityalerta.app.viewmodel.ExploreViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -55,6 +56,10 @@ fun AppNavigation() {
         factory = factory
     )
 
+    val exploreViewModel: ExploreViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
+    
     val reporteViewModel: ReporteViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
@@ -76,8 +81,8 @@ fun AppNavigation() {
             composable(Routes.Home.route) {
                 HomeScreen(navController)
             }
-            composable(Routes.Explore.route) {
-                ExploreScreen()
+            composable(Routes.Explore.route){
+                ExploreScreen(exploreViewModel)
             }
 
 

@@ -56,7 +56,10 @@ class AppViewModelFactory(
                     authRepository
                 ) as T
             }
-
+            modelClass.isAssignableFrom(ExploreViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                ExploreViewModel() as T
+            }
             modelClass.isAssignableFrom(ReporteViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
                 ReporteViewModel(

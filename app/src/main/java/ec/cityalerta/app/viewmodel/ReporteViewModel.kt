@@ -153,7 +153,8 @@ class ReporteViewModel(
                         descripcion = desc,
                         estado = ReporteEstado.PENDIENTE,
                         fecha_reporte = Instant.now().toString(),
-                        categoria = cat
+                        categoria = cat,
+                        barrio_id = "aff5277d-95a7-452f-a456-8bc2bc57cb2f"
                     )
                 ).getOrThrow()
 

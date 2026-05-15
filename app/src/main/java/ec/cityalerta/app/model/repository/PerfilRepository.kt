@@ -72,7 +72,8 @@ class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDt
             rolSlug = nullableString("rol_slug") ?: stringOrEmpty("rolSlug"),
             activo = booleanOrFalse("activo"),
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
-            updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
+            updatedAt = nullableString("updated_at") ?: nullableString("updatedAt"),
+            ciudadId = nullableString("ciudad_id") ?: stringOrEmpty("ciudadId")
         )
     }
 
@@ -81,7 +82,8 @@ class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDt
             mapOf(
                 "nombre_completo" to JsonPrimitive(nombreCompleto),
                 "rol_slug" to JsonPrimitive(rolSlug),
-                "activo" to JsonPrimitive(activo)
+                "activo" to JsonPrimitive(activo),
+                "ciudad_id" to JsonPrimitive(ciudadId)
             )
         )
     }
@@ -91,6 +93,7 @@ class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDt
         nombreCompleto?.let { map["nombre_completo"] = JsonPrimitive(it) }
         rolSlug?.let { map["rol_slug"] = JsonPrimitive(it) }
         activo?.let { map["activo"] = JsonPrimitive(it) }
+        ciudadId?.let { map["ciudad_id"] = JsonPrimitive(it) }
         return JsonObject(map)
     }
 }

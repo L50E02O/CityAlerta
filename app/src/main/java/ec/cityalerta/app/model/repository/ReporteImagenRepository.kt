@@ -67,6 +67,29 @@ class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCrea
         Unit
     }
 
+    suspend fun getFirstImagenByReporteId(reporteId: String): Result<ReporteImagen?> = safeSupabaseCall {
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("reporte_id", reporteId)
+                }
+            }
+            .decodeList<JsonObject>()
+            .firstOrNull()
+            ?.toReporteImagen()
+    }
+
+    suspend fun getAllImagenesByReporteId(reporteId: String): Result<List<ReporteImagen>> = safeSupabaseCall {
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("reporte_id", reporteId)
+                }
+            }
+            .decodeList<JsonObject>()
+            .map { it.toReporteImagen() }
+    }
+
     private fun JsonObject.toReporteImagen(): ReporteImagen {
         return ReporteImagen(
             id = stringOrEmpty("id"),
