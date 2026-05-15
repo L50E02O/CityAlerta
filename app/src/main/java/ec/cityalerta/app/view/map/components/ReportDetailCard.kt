@@ -121,6 +121,5 @@ private fun categoryLabel(category: ec.cityalerta.app.model.data.reporte.ReportT
         ec.cityalerta.app.model.data.reporte.ReportType.BACHE -> "Bache"
         ec.cityalerta.app.model.data.reporte.ReportType.AGUA -> "Agua"
         ec.cityalerta.app.model.data.reporte.ReportType.LUZ -> "Luz"
-        else -> category.name
     }
 }
