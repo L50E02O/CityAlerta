@@ -5,7 +5,7 @@ import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
 import ec.cityalerta.app.model.data.reporte.ReporteUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.data.contracts.CrudRepositoryContract
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty

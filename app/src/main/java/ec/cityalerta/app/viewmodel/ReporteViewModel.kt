@@ -13,8 +13,8 @@ import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
-import ec.cityalerta.app.model.data.contracts.LocationProviderContract
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.location.LocationProviderContract
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

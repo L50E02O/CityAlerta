@@ -1,9 +1,9 @@
 package ec.cityalerta.app.model.repository
 
 import ec.cityalerta.app.BuildConfig
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.remote.SupabaseAuthHttp
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email

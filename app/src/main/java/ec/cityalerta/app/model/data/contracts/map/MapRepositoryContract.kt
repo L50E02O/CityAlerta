@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data.contracts
+package ec.cityalerta.app.model.data.contracts.map
 
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 

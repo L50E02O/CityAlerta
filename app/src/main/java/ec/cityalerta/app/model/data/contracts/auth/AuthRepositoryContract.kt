@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data.contracts
+package ec.cityalerta.app.model.data.contracts.auth
 
 interface AuthRepositoryContract {
     suspend fun signUp(email: String, password: String, ciudadId: String): Result<Unit>

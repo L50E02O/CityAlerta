@@ -1,7 +1,7 @@
 package ec.cityalerta.app.viewmodel
 
 import ec.cityalerta.app.model.repository.AuthMappedException
-import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import ec.cityalerta.app.model.utils.MappedAuthError
 import androidx.compose.runtime.getValue

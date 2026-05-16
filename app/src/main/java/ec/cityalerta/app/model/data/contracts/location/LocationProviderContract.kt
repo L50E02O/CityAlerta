@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data.contracts
+package ec.cityalerta.app.model.data.contracts.location
 
 import ec.cityalerta.app.model.data.location.UserLocation
 

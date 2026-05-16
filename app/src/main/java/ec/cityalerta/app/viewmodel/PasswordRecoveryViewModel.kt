@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 

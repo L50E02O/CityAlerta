@@ -12,8 +12,8 @@ import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
-import ec.cityalerta.app.model.data.contracts.MapRepositoryContract
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import kotlinx.coroutines.launch
 

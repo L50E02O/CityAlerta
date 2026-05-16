@@ -5,7 +5,7 @@ import ec.cityalerta.app.model.data.barrio.BarrioCreateDto
 import ec.cityalerta.app.model.data.barrio.BarrioUpdateDto
 import ec.cityalerta.app.model.data.geoJson.Geometry
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.data.contracts.CrudRepositoryContract
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty

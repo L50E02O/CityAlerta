@@ -1,4 +1,4 @@
-package ec.cityalerta.app.model.data.contracts
+package ec.cityalerta.app.model.data.contracts.crud
 
 interface CrudRepositoryContract<T, CreateDto, UpdateDto> {
     suspend fun create(entity: CreateDto): Result<T>
