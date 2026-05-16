@@ -67,17 +67,11 @@ fun ExploreHeader(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Placeholder for Profile Image
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray)
-                    .clickable { onProfileClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text("JD", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
+            // Profile avatar
+            ec.cityalerta.app.view.components.ProfileAvatar(
+                initials = "JD",
+                onClick = onProfileClick
+            )
         }
     }
 }

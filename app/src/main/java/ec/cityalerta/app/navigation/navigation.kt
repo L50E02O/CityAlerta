@@ -93,10 +93,10 @@ fun AppNavigation(
                 RecoverPasswordScreen(navController, recoveryViewModel)
             }
             composable(Routes.Home.route) {
-                ExploreScreen(exploreViewModel)
+                ExploreScreen(navController, exploreViewModel)
             }
             composable(Routes.Explore.route){
-                ExploreScreen(exploreViewModel)
+                ExploreScreen(navController, exploreViewModel)
             }
 
 
@@ -125,6 +125,9 @@ fun AppNavigation(
             composable(Routes.Map.route) { backStackEntry ->
                 val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
                 MapScreen(navController, ciudadId, mapViewModel)
+            }
+            composable(Routes.Profile.route) {
+                ec.cityalerta.app.view.profile.ProfileScreen(navController)
             }
         }
     }
