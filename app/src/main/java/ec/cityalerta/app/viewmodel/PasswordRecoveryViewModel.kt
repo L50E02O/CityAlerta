@@ -14,6 +14,7 @@ data class PasswordRecoveryState(
     val newPassword: String = "",
     val confirmPassword: String = "",
     val isLoading: Boolean = false,
+    val isEmailVerified: Boolean = false,
     val successMessage: String? = null,
     val errorMessage: String? = null
 )
@@ -28,7 +29,12 @@ class PasswordRecoveryViewModel(
         private set
 
     fun onEmailChange(email: String) {
-        uiState = uiState.copy(email = email)
+        uiState = uiState.copy(
+            email = email,
+            isEmailVerified = false,
+            successMessage = null,
+            errorMessage = null
+        )
     }
 
     fun onNewPasswordChange(password: String) {
@@ -43,9 +49,53 @@ class PasswordRecoveryViewModel(
         // No-op: el reset ya no depende de una sesión ni de un enlace de correo.
     }
 
+    fun verifyEmail() {
+        if (uiState.email.isBlank()) {
+            uiState = uiState.copy(errorMessage = "Ingresa tu correo electronico")
+            return
+        }
+
+        if (uiState.isLoading) return
+        uiState = uiState.copy(isLoading = true, errorMessage = null, successMessage = null)
+
+        viewModelScope.launch {
+            try {
+                repository.verifyRecoveryEmail(uiState.email).fold(
+                    onSuccess = { exists ->
+                        uiState = uiState.copy(
+                            isEmailVerified = exists,
+                            successMessage = if (exists) {
+                                "Correo verificado. Ya puedes escribir la nueva contrasena."
+                            } else {
+                                null
+                            },
+                            errorMessage = if (exists) null else "No encontramos una cuenta con ese correo. Revisa que este bien escrito."
+                        )
+                    },
+                    onFailure = { error ->
+                        uiState = uiState.copy(
+                            isEmailVerified = false,
+                            errorMessage = error.message ?: RECOVERY_ERROR_MESSAGE
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                uiState = uiState.copy(isEmailVerified = false, errorMessage = e.message ?: RECOVERY_ERROR_MESSAGE)
+            } finally {
+                uiState = uiState.copy(isLoading = false)
+            }
+        }
+    }
+
     fun resetPassword(onSuccess: () -> Unit) {
         if (uiState.email.isBlank()) {
             uiState = uiState.copy(errorMessage = "Ingresa tu correo electronico")
+            return
+        }
+
+        if (!uiState.isEmailVerified) {
+            uiState = uiState.copy(errorMessage = "Primero verifica que el correo exista")
             return
         }
 
@@ -79,7 +129,8 @@ class PasswordRecoveryViewModel(
                         uiState = uiState.copy(
                             successMessage = "Contrasena actualizada correctamente",
                             newPassword = "",
-                            confirmPassword = ""
+                            confirmPassword = "",
+                            isEmailVerified = false
                         )
                         onSuccess()
                     },

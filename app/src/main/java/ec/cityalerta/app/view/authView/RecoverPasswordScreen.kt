@@ -70,7 +70,9 @@ fun RecoverPasswordScreen(
     }
 
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(state.email).matches()
+    val canVerifyEmail = isEmailValid && !state.isLoading
     val canUpdatePassword = isEmailValid &&
+        state.isEmailVerified &&
         state.newPassword.isNotBlank() &&
         state.newPassword.length >= 8 &&
         state.newPassword == state.confirmPassword &&
@@ -137,6 +139,22 @@ fun RecoverPasswordScreen(
                         color = ReportUiColors.HintText,
                         style = MaterialTheme.typography.bodySmall
                     )
+
+                    Button(
+                        onClick = viewModel::verifyEmail,
+                        enabled = canVerifyEmail,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (state.isLoading) "Verificando..." else "Verificar correo")
+                    }
+
+                    if (state.isEmailVerified) {
+                        Text(
+                            text = "Correo verificado. Paso 02 habilitado.",
+                            color = Color(0xFF1B5E20),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
 
@@ -145,7 +163,8 @@ fun RecoverPasswordScreen(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
+                        .fillMaxWidth()
+                        .alpha(if (state.isEmailVerified) 1f else 0.55f)
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -168,14 +187,14 @@ fun RecoverPasswordScreen(
                         value = state.newPassword,
                         label = "Escribe tu contrasena nueva",
                         onValueChange = viewModel::onNewPasswordChange,
-                        enabled = !state.isLoading
+                        enabled = state.isEmailVerified && !state.isLoading
                     )
 
                     PasswordField(
                         value = state.confirmPassword,
                         label = "Vuelve a escribir tu contrasena nueva",
                         onValueChange = viewModel::onConfirmPasswordChange,
-                        enabled = !state.isLoading
+                        enabled = state.isEmailVerified && !state.isLoading
                     )
 
                     Button(
@@ -189,7 +208,8 @@ fun RecoverPasswordScreen(
                         enabled = canUpdatePassword,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (state.isLoading) "Verificando..." else "Verificar y actualizar")
+
+                        Text(if (state.isLoading) "Procesando..." else "Actualizar Contrasena")
                     }
 
                     if (state.successMessage != null) {
