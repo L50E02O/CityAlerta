@@ -235,7 +235,4 @@ dependencies {
     // Annotation processors
     kapt(libs.androidx.room.compiler)
 
-    // Camera
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
 }
