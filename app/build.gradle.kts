@@ -235,4 +235,15 @@ dependencies {
     // Annotation processors
     kapt(libs.androidx.room.compiler)
 
+    // Workaround for version conflicts in test classpath
+    implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0"))
+    testImplementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0"))
+    androidTestImplementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0"))
+
+    implementation("androidx.concurrent:concurrent-futures:1.2.0")
+    implementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
+    androidTestImplementation("androidx.concurrent:concurrent-futures:1.2.0")
+    androidTestImplementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
+
+
 }
