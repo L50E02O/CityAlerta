@@ -3,6 +3,7 @@ package ec.cityalerta.app.view.authView
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,7 +12,17 @@ import androidx.navigation.NavController
 
 
 @Composable
-fun LoginScreen(navController: NavController, viewModel: AuthViewModel){
+fun LoginScreen(
+    navController: NavController,
+    viewModel: AuthViewModel,
+    authInfoMessage: String? = null
+) {
+    LaunchedEffect(authInfoMessage) {
+        if (!authInfoMessage.isNullOrBlank()) {
+            viewModel.setAuthInfoMessage(authInfoMessage)
+        }
+    }
+
     AuthScreenScaffold(
         title = "Iniciar sesion",
         primaryButtonText = "Entrar",

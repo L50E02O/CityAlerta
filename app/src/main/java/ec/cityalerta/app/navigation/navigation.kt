@@ -43,7 +43,10 @@ import ec.cityalerta.app.view.reporte.ReporteScreen
 import ec.cityalerta.app.viewmodel.ReporteViewModel
 
 @Composable
-fun AppNavigation(startDestination: String = Routes.Login.route) {
+fun AppNavigation(
+    startDestination: String = Routes.Login.route,
+    authInfoMessage: String? = null
+) {
 
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
@@ -77,7 +80,11 @@ fun AppNavigation(startDestination: String = Routes.Login.route) {
             modifier = Modifier.padding(top = innerPadding.calculateTopPadding())
         ) {
             composable(Routes.Login.route) {
-                LoginScreen(navController, authViewModel)
+                LoginScreen(
+                    navController = navController,
+                    viewModel = authViewModel,
+                    authInfoMessage = authInfoMessage
+                )
             }
             composable(Routes.Register.route) {
                 RegisterScreen(navController, authViewModel)

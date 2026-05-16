@@ -5,6 +5,7 @@ interface IAuthRepository {
     suspend fun signIn(email: String, password: String): Result<Unit>
     suspend fun logOut(): Result<Unit>
     suspend fun sendPasswordRecovery(email: String): Result<Unit>
+    suspend fun resendSignupConfirmation(email: String): Result<Unit>
     suspend fun updatePassword(newPassword: String): Result<Unit>
     suspend fun getUserId(): Result<String>
     suspend fun getUserEmail(): Result<String>

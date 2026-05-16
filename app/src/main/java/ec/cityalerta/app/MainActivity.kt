@@ -13,6 +13,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.maps.MapsInitializer
 import ec.cityalerta.app.model.remote.SupabaseProvider
+import ec.cityalerta.app.model.utils.AuthDeepLinkParser
+import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.handleDeeplinks
 
 class MainActivity : ComponentActivity() {
@@ -23,8 +25,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         hideSystemNavigationBar()
-        
-        // Inyectar API Key de Google Maps dinámicamente desde BuildConfig
+
         val apiKey = BuildConfig.GOOGLE_MAPS_API_KEY
         if (apiKey.isNotEmpty()) {
             MapsInitializer.initialize(this, MapsInitializer.Renderer.LATEST) { }
@@ -32,14 +33,31 @@ class MainActivity : ComponentActivity() {
 
         handleAuthIntent(intent)
 
-        val startDestination = if (isAuthRecoveryIntent(intent)) {
-            Routes.RecoverPassword.route
-        } else {
-            Routes.Login.route
+        val linkType = AuthDeepLinkParser.parseType(intent)
+        val hasSession = SupabaseProvider.client.auth.currentSessionOrNull() != null
+
+        val startDestination = when {
+            !AuthDeepLinkParser.isAppAuthDeepLink(intent) -> Routes.Login.route
+            linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY -> Routes.RecoverPassword.route
+            hasSession -> Routes.Home.route
+            else -> Routes.Login.route
         }
-        
+
+        val authInfoMessage = when {
+            AuthDeepLinkParser.isAppAuthDeepLink(intent) &&
+                linkType != AuthDeepLinkParser.AuthLinkType.RECOVERY &&
+                hasSession -> "Cuenta activada correctamente. Bienvenido a CityAlerta."
+            AuthDeepLinkParser.isAppAuthDeepLink(intent) &&
+                linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY &&
+                hasSession -> null
+            else -> null
+        }
+
         setContent {
-            AppNavigation(startDestination = startDestination)
+            AppNavigation(
+                startDestination = startDestination,
+                authInfoMessage = authInfoMessage
+            )
         }
     }
 
@@ -54,20 +72,15 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleAuthIntent(intent)
-        if (isAuthRecoveryIntent(intent)) {
+        if (AuthDeepLinkParser.isAppAuthDeepLink(intent)) {
             recreate()
         }
     }
 
     private fun handleAuthIntent(intent: Intent?) {
-        if (isAuthRecoveryIntent(intent)) {
+        if (AuthDeepLinkParser.isAppAuthDeepLink(intent)) {
             SupabaseProvider.client.handleDeeplinks(intent!!)
         }
-    }
-
-    private fun isAuthRecoveryIntent(intent: Intent?): Boolean {
-        val data = intent?.data ?: return false
-        return data.scheme == "cityalerta" && data.host == "auth"
     }
 
     private fun hideSystemNavigationBar() {

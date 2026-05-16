@@ -1,6 +1,9 @@
 package ec.cityalerta.app.viewmodel
 
+import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.utils.AuthErrorMapper
+import ec.cityalerta.app.model.utils.MappedAuthError
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -16,17 +19,21 @@ data class AuthState(
     val ciudadNombre: String = "",
     val ciudadId: String = "",
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val isEmailUnconfirmed: Boolean = false,
+    val errorMessage: String? = null,
+    val infoMessage: String? = null
 )
-
-private const val UNKNOWN_ERROR_MESSAGE = "Error desconocido"
 
 class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
     var uiState by mutableStateOf(AuthState())
         private set
 
     fun onEmailChange(email: String){
-        uiState = uiState.copy(email = email)
+        uiState = uiState.copy(
+            email = email,
+            isEmailUnconfirmed = false,
+            errorMessage = null
+        )
     }
 
     fun onPasswordChange(password: String){
@@ -34,11 +41,23 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
     }
 
     fun onCiudadChange(nombre: String) {
-        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = "") // resetea ID al escribir
+        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = "")
     }
 
     fun onCiudadSelected(nombre: String, id: String) {
-        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = id) // cuando confirma selección
+        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = id)
+    }
+
+    fun setAuthInfoMessage(message: String) {
+        uiState = uiState.copy(
+            infoMessage = message,
+            errorMessage = null,
+            isEmailUnconfirmed = false
+        )
+    }
+
+    fun clearInfoMessage() {
+        uiState = uiState.copy(infoMessage = null)
     }
 
     fun onLoginClick(onSuccess: () -> Unit) {
@@ -51,26 +70,16 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
         uiState = uiState.copy(isLoading = true)
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null)
+            uiState = uiState.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false)
 
             try {
-                val result = repository.signIn(uiState.email, uiState.password)
-
-                result.fold(
-                    onSuccess = {
-                        onSuccess()
-                    },
-                    onFailure = { error ->
-                        uiState = uiState.copy(
-                            errorMessage = error.message ?: UNKNOWN_ERROR_MESSAGE
-                        )
-                    }
+                repository.signIn(uiState.email, uiState.password).fold(
+                    onSuccess = { onSuccess() },
+                    onFailure = { error -> applyAuthFailure(error) }
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                uiState = uiState.copy(
-                    errorMessage = e.message ?: UNKNOWN_ERROR_MESSAGE
-                )
+                applyAuthFailure(e)
             } finally {
                 uiState = uiState.copy(isLoading = false)
             }
@@ -92,29 +101,75 @@ class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
         uiState = uiState.copy(isLoading = true)
 
         viewModelScope.launch {
-           uiState = uiState.copy(errorMessage = null)
+            uiState = uiState.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false)
 
             try {
-                val result = repository.signUp(uiState.email, uiState.password, uiState.ciudadId)
-
-                result.fold(
+                repository.signUp(uiState.email, uiState.password, uiState.ciudadId).fold(
                     onSuccess = {
-                        onSuccess()
+                        val hasSession = repository.getUserId().isSuccess
+                        if (hasSession) {
+                            onSuccess()
+                        } else {
+                            uiState = uiState.copy(
+                                infoMessage = "Registro exitoso. Te enviamos un correo de activacion. " +
+                                    "Abre el enlace en este celular (debe abrir CityAlerta, no el navegador web) y luego inicia sesion."
+                            )
+                            onSuccess()
+                        }
                     },
-                    onFailure = { error ->
-                        uiState = uiState.copy(
-                            errorMessage = error.message ?: UNKNOWN_ERROR_MESSAGE
-                        )
-                    }
+                    onFailure = { error -> applyAuthFailure(error) }
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                uiState = uiState.copy(
-                    errorMessage = e.message ?: UNKNOWN_ERROR_MESSAGE
-                )
+                applyAuthFailure(e)
             } finally {
                 uiState = uiState.copy(isLoading = false)
             }
         }
+    }
+
+    fun resendActivationEmail() {
+        if (uiState.email.isBlank()) {
+            uiState = uiState.copy(errorMessage = "Ingresa tu correo para reenviar la activacion")
+            return
+        }
+
+        if (uiState.isLoading) return
+        uiState = uiState.copy(isLoading = true)
+
+        viewModelScope.launch {
+            uiState = uiState.copy(errorMessage = null)
+
+            try {
+                repository.resendSignupConfirmation(uiState.email).fold(
+                    onSuccess = {
+                        uiState = uiState.copy(
+                            infoMessage = "Te reenviamos el correo de activacion. Revisa tu bandeja y spam.",
+                            isEmailUnconfirmed = false
+                        )
+                    },
+                    onFailure = { error -> applyAuthFailure(error) }
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                applyAuthFailure(e)
+            } finally {
+                uiState = uiState.copy(isLoading = false)
+            }
+        }
+    }
+
+    private fun applyAuthFailure(error: Throwable) {
+        val mapped = when (error) {
+            is AuthMappedException -> MappedAuthError(
+                message = error.message.orEmpty(),
+                isEmailUnconfirmed = error.isEmailUnconfirmed
+            )
+            else -> AuthErrorMapper.map(error)
+        }
+        uiState = uiState.copy(
+            errorMessage = mapped.message,
+            isEmailUnconfirmed = mapped.isEmailUnconfirmed
+        )
     }
 }

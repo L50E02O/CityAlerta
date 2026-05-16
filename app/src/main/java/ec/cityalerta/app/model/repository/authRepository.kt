@@ -2,6 +2,8 @@ package ec.cityalerta.app.model.repository
 
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.utils.AuthErrorMapper
+import ec.cityalerta.app.model.remote.SupabaseAuthHttp
 import io.github.jan.supabase.gotrue.auth
 import ec.cityalerta.app.BuildConfig
 import io.ktor.client.HttpClient
@@ -22,23 +24,20 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepository: IAuthRepository {
     override suspend fun signUp(email: String, password: String, ciudadId: String): Result<Unit> {
-        return try{
-            SupabaseProvider.client.auth.signUpWith(Email){
-                this.email = email
-                this.password = password
-                this.data = buildJsonObject {
-                    put("ciudad_id", ciudadId)
-                    put("nombre_completo", "Usuario")
-                }
-            }
-            if (SupabaseProvider.client.auth.currentSessionOrNull() != null) {
-                SupabaseProvider.client.auth.signOut()
-            }
-            Result.success(Unit)
-        }catch (e: CancellationException){
+        return try {
+            SupabaseAuthHttp.signUp(email, password, ciudadId).fold(
+                onSuccess = {
+                    if (SupabaseProvider.client.auth.currentSessionOrNull() != null) {
+                        SupabaseProvider.client.auth.signOut()
+                    }
+                    Result.success(Unit)
+                },
+                onFailure = { error -> Result.failure(mapAuthException(error as? Exception ?: Exception(error.message))) }
+            )
+        } catch (e: CancellationException) {
             throw e
-        }catch (e: Exception){
-            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
         }
     }
 
@@ -52,7 +51,7 @@ class AuthRepository: IAuthRepository {
         }catch (e: CancellationException){
             throw e
         }catch (e: Exception){
-            Result.failure(e)
+            Result.failure(mapAuthException(e))
         }
     }
 
@@ -69,12 +68,31 @@ class AuthRepository: IAuthRepository {
 
     override suspend fun sendPasswordRecovery(email: String): Result<Unit> {
         return try {
-            SupabaseProvider.client.auth.resetPasswordForEmail(email)
-            Result.success(Unit)
+            SupabaseAuthHttp.resetPasswordForEmail(email).fold(
+                onSuccess = { Result.success(Unit) },
+                onFailure = { error ->
+                    Result.failure(mapAuthException(error as? Exception ?: Exception(error.message)))
+                }
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(mapAuthException(e))
+        }
+    }
+
+    override suspend fun resendSignupConfirmation(email: String): Result<Unit> {
+        return try {
+            SupabaseAuthHttp.resendSignupConfirmation(email).fold(
+                onSuccess = { Result.success(Unit) },
+                onFailure = { error ->
+                    Result.failure(mapAuthException(error as? Exception ?: Exception(error.message)))
+                }
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
         }
     }
 
@@ -180,4 +198,14 @@ class AuthRepository: IAuthRepository {
             Result.failure(e)
         }
     }
+
+    private fun mapAuthException(exception: Exception): Exception {
+        val mapped = AuthErrorMapper.map(exception)
+        return AuthMappedException(mapped.message, mapped.isEmailUnconfirmed)
+    }
 }
+
+class AuthMappedException(
+    message: String,
+    val isEmailUnconfirmed: Boolean
+) : Exception(message)
