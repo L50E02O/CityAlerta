@@ -8,9 +8,22 @@ data class MappedAuthError(
 object AuthErrorMapper {
 
     fun map(throwable: Throwable): MappedAuthError {
+        // Normalize the raw message for matching: consider only the first line
+        // and ignore request details (URL, headers) that may be appended by HTTP clients.
+        val primaryMessage = throwable.message.orEmpty()
+            .substringBefore('\n')
+            .substringBefore("URL:")
+            .trim()
+        val causeMessage = throwable.cause?.message.orEmpty()
+            .substringBefore('\n')
+            .substringBefore("URL:")
+            .trim()
+
         val raw = buildString {
-            append(throwable.message.orEmpty())
-            throwable.cause?.message?.let { append(' ').append(it) }
+            append(primaryMessage)
+            if (causeMessage.isNotBlank()) {
+                append(' ').append(causeMessage)
+            }
         }.lowercase()
 
         return when {
@@ -47,7 +60,10 @@ object AuthErrorMapper {
                     "cityalerta://auth en Redirect URLs."
             )
             else -> MappedAuthError(
-                message = throwable.message?.takeIf { it.isNotBlank() }
+                message = throwable.message
+                    ?.substringBefore('\n')
+                    ?.substringBefore("URL:")
+                    ?.trim()
                     ?: "No se pudo completar la operacion. Intenta de nuevo."
             )
         }
