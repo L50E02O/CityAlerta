@@ -1,6 +1,6 @@
-package ec.cityalerta.app.model.repository.interfaces
+package ec.cityalerta.app.model.data.contracts
 
-interface IAuthRepository {
+interface AuthRepositoryContract {
     suspend fun signUp(email: String, password: String, ciudadId: String): Result<Unit>
     suspend fun signIn(email: String, password: String): Result<Unit>
     suspend fun logOut(): Result<Unit>

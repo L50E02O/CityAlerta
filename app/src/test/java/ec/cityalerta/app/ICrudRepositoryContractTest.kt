@@ -1,23 +1,23 @@
 package ec.cityalerta.app
 
-import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.data.contracts.CrudRepositoryContract
 import org.junit.Test
 import kotlin.test.assertTrue
 
 /**
- * Tests abstractos para la interfaz ICrudRepository<T, CreateDto, UpdateDto>.
+ * Tests abstractos para el contrato CrudRepositoryContract<T, CreateDto, UpdateDto>.
  * Define los contratos que todo repositorio CRUD debe cumplir.
  */
 class ICrudRepositoryContractTest {
 
     /**
-     * Verifica que el repositorio implemente los metodos requeridos
-     * de la interfaz ICrudRepository.
+        * Verifica que el repositorio implemente los metodos requeridos
+        * del contrato CrudRepositoryContract.
      */
     @Test
     fun testCrudRepositoryImplementsAllRequiredMethods() {
         // Verificar que la interfaz tiene los metodos esperados
-        val methods = ICrudRepository::class.members.map { it.name }
+        val methods = CrudRepositoryContract::class.members.map { it.name }
 
         assertTrue(methods.contains("create"), "create method should exist")
         assertTrue(methods.contains("update"), "update method should exist")
@@ -31,11 +31,11 @@ class ICrudRepositoryContractTest {
      */
     @Test
     fun testCrudRepositoryMethodsAreSuspending() {
-        val createMethod = ICrudRepository::class.members.find { it.name == "create" }
-        val updateMethod = ICrudRepository::class.members.find { it.name == "update" }
-        val getAllMethod = ICrudRepository::class.members.find { it.name == "getAll" }
-        val getByIdMethod = ICrudRepository::class.members.find { it.name == "getById" }
-        val deleteMethod = ICrudRepository::class.members.find { it.name == "delete" }
+        val createMethod = CrudRepositoryContract::class.members.find { it.name == "create" }
+        val updateMethod = CrudRepositoryContract::class.members.find { it.name == "update" }
+        val getAllMethod = CrudRepositoryContract::class.members.find { it.name == "getAll" }
+        val getByIdMethod = CrudRepositoryContract::class.members.find { it.name == "getById" }
+        val deleteMethod = CrudRepositoryContract::class.members.find { it.name == "delete" }
 
         assertTrue(createMethod != null, "create method should exist")
         assertTrue(updateMethod != null, "update method should exist")

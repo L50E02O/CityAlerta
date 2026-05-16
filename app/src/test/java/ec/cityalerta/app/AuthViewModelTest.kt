@@ -1,6 +1,6 @@
 package ec.cityalerta.app
 
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,7 +21,7 @@ class AuthViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     
     @Mock
-    private lateinit var mockRepository: IAuthRepository
+    private lateinit var mockRepository: AuthRepositoryContract
 
     private lateinit var viewModel: AuthViewModel
 

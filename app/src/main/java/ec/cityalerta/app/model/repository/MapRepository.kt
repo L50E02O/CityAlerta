@@ -1,9 +1,9 @@
 package ec.cityalerta.app.model.repository
 
 import ec.cityalerta.app.model.data.ciudad.Ciudad
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
+import ec.cityalerta.app.model.data.contracts.MapRepositoryContract
 
-class MapRepository : IMapRepository {
+class MapRepository : MapRepositoryContract {
 
     private val ciudadRepository = CiudadRepository()
 

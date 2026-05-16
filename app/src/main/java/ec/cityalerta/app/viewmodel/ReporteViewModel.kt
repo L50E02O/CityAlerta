@@ -13,8 +13,8 @@ import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
-import ec.cityalerta.app.model.repository.interfaces.ILocationProvider
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.LocationProviderContract
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,8 +26,8 @@ class ReporteViewModel(
     private val reporteImagenRepository: ReporteImagenRepository,
     private val reporteUbicacionRepository: ReporteUbicacionRepository,
     private val reporteStorageRepository: ReporteStorageRepository,
-    private val locationProvider: ILocationProvider,
-    private val authRepository: IAuthRepository
+    private val locationProvider: LocationProviderContract,
+    private val authRepository: AuthRepositoryContract
 ): ViewModel(){
 
     private val _descripcion = MutableStateFlow("")

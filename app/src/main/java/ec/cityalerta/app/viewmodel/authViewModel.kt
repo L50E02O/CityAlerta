@@ -1,7 +1,7 @@
 package ec.cityalerta.app.viewmodel
 
 import ec.cityalerta.app.model.repository.AuthMappedException
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import ec.cityalerta.app.model.utils.MappedAuthError
 import androidx.compose.runtime.getValue
@@ -24,7 +24,7 @@ data class AuthState(
     val infoMessage: String? = null
 )
 
-class AuthViewModel(private val repository: IAuthRepository) : ViewModel() {
+class AuthViewModel(private val repository: AuthRepositoryContract) : ViewModel() {
     var uiState by mutableStateOf(AuthState())
         private set
 

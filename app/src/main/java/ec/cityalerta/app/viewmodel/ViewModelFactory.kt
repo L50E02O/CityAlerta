@@ -3,8 +3,8 @@ package ec.cityalerta.app.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import android.content.Context
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.MapRepositoryContract
 import ec.cityalerta.app.model.repository.MapRepository
 import ec.cityalerta.app.model.repository.LocationRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
@@ -14,11 +14,11 @@ import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
 
 class AppViewModelFactory(
-    private val authRepository: IAuthRepository,
+    private val authRepository: AuthRepositoryContract,
     private val appContext: Context
 ) : ViewModelProvider.Factory {
 
-    private val mapRepository: IMapRepository by lazy {
+    private val mapRepository: MapRepositoryContract by lazy {
         MapRepository()
     }
 

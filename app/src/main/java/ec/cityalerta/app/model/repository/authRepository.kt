@@ -3,7 +3,7 @@ package ec.cityalerta.app.model.repository
 import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.remote.SupabaseAuthHttp
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
@@ -27,7 +27,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.coroutines.cancellation.CancellationException
 
-class AuthRepository : IAuthRepository {
+class AuthRepository : AuthRepositoryContract {
     override suspend fun signUp(email: String, password: String, ciudadId: String): Result<Unit> {
         return try {
             SupabaseAuthHttp.signUp(email, password, ciudadId).fold(

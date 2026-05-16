@@ -5,7 +5,7 @@ import ec.cityalerta.app.model.data.ciudad.CiudadCreateDto
 import ec.cityalerta.app.model.data.ciudad.CiudadUpdateDto
 import ec.cityalerta.app.model.data.geoJson.Geometry
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.data.contracts.CrudRepositoryContract
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
@@ -20,7 +20,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 
-class CiudadRepository : ICrudRepository<Ciudad, CiudadCreateDto, CiudadUpdateDto> {
+class CiudadRepository : CrudRepositoryContract<Ciudad, CiudadCreateDto, CiudadUpdateDto> {
 
     private val tableName = "ciudad"
 

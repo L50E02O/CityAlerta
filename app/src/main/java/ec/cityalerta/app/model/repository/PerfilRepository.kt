@@ -4,7 +4,7 @@ import ec.cityalerta.app.model.data.perfil.Perfil
 import ec.cityalerta.app.model.data.perfil.PerfilCreateDto
 import ec.cityalerta.app.model.data.perfil.PerfilUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.data.contracts.CrudRepositoryContract
 import ec.cityalerta.app.model.utils.booleanOrFalse
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
 
-class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDto> {
+class PerfilRepository : CrudRepositoryContract<Perfil, PerfilCreateDto, PerfilUpdateDto> {
 
     private val tableName = "perfil"
 

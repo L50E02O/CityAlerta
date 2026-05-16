@@ -12,8 +12,8 @@ import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.MapRepositoryContract
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import kotlinx.coroutines.launch
 
@@ -30,10 +30,10 @@ data class MapUiState(
 )
 
 class MapViewModel(
-    private val repository: IMapRepository,
+    private val repository: MapRepositoryContract,
     private val reporteRepository: ReporteRepository,
     private val ubicacionRepository: ReporteUbicacionRepository,
-    private val authRepository: IAuthRepository
+    private val authRepository: AuthRepositoryContract
 ) : ViewModel() {
 
     var uiState by mutableStateOf(MapUiState())

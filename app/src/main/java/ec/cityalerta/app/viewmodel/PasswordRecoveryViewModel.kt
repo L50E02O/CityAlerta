@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -22,7 +22,7 @@ data class PasswordRecoveryState(
 private const val RECOVERY_ERROR_MESSAGE = "Error desconocido"
 
 class PasswordRecoveryViewModel(
-    private val repository: IAuthRepository
+    private val repository: AuthRepositoryContract
 ) : ViewModel() {
 
     var uiState by mutableStateOf(PasswordRecoveryState())

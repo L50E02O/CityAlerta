@@ -3,7 +3,7 @@ package ec.cityalerta.app
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.CreationExtras
 import android.content.Context
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
 import ec.cityalerta.app.viewmodel.AppViewModelFactory
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Assert.assertTrue
@@ -14,7 +14,7 @@ class AuthViewModelFactoryTest {
 
     private class AnotherViewModel : ViewModel()
 
-    private val repository: IAuthRepository = mock()
+    private val repository: AuthRepositoryContract = mock()
     private val context: Context = mock()
     private val factory = AppViewModelFactory(repository, context)
 
