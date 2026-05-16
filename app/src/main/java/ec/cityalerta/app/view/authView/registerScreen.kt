@@ -16,13 +16,18 @@ import ec.cityalerta.app.model.repository.CiudadRepository
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
     var ciudades by remember { mutableStateOf<List<Ciudad>>(emptyList()) }
     var ciudadError by remember { mutableStateOf<String?>(null) }
+    var mantaCiudad by remember { mutableStateOf<Ciudad?>(null) }
 
     LaunchedEffect(Unit) {
         val repo = CiudadRepository()
         repo.getAllByCountry("Ecuador").fold(
             onSuccess = { result ->
                 ciudades = result
-                ciudadError = if (result.isEmpty()) "No se encontraron ciudades" else null
+                mantaCiudad = result.firstOrNull { it.nombre.equals("Manta", ignoreCase = true) }
+                ciudadError = if (mantaCiudad == null) "No se encontró la ciudad de Manta" else null
+                mantaCiudad?.let { ciudad ->
+                    viewModel.onCiudadSelected(ciudad.nombre, ciudad.id)
+                }
             },
             onFailure = { error ->
                 ciudadError = error.message ?: "Error al cargar ciudades"
@@ -36,10 +41,11 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
         viewModel = viewModel,
         showCitySection = true,
         ciudades = ciudades,
+        fixedCity = mantaCiudad,
         cityLoadError = ciudadError,
         onPrimaryAction = {
             viewModel.onRegisterClick {
-                navController.navigate(Routes.Home.route) {
+                navController.navigate(Routes.Login.route) {
                     popUpTo(Routes.Register.route) { inclusive = true }
                 }
             }

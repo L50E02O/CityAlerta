@@ -3,7 +3,7 @@ package ec.cityalerta.app
 import com.google.android.gms.maps.model.LatLng
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.geoJson.Geometry
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
+import ec.cityalerta.app.model.data.contracts.MapRepositoryContract
 import ec.cityalerta.app.viewmodel.MapUiState
 import ec.cityalerta.app.viewmodel.MapViewModel
 
@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 class MapViewModelTest {
 
     @Mock
-    private lateinit var mapRepository: IMapRepository
+    private lateinit var mapRepository: MapRepositoryContract
 
     private lateinit var viewModel: MapViewModel
 

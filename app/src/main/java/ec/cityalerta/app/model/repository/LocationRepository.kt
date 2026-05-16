@@ -3,12 +3,12 @@ package ec.cityalerta.app.model.repository
 import android.annotation.SuppressLint
 import android.content.Context
 import com.google.android.gms.location.LocationServices
+import ec.cityalerta.app.model.data.contracts.location.LocationProviderContract
 import ec.cityalerta.app.model.data.location.UserLocation
-import ec.cityalerta.app.model.repository.interfaces.ILocationProvider
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class LocationRepository(context: Context) : ILocationProvider {
+class LocationRepository(context: Context) : LocationProviderContract {
 
     private val client = LocationServices.getFusedLocationProviderClient(context)
 

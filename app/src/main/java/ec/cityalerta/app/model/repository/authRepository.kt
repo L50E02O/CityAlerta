@@ -1,45 +1,62 @@
 package ec.cityalerta.app.model.repository
 
+import ec.cityalerta.app.BuildConfig
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.remote.SupabaseAuthHttp
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.utils.AuthErrorMapper
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
+import io.ktor.client.request.header
+import io.ktor.client.request.patch
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.coroutines.cancellation.CancellationException
 
-class AuthRepository: IAuthRepository {
+class AuthRepository : AuthRepositoryContract {
     override suspend fun signUp(email: String, password: String, ciudadId: String): Result<Unit> {
-        return try{
-            SupabaseProvider.client.auth.signUpWith(Email){
-                this.email = email
-                this.password = password
-                this.data = buildJsonObject {
-                    put("ciudad_id", ciudadId)
-                    put("nombre_completo", "Usuario")
-                }
-            }
-            Result.success(Unit)
-        }catch (e: CancellationException){
+        return try {
+            SupabaseAuthHttp.signUp(email, password, ciudadId).fold(
+                onSuccess = {
+                    if (SupabaseProvider.client.auth.currentSessionOrNull() != null) {
+                        SupabaseProvider.client.auth.signOut()
+                    }
+                    Result.success(Unit)
+                },
+                onFailure = { error -> Result.failure(mapAuthException(error as? Exception ?: Exception(error.message))) }
+            )
+        } catch (e: CancellationException) {
             throw e
-        }catch (e: Exception){
-            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
         }
     }
 
     override suspend fun signIn(email: String, password: String): Result<Unit> {
         return try {
-            SupabaseProvider.client.auth.signInWith(Email){
+            SupabaseProvider.client.auth.signInWith(Email) {
                 this.email = email
                 this.password = password
             }
             Result.success(Unit)
-        }catch (e: CancellationException){
+        } catch (e: CancellationException) {
             throw e
-        }catch (e: Exception){
-            Result.failure(e)
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
         }
     }
 
@@ -47,24 +64,167 @@ class AuthRepository: IAuthRepository {
         return try {
             SupabaseProvider.client.auth.signOut()
             Result.success(Unit)
-        }catch (e: CancellationException){
+        } catch (e: CancellationException) {
             throw e
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    override suspend fun getUserId(): Result<String>{
-        return try{
+    override suspend fun verifyRecoveryEmail(email: String): Result<Boolean> {
+        return try {
+            val httpClient = HttpClient(Android)
+            try {
+                val response: HttpResponse = httpClient.post("${BuildConfig.SUPABASE_URL.trimEnd('/')}/functions/v1/reset-password-by-email") {
+                    header("x-reset-secret", BuildConfig.PASSWORD_RESET_SECRET)
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        buildJsonObject {
+                            put("email", email)
+                            put("mode", "verify")
+                        }.toString()
+                    )
+                }
+
+                val body = response.bodyAsText()
+                if (response.status.value !in 200..299) {
+                    val message = runCatching {
+                        Json.parseToJsonElement(body)
+                            .jsonObject["error"]
+                            ?.jsonPrimitive
+                            ?.content
+                    }.getOrNull().orEmpty().ifBlank { body }
+                    return Result.failure(Exception(message))
+                }
+
+                val emailExists = runCatching {
+                    Json.parseToJsonElement(body)
+                        .jsonObject["emailExists"]
+                        ?.jsonPrimitive
+                        ?.booleanOrNull
+                        ?: false
+                }.getOrDefault(false)
+
+                Result.success(emailExists)
+            } finally {
+                httpClient.close()
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
+        }
+    }
+
+    override suspend fun resetPasswordByEmail(email: String, newPassword: String): Result<Unit> {
+        return try {
+            val httpClient = HttpClient(Android)
+            try {
+                val response: HttpResponse = httpClient.post("${BuildConfig.SUPABASE_URL.trimEnd('/')}/functions/v1/reset-password-by-email") {
+                    header("x-reset-secret", BuildConfig.PASSWORD_RESET_SECRET)
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        buildJsonObject {
+                            put("email", email)
+                            put("newPassword", newPassword)
+                        }.toString()
+                    )
+                }
+
+                val body = response.bodyAsText()
+                if (response.status.value !in 200..299) {
+                    val message = runCatching {
+                        Json.parseToJsonElement(body)
+                            .jsonObject["error"]
+                            ?.jsonPrimitive
+                            ?.content
+                    }.getOrNull().orEmpty().ifBlank {
+                        "No se pudo actualizar la contrasena: ${response.status.value} $body"
+                    }
+                    return Result.failure(Exception(message))
+                }
+            } finally {
+                httpClient.close()
+            }
+
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
+        }
+    }
+
+    override suspend fun resendSignupConfirmation(email: String): Result<Unit> {
+        return try {
+            SupabaseAuthHttp.resendSignupConfirmation(email).fold(
+                onSuccess = { Result.success(Unit) },
+                onFailure = { error ->
+                    Result.failure(mapAuthException(error as? Exception ?: Exception(error.message)))
+                }
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
+        }
+    }
+
+    override suspend fun updatePassword(newPassword: String): Result<Unit> {
+        return try {
+            val session = SupabaseProvider.client.auth.currentSessionOrNull()
+                ?: return Result.failure(Exception("Abre el enlace del correo antes de actualizar la contrasena"))
+
+            val accessToken = session.accessToken
+            val httpClient = HttpClient(Android)
+            try {
+                val resp: HttpResponse = httpClient.patch("${BuildConfig.SUPABASE_URL.trimEnd('/')}/auth/v1/user") {
+                    header("Authorization", "Bearer $accessToken")
+                    contentType(ContentType.Application.Json)
+                    setBody("{\"password\":\"$newPassword\"}")
+                }
+
+                if (resp.status.value !in 200..299) {
+                    val body = resp.bodyAsText()
+                    return Result.failure(Exception("No se pudo actualizar la contrasena: ${resp.status.value} $body"))
+                }
+            } finally {
+                httpClient.close()
+            }
+
+            SupabaseProvider.client.auth.signOut()
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getUserEmail(): Result<String> {
+        return try {
+            val email = SupabaseProvider.client.auth.currentSessionOrNull()?.user?.email
+            if (email.isNullOrBlank()) {
+                Result.failure(Exception("No hay correo asociado a la sesion"))
+            } else {
+                Result.success(email)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getUserId(): Result<String> {
+        return try {
             val session = SupabaseProvider.client.auth.currentSessionOrNull()
             val user = session?.user
 
-            if (user == null){
+            if (user == null) {
                 Result.failure(Exception("No hay usuario logueado"))
-            }else{
+            } else {
                 Result.success(user.id)
             }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
@@ -112,4 +272,14 @@ class AuthRepository: IAuthRepository {
             Result.failure(e)
         }
     }
+
+    private fun mapAuthException(exception: Exception): Exception {
+        val mapped = AuthErrorMapper.map(exception)
+        return AuthMappedException(mapped.message, mapped.isEmailUnconfirmed)
+    }
 }
+
+class AuthMappedException(
+    message: String,
+    val isEmailUnconfirmed: Boolean
+) : Exception(message)

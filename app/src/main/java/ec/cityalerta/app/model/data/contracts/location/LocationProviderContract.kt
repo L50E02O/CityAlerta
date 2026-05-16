@@ -1,7 +1,7 @@
-package ec.cityalerta.app.model.repository.interfaces
+package ec.cityalerta.app.model.data.contracts.location
 
 import ec.cityalerta.app.model.data.location.UserLocation
 
-interface ILocationProvider {
+interface LocationProviderContract {
     suspend fun getCurrentLocation(): Result<UserLocation>
 }

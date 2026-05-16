@@ -4,7 +4,7 @@ import ec.cityalerta.app.model.data.reporteimagen.ReporteImagen
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
 
-class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCreateDto, ReporteImagenUpdateDto> {
+class ReporteImagenRepository : CrudRepositoryContract<ReporteImagen, ReporteImagenCreateDto, ReporteImagenUpdateDto> {
 
     private val tableName = "reporte_imagen"
 

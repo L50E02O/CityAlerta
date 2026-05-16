@@ -143,7 +143,6 @@ class ExploreViewModel(
                             ec.cityalerta.app.model.data.reporte.ReportType.BACHE -> "Bache"
                             ec.cityalerta.app.model.data.reporte.ReportType.AGUA -> "Agua"
                             ec.cityalerta.app.model.data.reporte.ReportType.LUZ -> "Luz"
-                            else -> "General"
                         },
                         imageUrl = imageUrl,
                         barrio = barrioNombre,
