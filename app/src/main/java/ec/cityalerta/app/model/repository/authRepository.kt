@@ -9,6 +9,7 @@ import ec.cityalerta.app.BuildConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.request.header
+import io.ktor.client.request.post
 import io.ktor.client.request.patch
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -66,14 +67,30 @@ class AuthRepository: IAuthRepository {
         }
     }
 
-    override suspend fun sendPasswordRecovery(email: String): Result<Unit> {
+    override suspend fun resetPasswordByEmail(email: String, newPassword: String): Result<Unit> {
         return try {
-            SupabaseAuthHttp.resetPasswordForEmail(email).fold(
-                onSuccess = { Result.success(Unit) },
-                onFailure = { error ->
-                    Result.failure(mapAuthException(error as? Exception ?: Exception(error.message)))
+            val httpClient = HttpClient(Android)
+            try {
+                val response: HttpResponse = httpClient.post("${BuildConfig.SUPABASE_URL.trimEnd('/')}/functions/v1/reset-password-by-email") {
+                    header("x-reset-secret", BuildConfig.PASSWORD_RESET_SECRET)
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        buildJsonObject {
+                            put("email", email)
+                            put("newPassword", newPassword)
+                        }.toString()
+                    )
                 }
-            )
+
+                if (response.status.value !in 200..299) {
+                    val body = response.bodyAsText()
+                    return Result.failure(Exception("No se pudo actualizar la contrasena: ${response.status.value} $body"))
+                }
+            } finally {
+                httpClient.close()
+            }
+
+            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

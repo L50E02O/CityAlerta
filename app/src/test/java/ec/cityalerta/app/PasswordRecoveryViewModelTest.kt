@@ -12,15 +12,15 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
+
 import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,7 +40,6 @@ class PasswordRecoveryViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         MockitoAnnotations.openMocks(this)
-        whenever(mockPreferences.canRecover(any())).thenReturn(true)
         viewModel = PasswordRecoveryViewModel(mockRepository, mockPreferences)
     }
 
@@ -50,27 +49,31 @@ class PasswordRecoveryViewModelTest {
     }
 
     @Test
-    fun sendRecoveryEmail_blocksWhenDailyLimitReached() = runTest {
-        whenever(mockPreferences.canRecover("test@example.com")).thenReturn(false)
-        whenever(mockPreferences.millisUntilNextRecovery("test@example.com")).thenReturn(3_600_000L)
-
+    fun resetPassword_requiresCompleteForm() = runTest {
         viewModel.onEmailChange("test@example.com")
-        viewModel.sendRecoveryEmail()
+        viewModel.onNewPasswordChange("12345678")
+
+        viewModel.resetPassword { }
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.errorMessage?.contains("una vez al dia") == true)
-        verify(mockRepository, never()).sendPasswordRecovery(any())
+        assertEquals("Completa la nueva contrasena", viewModel.uiState.errorMessage)
     }
 
     @Test
-    fun updatePassword_requiresStepOneBeforeReset() = runTest {
-        viewModel.updatePassword { }
+    fun resetPassword_updatesPasswordByEmail() = runTest {
+        whenever(mockRepository.resetPasswordByEmail("test@example.com", "Password123"))
+            .thenReturn(Result.success(Unit))
+
+        viewModel.onEmailChange("test@example.com")
+        viewModel.onNewPasswordChange("Password123")
+        viewModel.onConfirmPasswordChange("Password123")
+
+        var successCalled = false
+        viewModel.resetPassword { successCalled = true }
         advanceUntilIdle()
 
-        assertEquals(
-            "Primero envia el enlace de recuperacion a tu correo",
-            viewModel.uiState.errorMessage
-        )
-        assertFalse(viewModel.uiState.isStepTwoUnlocked)
+        verify(mockRepository).resetPasswordByEmail("test@example.com", "Password123")
+        assertTrue(successCalled)
+        assertEquals("Contrasena actualizada correctamente", viewModel.uiState.successMessage)
     }
 }

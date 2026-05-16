@@ -30,8 +30,14 @@ object AuthErrorMapper {
             )
             raw.contains("rate limit") ||
                 raw.contains("too many requests") ||
-                raw.contains("email rate limit") -> MappedAuthError(
-                message = "Demasiados intentos. Espera unos minutos antes de volver a intentarlo."
+                raw.contains("email rate limit") ||
+                raw.contains("over_email_send_rate_limit") -> MappedAuthError(
+                message = "Limite de correos alcanzado. Espera unos minutos o pide al administrador " +
+                    "que configure SMTP en Supabase (Authentication > SMTP Settings)."
+            )
+            isEmailDeliveryIssue(raw) -> MappedAuthError(
+                message = "No se pudo enviar el correo desde el servidor. El administrador debe activar " +
+                    "SMTP en Supabase (Authentication > SMTP Settings) con un servicio como Resend, Brevo o Gmail."
             )
             raw.contains("signup is disabled") -> MappedAuthError(
                 message = "El registro no esta disponible en este momento. Intenta mas tarde."
@@ -45,6 +51,15 @@ object AuthErrorMapper {
                     ?: "No se pudo completar la operacion. Intenta de nuevo."
             )
         }
+    }
+
+    private fun isEmailDeliveryIssue(raw: String): Boolean {
+        return raw.contains("smtp") ||
+            raw.contains("mail") && raw.contains("fail") ||
+            raw.contains("email address not authorized") ||
+            raw.contains("error sending") ||
+            raw.contains("unable to send") ||
+            raw.contains("email provider")
     }
 
     private fun isEmailNotConfirmed(raw: String): Boolean {

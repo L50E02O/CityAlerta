@@ -52,6 +52,10 @@ android {
             .orElse(properties.getProperty("GOOGLE_MAPS_API_KEY") ?: "")
             .getOrElse("")
 
+        val passwordResetSecret = providers.gradleProperty("PASSWORD_RESET_SECRET")
+            .orElse(properties.getProperty("PASSWORD_RESET_SECRET") ?: "")
+            .getOrElse("")
+
         if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
             project.logger.warn("WARNING: Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties. Build tasks that require Supabase will fail.")
         }
@@ -60,10 +64,15 @@ android {
             project.logger.warn("WARNING: Missing Google Maps API Key. Define GOOGLE_MAPS_API_KEY in local.properties or gradle.properties. Maps will not display.")
         }
 
+        if (passwordResetSecret.isEmpty()) {
+            project.logger.warn("WARNING: Missing PASSWORD_RESET_SECRET. Define PASSWORD_RESET_SECRET in local.properties or gradle.properties to use the password reset edge function.")
+        }
+
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
         buildConfigField("String", "STORAGE_BASE_URL", "\"$storageBaseUrl\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsApiKey\"")
+        buildConfigField("String", "PASSWORD_RESET_SECRET", "\"$passwordResetSecret\"")
 
         // Inyectar API Key al manifest
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
@@ -115,8 +124,16 @@ tasks.matching { task ->
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
+        val passwordResetSecret = providers.gradleProperty("PASSWORD_RESET_SECRET")
+            .orElse(properties.getProperty("PASSWORD_RESET_SECRET") ?: "")
+            .getOrElse("")
+
         require(supabaseUrl.isNotBlank() && supabaseKey.isNotBlank()) {
             "Missing SUPABASE_URL / SUPABASE_ANON_KEY for Release build."
+        }
+
+        require(passwordResetSecret.isNotBlank()) {
+            "Missing PASSWORD_RESET_SECRET for Release build."
         }
     }
 }

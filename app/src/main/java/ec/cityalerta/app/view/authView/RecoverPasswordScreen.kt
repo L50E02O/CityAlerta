@@ -70,9 +70,7 @@ fun RecoverPasswordScreen(
     }
 
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(state.email).matches()
-    val canSendRecovery = isEmailValid && !state.isLoading && !state.isRecoveryBlocked
-    val canUpdatePassword = state.isStepTwoUnlocked &&
-        state.isPasswordResetReady &&
+    val canUpdatePassword = isEmailValid &&
         state.newPassword.isNotBlank() &&
         state.newPassword.length >= 8 &&
         state.newPassword == state.confirmPassword &&
@@ -95,7 +93,7 @@ fun RecoverPasswordScreen(
 
             Column {
                 Text(
-                    text = "Recuperar Contrasena",
+                    text = "Restablecer Contrasena",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color(0xFF1B2633),
                     fontWeight = FontWeight.SemiBold
@@ -120,7 +118,7 @@ fun RecoverPasswordScreen(
                 ) {
                     SectionLabel("PASO 01")
                     Text(
-                        text = "Ingresa tu correo",
+                        text = "Verifica tu correo",
                         style = MaterialTheme.typography.titleMedium,
                         color = Color(0xFF1B2633),
                         fontWeight = FontWeight.SemiBold
@@ -134,40 +132,8 @@ fun RecoverPasswordScreen(
                         label = { Text("Correo electronico") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                     )
-                    Button(
-                        onClick = viewModel::sendRecoveryEmail,
-                        enabled = canSendRecovery,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(if (state.isLoading) "Enviando..." else "Enviar enlace")
-                    }
-
-                    if (state.isRecoveryBlocked && !state.recoveryEmailSent) {
-                        Text(
-                            text = "Ya solicitaste recuperacion hoy. Podras volver a intentarlo manana.",
-                            color = ReportUiColors.HintText,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                    if (state.successMessage != null) {
-                        Text(
-                            text = state.successMessage!!,
-                            color = Color(0xFF1B5E20),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                    if (state.errorMessage != null && !state.isStepTwoUnlocked) {
-                        Text(
-                            text = state.errorMessage!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
                     Text(
-                        text = "Si no lo ves, revisa spam o vuelve a enviar el enlace.",
+                        text = "La app validara que el correo exista y luego actualizara la contrasena con la edge function.",
                         color = ReportUiColors.HintText,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -180,7 +146,6 @@ fun RecoverPasswordScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .alpha(if (state.isStepTwoUnlocked) 1f else 0.55f)
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -193,47 +158,29 @@ fun RecoverPasswordScreen(
                         color = Color(0xFF1B2633),
                         fontWeight = FontWeight.SemiBold
                     )
-                    when {
-                        !state.isStepTwoUnlocked -> {
-                            Text(
-                                text = "Primero envia el enlace de recuperacion en el paso 01.",
-                                color = ReportUiColors.HintText,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                        state.isPasswordResetReady -> {
-                            Text(
-                                text = "Ya puedes actualizar la contrasena desde este dispositivo.",
-                                color = ReportUiColors.HintText,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                        else -> {
-                            Text(
-                                text = "Abre el enlace del correo para activar este paso.",
-                                color = ReportUiColors.HintText,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
+                    Text(
+                        text = "Escribe una nueva contrasena y confirmala. Si el correo existe, la edge function la guardara en Supabase Auth.",
+                        color = ReportUiColors.HintText,
+                        style = MaterialTheme.typography.bodySmall
+                    )
 
                     PasswordField(
                         value = state.newPassword,
                         label = "Escribe tu contrasena nueva",
                         onValueChange = viewModel::onNewPasswordChange,
-                        enabled = state.isPasswordResetReady
+                        enabled = !state.isLoading
                     )
 
                     PasswordField(
                         value = state.confirmPassword,
                         label = "Vuelve a escribir tu contrasena nueva",
                         onValueChange = viewModel::onConfirmPasswordChange,
-                        enabled = state.isPasswordResetReady
+                        enabled = !state.isLoading
                     )
 
                     Button(
                         onClick = {
-                            viewModel.updatePassword {
+                            viewModel.resetPassword {
                                 navController.navigate(Routes.Login.route) {
                                     popUpTo(Routes.RecoverPassword.route) { inclusive = true }
                                 }
@@ -242,10 +189,18 @@ fun RecoverPasswordScreen(
                         enabled = canUpdatePassword,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (state.isLoading) "Actualizando..." else "Actualizar Contrasena")
+                        Text(if (state.isLoading) "Verificando..." else "Verificar y actualizar")
                     }
 
-                    if (state.errorMessage != null && state.isStepTwoUnlocked) {
+                    if (state.successMessage != null) {
+                        Text(
+                            text = state.successMessage!!,
+                            color = Color(0xFF1B5E20),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    if (state.errorMessage != null) {
                         Text(
                             text = state.errorMessage!!,
                             color = MaterialTheme.colorScheme.error,
