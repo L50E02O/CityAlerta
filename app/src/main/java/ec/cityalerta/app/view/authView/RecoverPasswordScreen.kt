@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,12 +28,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,6 +43,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
@@ -53,9 +57,22 @@ fun RecoverPasswordScreen(
     viewModel: PasswordRecoveryViewModel
 ) {
     val state = viewModel.uiState
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshSessionState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(state.email).matches()
-    val canSendRecovery = isEmailValid && !state.isLoading
-    val canUpdatePassword = state.isPasswordResetReady &&
+    val canSendRecovery = isEmailValid && !state.isLoading && !state.isRecoveryBlocked
+    val canUpdatePassword = state.isStepTwoUnlocked &&
+        state.isPasswordResetReady &&
         state.newPassword.isNotBlank() &&
         state.newPassword.length >= 8 &&
         state.newPassword == state.confirmPassword &&
@@ -113,6 +130,7 @@ fun RecoverPasswordScreen(
                         onValueChange = viewModel::onEmailChange,
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        enabled = !state.isLoading,
                         label = { Text("Correo electronico") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                     )
@@ -124,6 +142,14 @@ fun RecoverPasswordScreen(
                         Text(if (state.isLoading) "Enviando..." else "Enviar enlace")
                     }
 
+                    if (state.isRecoveryBlocked && !state.recoveryEmailSent) {
+                        Text(
+                            text = "Ya solicitaste recuperacion hoy. Podras volver a intentarlo manana.",
+                            color = ReportUiColors.HintText,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
                     if (state.successMessage != null) {
                         Text(
                             text = state.successMessage!!,
@@ -132,7 +158,7 @@ fun RecoverPasswordScreen(
                         )
                     }
 
-                    if (state.errorMessage != null) {
+                    if (state.errorMessage != null && !state.isStepTwoUnlocked) {
                         Text(
                             text = state.errorMessage!!,
                             color = MaterialTheme.colorScheme.error,
@@ -152,7 +178,9 @@ fun RecoverPasswordScreen(
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(if (state.isStepTwoUnlocked) 1f else 0.55f)
             ) {
                 Column(
                     modifier = Modifier.padding(18.dp),
@@ -165,37 +193,49 @@ fun RecoverPasswordScreen(
                         color = Color(0xFF1B2633),
                         fontWeight = FontWeight.SemiBold
                     )
-                    if (state.isPasswordResetReady) {
-                        Text(
-                            text = "Ya puedes actualizar la contrasena desde este dispositivo.",
-                            color = ReportUiColors.HintText,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    } else {
-                        Text(
-                            text = "Abre el enlace del correo para activar este paso.",
-                            color = ReportUiColors.HintText,
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    when {
+                        !state.isStepTwoUnlocked -> {
+                            Text(
+                                text = "Primero envia el enlace de recuperacion en el paso 01.",
+                                color = ReportUiColors.HintText,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        state.isPasswordResetReady -> {
+                            Text(
+                                text = "Ya puedes actualizar la contrasena desde este dispositivo.",
+                                color = ReportUiColors.HintText,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        else -> {
+                            Text(
+                                text = "Abre el enlace del correo para activar este paso.",
+                                color = ReportUiColors.HintText,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
 
                     PasswordField(
                         value = state.newPassword,
                         label = "Escribe tu contrasena nueva",
-                        onValueChange = viewModel::onNewPasswordChange
+                        onValueChange = viewModel::onNewPasswordChange,
+                        enabled = state.isPasswordResetReady
                     )
 
                     PasswordField(
                         value = state.confirmPassword,
                         label = "Vuelve a escribir tu contrasena nueva",
-                        onValueChange = viewModel::onConfirmPasswordChange
+                        onValueChange = viewModel::onConfirmPasswordChange,
+                        enabled = state.isPasswordResetReady
                     )
 
                     Button(
                         onClick = {
                             viewModel.updatePassword {
-                                navController.navigate(Routes.Home.route) {
-                                    popUpTo(Routes.Login.route) { inclusive = true }
+                                navController.navigate(Routes.Login.route) {
+                                    popUpTo(Routes.RecoverPassword.route) { inclusive = true }
                                 }
                             }
                         },
@@ -203,6 +243,14 @@ fun RecoverPasswordScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(if (state.isLoading) "Actualizando..." else "Actualizar Contrasena")
+                    }
+
+                    if (state.errorMessage != null && state.isStepTwoUnlocked) {
+                        Text(
+                            text = state.errorMessage!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
@@ -236,7 +284,8 @@ private fun SectionLabel(text: String) {
 private fun PasswordField(
     value: String,
     label: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    enabled: Boolean = true
 ) {
     var isVisible by remember { mutableStateOf(false) }
 
@@ -245,11 +294,15 @@ private fun PasswordField(
         onValueChange = onValueChange,
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
+        enabled = enabled,
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
-            IconButton(onClick = { isVisible = !isVisible }) {
+            IconButton(
+                onClick = { isVisible = !isVisible },
+                enabled = enabled
+            ) {
                 Icon(
                     imageVector = if (isVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
                     contentDescription = if (isVisible) "Ocultar contrasena" else "Mostrar contrasena"

@@ -3,6 +3,7 @@ package ec.cityalerta.app.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import android.content.Context
+import ec.cityalerta.app.model.local.PasswordRecoveryPreferences
 import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 import ec.cityalerta.app.model.repository.MapRepository
@@ -42,6 +43,10 @@ class AppViewModelFactory(
         LocationRepository(appContext)
     }
 
+    private val passwordRecoveryPreferences by lazy {
+        PasswordRecoveryPreferences(appContext)
+    }
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
@@ -50,7 +55,7 @@ class AppViewModelFactory(
             }
             modelClass.isAssignableFrom(PasswordRecoveryViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                PasswordRecoveryViewModel(authRepository) as T
+                PasswordRecoveryViewModel(authRepository, passwordRecoveryPreferences) as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")

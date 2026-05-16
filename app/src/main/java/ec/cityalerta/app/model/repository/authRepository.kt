@@ -6,9 +6,13 @@ import io.github.jan.supabase.gotrue.auth
 import ec.cityalerta.app.BuildConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import io.ktor.client.request.header
+import io.ktor.client.request.patch
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.json.JsonObject
@@ -77,10 +81,9 @@ class AuthRepository: IAuthRepository {
     override suspend fun updatePassword(newPassword: String): Result<Unit> {
         return try {
             val session = SupabaseProvider.client.auth.currentSessionOrNull()
-                ?: return Result.failure(Exception("No hay usuario logueado"))
+                ?: return Result.failure(Exception("Abre el enlace del correo antes de actualizar la contrasena"))
 
             val accessToken = session.accessToken
-
             val httpClient = HttpClient(Android)
             try {
                 val resp: HttpResponse = httpClient.patch("${BuildConfig.SUPABASE_URL.trimEnd('/')}/auth/v1/user") {
@@ -89,17 +92,31 @@ class AuthRepository: IAuthRepository {
                     setBody("{\"password\":\"$newPassword\"}")
                 }
 
-                if (resp.status.value in 200..299) {
-                    Result.success(Unit)
-                } else {
+                if (resp.status.value !in 200..299) {
                     val body = resp.bodyAsText()
-                    Result.failure(Exception("Failed to update password: ${resp.status.value} $body"))
+                    return Result.failure(Exception("No se pudo actualizar la contrasena: ${resp.status.value} $body"))
                 }
             } finally {
                 httpClient.close()
             }
+
+            SupabaseProvider.client.auth.signOut()
+            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getUserEmail(): Result<String> {
+        return try {
+            val email = SupabaseProvider.client.auth.currentSessionOrNull()?.user?.email
+            if (email.isNullOrBlank()) {
+                Result.failure(Exception("No hay correo asociado a la sesion"))
+            } else {
+                Result.success(email)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
