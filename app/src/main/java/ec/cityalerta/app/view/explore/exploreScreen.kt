@@ -26,9 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
+import androidx.navigation.NavController
+import ec.cityalerta.app.navigation.Routes
 
 @Composable
 fun ExploreScreen(
+    navController: NavController,
     viewModel: ExploreViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -42,7 +45,7 @@ fun ExploreScreen(
             ExploreHeader(
                 city = state.ciudadNombre,
                 onSearchClick = { /* No functionality yet */ },
-                onProfileClick = { /* No functionality yet */ }
+                onProfileClick = { navController.navigate(Routes.Profile.route) }
             )
         },
         containerColor = Color(0xFFF8F9FA)

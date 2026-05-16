@@ -9,4 +9,5 @@ sealed class Routes(val route: String, val authRequired: Boolean = false) {
     object Post : Routes("post", authRequired = true)
     object ReporteForm : Routes("reporte_form", authRequired = true)
     object Map : Routes("map/{ciudadId}")
+    object Profile : Routes("profile", authRequired = true)
 }

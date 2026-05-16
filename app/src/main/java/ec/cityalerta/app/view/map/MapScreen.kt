@@ -25,6 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import ec.cityalerta.app.view.components.ProfileAvatar
+import ec.cityalerta.app.navigation.Routes
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -116,6 +118,10 @@ fun MapScreen(
                             contentDescription = "Atras"
                         )
                     }
+                }
+                ,
+                actions = {
+                    ProfileAvatar(initials = "US", onClick = { navController.navigate(Routes.Profile.route) })
                 }
             )
         },
