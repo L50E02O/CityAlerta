@@ -19,15 +19,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cached
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,15 +41,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import ec.cityalerta.app.viewmodel.ReporteViewModel
+import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.view.style.ReportUiDimens
 import ec.cityalerta.app.view.style.ReportUiShapes
+import ec.cityalerta.app.viewmodel.ReporteViewModel
 import java.io.File
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotoScreen(
+    navController: NavController,
     viewModel: ReporteViewModel,
     onPhotoCaptured: () -> Unit
 ) {
@@ -91,83 +101,99 @@ fun PhotoScreen(
         cameraLauncher.launch(uri)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ReportUiColors.ScreenBackground)
-            .padding(ReportUiDimens.ScreenPadding),
-        verticalArrangement = Arrangement.spacedBy(ReportUiDimens.SectionSpacing)
-    ) {
-        Box(
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Foto") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                    }
+                },
+                actions = {
+                    ProfileAvatar(initials = "US", onClick = { navController.navigate(Routes.Profile.route) })
+                }
+            )
+        }
+    ) { padding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(ReportUiDimens.FrameHeight)
-                .background(ReportUiColors.FrameBackground, ReportUiShapes.Frame)
+                .fillMaxSize()
+                .background(ReportUiColors.ScreenBackground)
+                .padding(ReportUiDimens.ScreenPadding)
+                .padding(padding),
+            verticalArrangement = Arrangement.spacedBy(ReportUiDimens.SectionSpacing)
         ) {
-            if (photoUri != null) {
-                AsyncImage(
-                    model = photoUri,
-                    contentDescription = "Foto seleccionada",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(ReportUiColors.FrameBackground, ReportUiShapes.Frame)
-                )
-            }
-
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp)
-                    .border(2.dp, ReportUiColors.FrameBorder, ReportUiShapes.FrameInner)
-            )
-
-            Text(
-                text = "Alinee el objeto con las guias",
-                color = ReportUiColors.FrameBorder,
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .background(Color(0x99000000), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedButton(
-                onClick = { galleryLauncher.launch("image/*") },
-                modifier = Modifier.size(ReportUiDimens.SideButtonSize),
-                shape = ReportUiShapes.SideButton
+                    .fillMaxWidth()
+                    .height(ReportUiDimens.FrameHeight)
+                    .background(ReportUiColors.FrameBackground, ReportUiShapes.Frame)
             ) {
-                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-            }
+                if (photoUri != null) {
+                    AsyncImage(
+                        model = photoUri,
+                        contentDescription = "Foto seleccionada",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(ReportUiColors.FrameBackground, ReportUiShapes.Frame)
+                    )
+                }
 
-            ElevatedButton(
-                onClick = { launchCamera() },
-                modifier = Modifier.size(ReportUiDimens.CaptureButtonSize),
-                shape = ReportUiShapes.Circle,
-                colors = ButtonDefaults.buttonColors(containerColor = ReportUiColors.AccentRed)
-            ) {
-                Icon(
-                    Icons.Default.CameraAlt,
-                    contentDescription = null,
-                    tint = Color.White
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp)
+                        .border(2.dp, ReportUiColors.FrameBorder, ReportUiShapes.FrameInner)
+                )
+
+                Text(
+                    text = "Alinee el objeto con las guias",
+                    color = ReportUiColors.FrameBorder,
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(Color(0x99000000), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 )
             }
 
-            OutlinedButton(
-                onClick = { launchCamera() },
-                modifier = Modifier.size(ReportUiDimens.SideButtonSize),
-                shape = ReportUiShapes.SideButton
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Cached, contentDescription = null)
+                OutlinedButton(
+                    onClick = { galleryLauncher.launch("image/*") },
+                    modifier = Modifier.size(ReportUiDimens.SideButtonSize),
+                    shape = ReportUiShapes.SideButton
+                ) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+                }
+
+                ElevatedButton(
+                    onClick = { launchCamera() },
+                    modifier = Modifier.size(ReportUiDimens.CaptureButtonSize),
+                    shape = ReportUiShapes.Circle,
+                    colors = ButtonDefaults.buttonColors(containerColor = ReportUiColors.AccentRed)
+                ) {
+                    Icon(
+                        Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        tint = Color.White
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = { launchCamera() },
+                    modifier = Modifier.size(ReportUiDimens.SideButtonSize),
+                    shape = ReportUiShapes.SideButton
+                ) {
+                    Icon(Icons.Default.Cached, contentDescription = null)
+                }
             }
         }
-
     }
 }
 

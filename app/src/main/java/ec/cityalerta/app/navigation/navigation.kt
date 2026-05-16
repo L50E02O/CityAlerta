@@ -102,6 +102,7 @@ fun AppNavigation(
 
             composable(Routes.Post.route) {
                 PhotoScreen(
+                    navController = navController,
                     viewModel = reporteViewModel,
                     onPhotoCaptured = {
                         navController.navigate(Routes.ReporteForm.route)
