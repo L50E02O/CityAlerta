@@ -48,6 +48,7 @@ import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.view.style.ReportUiDimens
 import ec.cityalerta.app.view.style.ReportUiShapes
+import ec.cityalerta.app.view.utils.readBytesFromUri
 import ec.cityalerta.app.viewmodel.ReporteViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 import java.io.File
@@ -201,11 +202,5 @@ fun PhotoScreen(
                 }
             }
         }
-    }
-}
-
-private fun readBytesFromUri(context: Context, uri: Uri): ByteArray? {
-    return context.contentResolver.openInputStream(uri)?.use { input ->
-        input.readBytes()
     }
 }

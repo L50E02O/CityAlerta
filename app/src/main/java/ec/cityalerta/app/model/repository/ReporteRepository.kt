@@ -36,6 +36,7 @@ class ReporteRepository : CrudRepositoryContract<Reporte, ReporteCreateDto, Repo
             filter {
                 eq("id", id)
             }
+            select()
         }
             .decodeList<JsonObject>()
             .firstOrNull()

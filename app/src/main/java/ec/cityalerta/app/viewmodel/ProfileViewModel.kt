@@ -8,6 +8,8 @@ import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.reporte.ReporteUpdateDto
+import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
+import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
 import ec.cityalerta.app.model.repository.AuthRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
@@ -26,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 private const val TIME_AGO_RECENT = "Hace poco"
 
@@ -130,25 +133,82 @@ class ProfileViewModel(
     }
 
     fun updateReport(
-        reportId: String,
+        report: UserReportUi,
         descripcion: String,
         categoria: ReportType,
-        estado: ReporteEstado
+        newImageBytes: ByteArray? = null
     ) {
         viewModelScope.launch {
+            _state.value = _state.value.copy(
+                myReports = _state.value.myReports.map { item ->
+                    if (item.id == report.id) {
+                        item.copy(descripcion = descripcion, categoria = categoria)
+                    } else {
+                        item
+                    }
+                },
+                errorMessage = null
+            )
+
             reporteRepository.update(
                 ReporteUpdateDto(
                     descripcion = descripcion,
-                    categoria = categoria,
-                    estado = estado
+                    categoria = categoria
                 ),
-                reportId
+                report.id
             ).onSuccess {
-                loadDashboard()
+                if (newImageBytes != null) {
+                    replaceReportImage(report, newImageBytes).onFailure { error ->
+                        _state.value = _state.value.copy(
+                            errorMessage = error.message ?: "No se pudo actualizar la imagen"
+                        )
+                    }
+                }
+                refreshMyReports()
             }.onFailure { error ->
-                _state.value = _state.value.copy(errorMessage = error.message ?: "No se pudo actualizar el reporte")
+                _state.value = _state.value.copy(
+                    errorMessage = error.message ?: "No se pudo actualizar el reporte"
+                )
+                refreshMyReports()
             }
         }
+    }
+
+    private suspend fun replaceReportImage(report: UserReportUi, imageBytes: ByteArray): Result<Unit> = runCatching {
+        val storageUuid = UUID.randomUUID().toString()
+        val storagePath = reporteStorageRepository.uploadReportImage(imageBytes, storageUuid).getOrThrow()
+        val previousStorageUuid = report.storageUuid
+
+        if (report.imageId.isNullOrBlank()) {
+            reporteImagenRepository.create(
+                ReporteImagenCreateDto(
+                    reporte_id = report.id,
+                    storage_uuid = storageUuid,
+                    url_path = storagePath
+                )
+            ).getOrThrow()
+        } else {
+            reporteImagenRepository.update(
+                ReporteImagenUpdateDto(
+                    storage_uuid = storageUuid,
+                    url_path = storagePath
+                ),
+                report.imageId
+            ).getOrThrow()
+        }
+
+        if (!previousStorageUuid.isNullOrBlank() && previousStorageUuid != storageUuid) {
+            reporteStorageRepository.deleteReportImage(previousStorageUuid)
+        }
+    }
+
+    private suspend fun refreshMyReports() {
+        val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
+            ?: authRepository.getUserId().getOrNull()
+            ?: return
+
+        val reportes = loadUserReports(userId)
+        _state.value = _state.value.copy(myReports = reportes)
     }
 
     fun deleteReport(report: UserReportUi) {
@@ -167,7 +227,7 @@ class ProfileViewModel(
             reporteRepository.delete(report.id)
                 .onSuccess {
                     reporteUbicacionRepository.delete(report.ubicacionId)
-                    loadDashboard()
+                    refreshMyReports()
                 }
                 .onFailure { error ->
                     _state.value = _state.value.copy(errorMessage = error.message ?: "No se pudo eliminar el reporte")

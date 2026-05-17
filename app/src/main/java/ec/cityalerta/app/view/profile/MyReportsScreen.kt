@@ -1,5 +1,8 @@
 package ec.cityalerta.app.view.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,13 +52,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import ec.cityalerta.app.model.data.reporte.ReportType
-import ec.cityalerta.app.model.data.reporte.ReporteEstado
+import ec.cityalerta.app.view.utils.readBytesFromUri
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 import ec.cityalerta.app.viewmodel.UserReportUi
 
@@ -127,8 +131,8 @@ fun MyReportsScreen(
         EditReportDialog(
             report = report,
             onDismiss = { editingReport = null },
-            onSave = { descripcion, categoria, estado ->
-                viewModel.updateReport(report.id, descripcion, categoria, estado)
+            onSave = { descripcion, categoria, newImageBytes ->
+                viewModel.updateReport(report, descripcion, categoria, newImageBytes)
                 editingReport = null
             }
         )
@@ -243,19 +247,67 @@ private fun MyReportCard(
 private fun EditReportDialog(
     report: UserReportUi,
     onDismiss: () -> Unit,
-    onSave: (String, ReportType, ReporteEstado) -> Unit
+    onSave: (String, ReportType, ByteArray?) -> Unit
 ) {
+    val context = LocalContext.current
     var description by remember(report.id) { mutableStateOf(report.descripcion) }
     var category by remember(report.id) { mutableStateOf(report.categoria) }
-    var status by remember(report.id) { mutableStateOf(report.estado) }
     var categoryExpanded by remember { mutableStateOf(false) }
-    var statusExpanded by remember { mutableStateOf(false) }
+    var previewUri by remember(report.id) { mutableStateOf<Uri?>(null) }
+    var newImageBytes by remember(report.id) { mutableStateOf<ByteArray?>(null) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            previewUri = it
+            newImageBytes = readBytesFromUri(context, it)
+        }
+    }
+
+    val imageModel = previewUri ?: report.imageUrl
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Editar reporte") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFFE9ECEF)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (imageModel != null) {
+                        AsyncImage(
+                            model = imageModel,
+                            contentDescription = "Imagen del reporte",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text("Sin imagen", color = Color(0xFFADB5BD))
+                    }
+                }
+
+                Button(
+                    onClick = { galleryLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (imageModel == null) "Agregar imagen" else "Cambiar imagen")
+                }
+
+                OutlinedTextField(
+                    value = report.estado.name.replace("_", " "),
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
+                    label = { Text("Estado") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 ExposedDropdownMenuBox(
                     expanded = categoryExpanded,
                     onExpandedChange = { categoryExpanded = !categoryExpanded }
@@ -280,30 +332,6 @@ private fun EditReportDialog(
                     }
                 }
 
-                ExposedDropdownMenuBox(
-                    expanded = statusExpanded,
-                    onExpandedChange = { statusExpanded = !statusExpanded }
-                ) {
-                    OutlinedTextField(
-                        value = status.name.replace("_", " "),
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Estado") },
-                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
-                    )
-                    ExposedDropdownMenu(expanded = statusExpanded, onDismissRequest = { statusExpanded = false }) {
-                        ReporteEstado.entries.forEach { item ->
-                            DropdownMenuItem(
-                                text = { Text(item.name.replace("_", " ")) },
-                                onClick = {
-                                    status = item
-                                    statusExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
@@ -313,7 +341,7 @@ private fun EditReportDialog(
             }
         },
         confirmButton = {
-            Button(onClick = { onSave(description, category, status) }) { Text("Guardar") }
+            Button(onClick = { onSave(description, category, newImageBytes) }) { Text("Guardar") }
         },
         dismissButton = {
             Button(onClick = onDismiss) { Text("Cancelar") }
