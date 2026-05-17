@@ -73,4 +73,32 @@ class AuthErrorMapperTest {
         assertFalse(result.isEmailUnconfirmed)
         assertEquals("unexpected backend failure", result.message)
     }
+
+    @Test
+    fun map_detectsSignupDisabled() {
+        val result = AuthErrorMapper.map(Exception("signup is disabled"))
+
+        assertTrue(result.message.contains("registro no esta disponible"))
+    }
+
+    @Test
+    fun map_detectsSmtpFailure() {
+        val result = AuthErrorMapper.map(Exception("smtp mail fail"))
+
+        assertTrue(result.message.contains("SMTP"))
+    }
+
+    @Test
+    fun map_detectsInvalidRedirect() {
+        val result = AuthErrorMapper.map(Exception("redirect url invalid"))
+
+        assertTrue(result.message.contains("Redirect URLs"))
+    }
+
+    @Test
+    fun map_returnsDefaultWhenMessageMissing() {
+        val result = AuthErrorMapper.map(Exception())
+
+        assertEquals("No se pudo completar la operacion. Intenta de nuevo.", result.message)
+    }
 }

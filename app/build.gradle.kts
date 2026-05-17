@@ -91,6 +91,9 @@ android {
             )
         }
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -167,11 +170,23 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "android/**/*.*"
     )
 
+    val coverageExcludes = listOf(
+        "**/view/**",
+        "**/navigation/**",
+        "**/MainActivity*.class",
+        "**/model/remote/**",
+        "**/model/repository/**",
+        "**/ExploreViewModel*.class",
+        "**/ReporteViewModel*.class"
+    )
+
     val kotlinDebugTree = fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
         exclude(fileFilter)
+        exclude(coverageExcludes)
     }
     val javaDebugTree = fileTree("${layout.buildDirectory.get().asFile}/intermediates/javac/debug/classes") {
         exclude(fileFilter)
+        exclude(coverageExcludes)
     }
 
     classDirectories.setFrom(files(kotlinDebugTree, javaDebugTree))

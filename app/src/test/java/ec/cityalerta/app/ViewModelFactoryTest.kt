@@ -4,10 +4,19 @@ import android.content.Context
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.viewmodel.AppViewModelFactory
 import ec.cityalerta.app.viewmodel.AuthViewModel
+import ec.cityalerta.app.viewmodel.ExploreViewModel
+import ec.cityalerta.app.viewmodel.MapViewModel
+import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
+import ec.cityalerta.app.viewmodel.ReporteViewModel
+import androidx.lifecycle.ViewModel
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Answers
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.mock
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -28,37 +37,61 @@ class ViewModelFactoryTest {
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        factory = AppViewModelFactory(mockAuthRepository, mockContext)
+        val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
+        factory = AppViewModelFactory(mockAuthRepository, context)
     }
 
     @Test
     fun testViewModelFactoryCreation() {
-        // Arrange & Act
-        val viewModelFactory = AppViewModelFactory(mockAuthRepository, mockContext)
-
-        // Assert
+        val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
+        val viewModelFactory = AppViewModelFactory(mockAuthRepository, context)
         assertNotNull(viewModelFactory)
-        assertTrue(viewModelFactory is AppViewModelFactory)
     }
 
     @Test
     fun testCreateAuthViewModel() {
-        // Note: AuthViewModel can be created with minimal dependencies
-        // Other ViewModels require extensive context setup and are better tested with integration tests
-
-        // Arrange & Act
         val authViewModel = factory.create(AuthViewModel::class.java)
-
-        // Assert
         assertNotNull(authViewModel)
-        assertTrue(authViewModel is AuthViewModel)
     }
 
     @Test
+    fun testCreatePasswordRecoveryViewModel() {
+        val viewModel = factory.create(PasswordRecoveryViewModel::class.java)
+        assertNotNull(viewModel)
+    }
+
+    @Test
+    fun testCreateMapViewModel() {
+        val viewModel = factory.create(MapViewModel::class.java)
+        assertNotNull(viewModel)
+    }
+
+    @Test
+    fun testCreateExploreViewModel() {
+        val viewModel = factory.create(ExploreViewModel::class.java)
+        assertNotNull(viewModel)
+    }
+
+    @Test
+    fun testCreateReporteViewModel() {
+        val viewModel = factory.create(ReporteViewModel::class.java)
+        assertNotNull(viewModel)
+    }
+
+    @Test
+    fun testCreateUnknownViewModelThrows() {
+        assertFailsWith<IllegalArgumentException> {
+            factory.create(UnsupportedViewModel::class.java)
+        }
+    }
+
+    private class UnsupportedViewModel : ViewModel()
+
+    @Test
     fun testViewModelFactoryWithDifferentContexts() {
-        // Arrange & Act
-        val factory1 = AppViewModelFactory(mockAuthRepository, mockContext)
-        val factory2 = AppViewModelFactory(mockAuthRepository, mockContext)
+        val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
+        val factory1 = AppViewModelFactory(mockAuthRepository, context)
+        val factory2 = AppViewModelFactory(mockAuthRepository, context)
 
         // Assert
         assertNotNull(factory1)
@@ -69,12 +102,11 @@ class ViewModelFactoryTest {
 
     @Test
     fun testViewModelFactoryInitializesLazyRepositories() {
-        // Arrange & Act
-        val factory = AppViewModelFactory(mockAuthRepository, mockContext)
+        val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
+        val factory = AppViewModelFactory(mockAuthRepository, context)
 
         // Assert - verify factory is properly initialized
         assertNotNull(factory)
-        assertTrue(factory is AppViewModelFactory)
 
         // Factory should have lazy-initialized repositories
         // We verify by creating an AuthViewModel which doesn't depend on them heavily
@@ -91,9 +123,6 @@ class ViewModelFactoryTest {
         // Assert
         assertNotNull(authViewModel1)
         assertNotNull(authViewModel2)
-        assertTrue(authViewModel1 is AuthViewModel)
-        assertTrue(authViewModel2 is AuthViewModel)
-        // Different instances
         assertTrue(authViewModel1 !== authViewModel2)
     }
 
@@ -115,16 +144,12 @@ class ViewModelFactoryTest {
 
     @Test
     fun testViewModelFactoryAcceptsAuthRepositoryContract() {
-        // Arrange
         val repository = mockAuthRepository
-        val context = mockContext
-
-        // Act
+        val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
         val factory = AppViewModelFactory(repository, context)
 
         // Assert
         assertNotNull(factory)
-        assertTrue(factory is AppViewModelFactory)
     }
 
     @Test
@@ -134,22 +159,7 @@ class ViewModelFactoryTest {
 
         // Assert
         assertNotNull(factoryClass)
-        assertTrue(factoryClass.simpleName == "AppViewModelFactory")
-    }
-
-    @Test
-    fun testAuthViewModelCreationConsistency() {
-        // Test that AuthViewModel creation is consistent
-
-        // Arrange & Act
-        val vm1 = factory.create(AuthViewModel::class.java)
-        val vm2 = factory.create(AuthViewModel::class.java)
-
-        // Assert - Both should be valid AuthViewModel instances
-        assertTrue(vm1 is AuthViewModel)
-        assertTrue(vm2 is AuthViewModel)
-        assertNotNull(vm1)
-        assertNotNull(vm2)
+        assertEquals("AppViewModelFactory", factoryClass.simpleName)
     }
 }
 

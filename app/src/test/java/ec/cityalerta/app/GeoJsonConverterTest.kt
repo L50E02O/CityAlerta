@@ -110,6 +110,24 @@ class GeoJsonConverterTest {
     }
 
     @Test
+    fun extractPolygonPoints_skipsInvalidCoordinates() {
+        val geometry = Geometry(
+            type = "Polygon",
+            coordinates = listOf(
+                listOf(
+                    listOf(-80.0),
+                    listOf(-80.0, -1.0),
+                    listOf(-79.0, -1.0)
+                )
+            )
+        )
+
+        val points = GeoJsonConverter.extractPolygonPoints(geometry)
+
+        assertEquals(2, points.size)
+    }
+
+    @Test
     fun geoJsonPolygonToGoogleMapsPolygon_validGeometry() {
         val geometry = Geometry(
             type = "Polygon",
