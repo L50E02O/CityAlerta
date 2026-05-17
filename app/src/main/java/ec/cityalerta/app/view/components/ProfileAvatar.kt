@@ -5,6 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,10 +28,14 @@ fun ProfileAvatar(
         modifier = modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(Color.LightGray)
+            .background(Color(0xFF3B5B7A))
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Text(initials, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        if (initials.isBlank()) {
+            Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = Color.White)
+        } else {
+            Text(initials, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }

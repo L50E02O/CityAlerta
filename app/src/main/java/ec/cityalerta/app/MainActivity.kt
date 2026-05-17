@@ -16,6 +16,8 @@ import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.handleDeeplinks
+import ec.cityalerta.app.theme.ThemeManager
+import ec.cityalerta.app.theme.CityAlertaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,10 +56,13 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            AppNavigation(
-                startDestination = startDestination,
-                authInfoMessage = authInfoMessage
-            )
+            val themeManager = androidx.compose.runtime.remember { ThemeManager(this@MainActivity) }
+            CityAlertaTheme(themeManager = themeManager) {
+                AppNavigation(
+                    startDestination = startDestination,
+                    authInfoMessage = authInfoMessage
+                )
+            }
         }
     }
 

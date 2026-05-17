@@ -49,6 +49,7 @@ import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.view.style.ReportUiDimens
 import ec.cityalerta.app.view.style.ReportUiShapes
 import ec.cityalerta.app.viewmodel.ReporteViewModel
+import ec.cityalerta.app.viewmodel.ProfileViewModel
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,11 +57,17 @@ import java.io.File
 fun PhotoScreen(
     navController: NavController,
     viewModel: ReporteViewModel,
+    profileViewModel: ProfileViewModel,
     onPhotoCaptured: () -> Unit
 ) {
     val context = LocalContext.current
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var tempUri by remember { mutableStateOf<Uri?>(null) }
+    val profileState = profileViewModel.state.collectAsState().value
+
+    LaunchedEffect(Unit) {
+        profileViewModel.loadSummary()
+    }
 
     fun handleSelectedImage(uri: Uri) {
         photoUri = uri
@@ -111,7 +118,7 @@ fun PhotoScreen(
                     }
                 },
                 actions = {
-                    ProfileAvatar(initials = "US", onClick = { navController.navigate(Routes.Profile.route) })
+                    ProfileAvatar(initials = profileState.initials, onClick = { navController.navigate(Routes.Profile.route) })
                 }
             )
         }

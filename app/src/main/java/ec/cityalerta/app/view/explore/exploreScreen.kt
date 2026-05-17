@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,24 +27,32 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
+import ec.cityalerta.app.viewmodel.ProfileViewModel
 import androidx.navigation.NavController
 import ec.cityalerta.app.navigation.Routes
 
 @Composable
 fun ExploreScreen(
     navController: NavController,
-    viewModel: ExploreViewModel = viewModel()
+    viewModel: ExploreViewModel = viewModel(),
+    profileViewModel: ProfileViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val profileState by profileViewModel.state.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadData()
+    }
+
+    LaunchedEffect(Unit) {
+        profileViewModel.loadSummary()
     }
 
     Scaffold(
         topBar = {
             ExploreHeader(
                 city = state.ciudadNombre,
+                profileInitials = profileState.initials,
                 onSearchClick = { /* No functionality yet */ },
                 onProfileClick = { navController.navigate(Routes.Profile.route) }
             )

@@ -70,6 +70,17 @@ class ReporteRepository : CrudRepositoryContract<Reporte, ReporteCreateDto, Repo
         Unit
     }
 
+    suspend fun getReporteByUsuarioId(usuarioId: String): Result<List<Reporte>> = safeSupabaseCall {
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("usuario_id", usuarioId)
+                }
+            }
+            .decodeList<JsonObject>()
+            .map { it.toReporte() }
+    }
+
     suspend fun getReporteByCiudadId(ciudadId: String): Result<List<Reporte>> = safeSupabaseCall {
         SupabaseProvider.client.from(tableName)
             .select(Columns.ALL) {

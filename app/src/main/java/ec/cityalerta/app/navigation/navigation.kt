@@ -12,6 +12,7 @@ import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
+import ec.cityalerta.app.viewmodel.ProfileViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -41,6 +42,8 @@ import androidx.navigation.NavController
 import ec.cityalerta.app.view.camera.PhotoScreen
 import ec.cityalerta.app.view.reporte.ReporteScreen
 import ec.cityalerta.app.viewmodel.ReporteViewModel
+import ec.cityalerta.app.view.profile.MyReportsScreen
+import ec.cityalerta.app.view.profile.ProfileDashboardScreen
 
 @Composable
 fun AppNavigation(
@@ -61,6 +64,10 @@ fun AppNavigation(
     )
 
     val exploreViewModel: ExploreViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
+
+    val profileViewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
     
@@ -93,10 +100,10 @@ fun AppNavigation(
                 RecoverPasswordScreen(navController, recoveryViewModel)
             }
             composable(Routes.Home.route) {
-                ExploreScreen(navController, exploreViewModel)
+                ExploreScreen(navController, exploreViewModel, profileViewModel)
             }
             composable(Routes.Explore.route){
-                ExploreScreen(navController, exploreViewModel)
+                ExploreScreen(navController, exploreViewModel, profileViewModel)
             }
 
 
@@ -104,6 +111,7 @@ fun AppNavigation(
                 PhotoScreen(
                     navController = navController,
                     viewModel = reporteViewModel,
+                    profileViewModel = profileViewModel,
                     onPhotoCaptured = {
                         navController.navigate(Routes.ReporteForm.route)
                     }
@@ -125,10 +133,13 @@ fun AppNavigation(
 
             composable(Routes.Map.route) { backStackEntry ->
                 val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
-                MapScreen(navController, ciudadId, mapViewModel)
+                MapScreen(navController, ciudadId, mapViewModel, profileViewModel)
             }
             composable(Routes.Profile.route) {
-                ec.cityalerta.app.view.profile.ProfileScreen(navController)
+                ProfileDashboardScreen(navController, profileViewModel)
+            }
+            composable(Routes.MyReports.route) {
+                MyReportsScreen(navController, profileViewModel)
             }
         }
     }

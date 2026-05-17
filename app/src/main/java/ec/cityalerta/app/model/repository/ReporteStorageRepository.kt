@@ -26,4 +26,12 @@ class ReporteStorageRepository {
         SupabaseProvider.client.storage[bucketName]
             .createSignedUrl(imageUUID, expirationDuration)
     }
+
+    suspend fun deleteReportImage(
+        imageUUID: String
+    ): Result<Unit> = safeSupabaseCall {
+        SupabaseProvider.client.storage[bucketName]
+            .delete(imageUUID)
+        Unit
+    }
 }
