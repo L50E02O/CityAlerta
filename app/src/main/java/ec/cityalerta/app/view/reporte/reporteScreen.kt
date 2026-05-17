@@ -13,23 +13,37 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.navigation.NavController
+import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.view.components.ProfileAvatar
+import ec.cityalerta.app.viewmodel.ProfileViewModel
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,11 +62,19 @@ import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.view.style.ReportUiDimens
 import ec.cityalerta.app.view.style.ReportUiShapes
 
-@Composable()
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun ReporteScreen(
+    navController: NavController,
     viewModel: ReporteViewModel,
-    onReportSent: () ->Unit
-    ) {
+    profileViewModel: ProfileViewModel,
+    onReportSent: () -> Unit
+) {
+    val profileState by profileViewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        profileViewModel.loadSummaryIfNeeded()
+    }
     val descripcion by viewModel.descripcion.collectAsState()
     val categoria by viewModel.categoria.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -79,9 +101,32 @@ fun ReporteScreen(
         position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
     }
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                modifier = Modifier.height(56.dp),
+                windowInsets = WindowInsets(0, 0, 0, 0),
+                title = { Text("Nuevo reporte") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atras")
+                    }
+                },
+                actions = {
+                    ProfileAvatar(
+                        imageUrl = profileState.profileImageUrl,
+                        isLoading = profileState.isUploadingImage,
+                        onClick = { navController.navigate(Routes.Profile.route) }
+                    )
+                }
+            )
+        },
+        containerColor = ReportUiColors.ScreenBackground
+    ) { padding ->
     Column(
         modifier = Modifier
             .background(ReportUiColors.ScreenBackground)
+            .padding(padding)
             .padding(ReportUiDimens.ScreenPadding),
         verticalArrangement = Arrangement.spacedBy(ReportUiDimens.SectionSpacing)
     ) {
@@ -180,8 +225,9 @@ fun ReporteScreen(
             )
         }
     }
+    }
 
-    androidx.compose.runtime.LaunchedEffect(userLocation) {
+    LaunchedEffect(userLocation) {
         userLocation?.let { location ->
             cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 16f)
         }

@@ -7,6 +7,12 @@ import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.repository.MapRepository
 import ec.cityalerta.app.model.repository.LocationRepository
+import ec.cityalerta.app.model.repository.BarrioRepository
+import ec.cityalerta.app.model.repository.CiudadRepository
+import ec.cityalerta.app.model.repository.PerfilImagenRepository
+import ec.cityalerta.app.model.repository.PerfilRepository
+import ec.cityalerta.app.model.repository.PerfilResumenRepository
+import ec.cityalerta.app.model.repository.PerfilStorageRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
@@ -26,6 +32,22 @@ class AppViewModelFactory(
         ReporteRepository()
     }
 
+    private val ciudadRepository by lazy {
+        CiudadRepository()
+    }
+
+    private val barrioRepository by lazy {
+        BarrioRepository()
+    }
+
+    private val perfilRepository by lazy {
+        PerfilRepository()
+    }
+
+    private val perfilResumenRepository by lazy {
+        PerfilResumenRepository()
+    }
+
     private val ubicacionReporte by lazy {
         ReporteUbicacionRepository()
     }
@@ -34,8 +56,16 @@ class AppViewModelFactory(
         ReporteImagenRepository()
     }
 
+    private val imagenPerfil by lazy {
+        PerfilImagenRepository()
+    }
+
     private val storageReporte by lazy {
         ReporteStorageRepository()
+    }
+
+    private val storagePerfil by lazy {
+        PerfilStorageRepository()
     }
 
     private val locationProvider by lazy {
@@ -64,6 +94,22 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(ExploreViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
                 ExploreViewModel() as T
+            }
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                ProfileViewModel(
+                    authRepository,
+                    perfilRepository,
+                    perfilResumenRepository,
+                    ciudadRepository,
+                    reporteRepository,
+                    imagenReporte,
+                    imagenPerfil,
+                    ubicacionReporte,
+                    storageReporte,
+                    storagePerfil,
+                    barrioRepository
+                ) as T
             }
             modelClass.isAssignableFrom(ReporteViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")

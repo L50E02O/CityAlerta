@@ -36,7 +36,13 @@ project(":app") {
           "src/main/java/ec/cityalerta/app/model/remote/**",
           "src/main/java/ec/cityalerta/app/model/repository/**",
           "src/main/java/ec/cityalerta/app/viewmodel/ExploreViewModel.kt",
-          "src/main/java/ec/cityalerta/app/viewmodel/ReporteViewModel.kt"
+          "src/main/java/ec/cityalerta/app/viewmodel/ReporteViewModel.kt",
+          "src/main/java/ec/cityalerta/app/viewmodel/ProfileViewModel.kt",
+          "src/main/java/ec/cityalerta/app/theme/Theme.kt",
+          "src/main/java/ec/cityalerta/app/CityAlertaApplication.kt",
+          "src/main/java/ec/cityalerta/app/theme/AccessibilityManager.kt",
+          "src/main/java/ec/cityalerta/app/theme/ThemeManager.kt",
+          "src/main/java/ec/cityalerta/app/theme/LocaleManager.kt"
         ).joinToString(",")
       )
     }

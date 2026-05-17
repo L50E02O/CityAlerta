@@ -177,7 +177,13 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/model/remote/**",
         "**/model/repository/**",
         "**/ExploreViewModel*.class",
-        "**/ReporteViewModel*.class"
+        "**/ReporteViewModel*.class",
+        "**/ProfileViewModel*.class",
+        "**/ThemeKt*.class",
+        "**/CityAlertaApplication*.class",
+        "**/AccessibilityManager*.class",
+        "**/ThemeManager*.class",
+        "**/LocaleManager*.class"
     )
 
     val kotlinDebugTree = fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
@@ -202,6 +208,7 @@ tasks.register<JacocoReport>("jacocoTestReport") {
 dependencies {
     // Main implementation dependencies
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

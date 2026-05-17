@@ -14,6 +14,8 @@ class FakeAuthRepository(
     var logOutResult: Result<Unit> = Result.success(Unit),
     var resendSignupConfirmationResult: Result<Unit> = Result.success(Unit),
     var updatePasswordResult: Result<Unit> = Result.success(Unit),
+    var updateEmailResult: Result<Unit> = Result.success(Unit),
+    var deleteAccountResult: Result<Unit> = Result.success(Unit),
     var getUserIdResult: Result<String> = Result.success("user-1"),
     var getUserEmailResult: Result<String> = Result.success("test@example.com"),
     var getCiudadIdResult: Result<String> = Result.success("ciudad-1")
@@ -24,6 +26,8 @@ class FakeAuthRepository(
     var lastResetEmail: String? = null
     var lastResetPassword: String? = null
     var lastCiudadNombre: String? = null
+    var lastUpdateEmail: String? = null
+    var deleteAccountCalls: Int = 0
 
     override suspend fun signUp(email: String, password: String, ciudadId: String) = signUpResult
 
@@ -46,6 +50,16 @@ class FakeAuthRepository(
     override suspend fun resendSignupConfirmation(email: String) = resendSignupConfirmationResult
 
     override suspend fun updatePassword(newPassword: String) = updatePasswordResult
+
+    override suspend fun updateEmail(newEmail: String): Result<Unit> {
+        lastUpdateEmail = newEmail
+        return updateEmailResult
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        deleteAccountCalls++
+        return deleteAccountResult
+    }
 
     override suspend fun getUserId() = getUserIdResult
 
