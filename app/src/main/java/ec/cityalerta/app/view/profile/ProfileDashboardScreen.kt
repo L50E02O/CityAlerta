@@ -9,9 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccessibilityNew
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.components.ProfileAvatar
+import ec.cityalerta.app.view.profile.components.SettingsNavigationRow
 import ec.cityalerta.app.view.utils.rememberProfileImagePicker
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 
@@ -84,6 +90,7 @@ fun ProfileDashboardScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(horizontal = 20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -101,8 +108,17 @@ fun ProfileDashboardScreen(
                             color = Color(0xFF6C757D)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(state.fullName.ifBlank { "Usuario" }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1B2633))
-                        Text(state.cityName.ifBlank { "Ciudad no disponible" }, fontSize = 14.sp, color = Color(0xFF6C757D))
+                        Text(
+                            state.fullName.ifBlank { "Usuario" },
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1B2633)
+                        )
+                        Text(
+                            state.cityName.ifBlank { "Ciudad no disponible" },
+                            fontSize = 14.sp,
+                            color = Color(0xFF6C757D)
+                        )
 
                         Spacer(modifier = Modifier.height(20.dp))
                         Row(
@@ -116,7 +132,10 @@ fun ProfileDashboardScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.White)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
                                     Text(state.totalReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                                     Text("REPORTES", fontSize = 12.sp, color = Color.Gray)
                                 }
@@ -126,7 +145,10 @@ fun ProfileDashboardScreen(
                                 shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.White)
                             ) {
-                                Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
                                     Text(state.resolvedReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                                     Text("RESUELTOS", fontSize = 12.sp, color = Color.Gray)
                                 }
@@ -134,6 +156,31 @@ fun ProfileDashboardScreen(
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            SettingsNavigationRow(
+                                icon = Icons.Default.Settings,
+                                title = "Configuracion",
+                                subtitle = "Perfil, idioma y cuenta",
+                                onClick = { navController.navigate(Routes.Settings.route) }
+                            )
+                            SettingsNavigationRow(
+                                icon = Icons.Default.Palette,
+                                title = "Apariencia",
+                                subtitle = "Tema claro u oscuro",
+                                onClick = { navController.navigate(Routes.Appearance.route) }
+                            )
+                            SettingsNavigationRow(
+                                icon = Icons.Default.AccessibilityNew,
+                                title = "Accesibilidad",
+                                subtitle = "Texto y contraste",
+                                onClick = { navController.navigate(Routes.Accessibility.route) }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -158,6 +205,7 @@ fun ProfileDashboardScreen(
                                 Text("Cerrar sesion", color = Color.White)
                             }
                         }
+                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
             }

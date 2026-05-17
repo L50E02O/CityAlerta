@@ -16,6 +16,7 @@ import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.handleDeeplinks
+import ec.cityalerta.app.theme.AccessibilityManager
 import ec.cityalerta.app.theme.ThemeManager
 import ec.cityalerta.app.theme.CityAlertaTheme
 
@@ -57,7 +58,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeManager = androidx.compose.runtime.remember { ThemeManager(this@MainActivity) }
-            CityAlertaTheme(themeManager = themeManager) {
+            val accessibilityManager = androidx.compose.runtime.remember { AccessibilityManager(this@MainActivity) }
+            CityAlertaTheme(
+                themeManager = themeManager,
+                accessibilityManager = accessibilityManager
+            ) {
                 AppNavigation(
                     startDestination = startDestination,
                     authInfoMessage = authInfoMessage

@@ -6,12 +6,19 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 
 val LocalThemeManager = staticCompositionLocalOf<ThemeManager> {
     error("No ThemeManager provided")
+}
+
+val LocalAccessibilityManager = staticCompositionLocalOf<AccessibilityManager> {
+    error("No AccessibilityManager provided")
 }
 
 private val LightColors = lightColorScheme(
@@ -29,13 +36,42 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun CityAlertaTheme(themeManager: ThemeManager, content: @Composable () -> Unit) {
-    // Rely on system dark flag, which will reflect AppCompatDelegate night mode when set.
-    val isDark = isSystemInDarkTheme()
+fun CityAlertaTheme(
+    themeManager: ThemeManager,
+    accessibilityManager: AccessibilityManager,
+    content: @Composable () -> Unit
+) {
+    val themePreference by themeManager.themeState
+    val textScale by accessibilityManager.textScaleState
+    val highContrast by accessibilityManager.highContrastState
 
-    val colors: ColorScheme = if (isDark) DarkColors else LightColors
+    val isDark = when (themePreference) {
+        ThemePreference.LIGHT -> false
+        ThemePreference.DARK -> true
+        ThemePreference.SYSTEM -> isSystemInDarkTheme()
+    }
 
-    CompositionLocalProvider(LocalThemeManager provides themeManager) {
+    val colors: ColorScheme = when {
+        highContrast && isDark -> DarkColors.copy(
+            primary = Color(0xFF5B8FC7),
+            background = Color(0xFF000000),
+            surface = Color(0xFF1A1A1A)
+        )
+        highContrast && !isDark -> LightColors.copy(
+            primary = Color(0xFF1E4D7B),
+            background = Color(0xFFFFFFFF),
+            surface = Color(0xFFF0F0F0)
+        )
+        isDark -> DarkColors
+        else -> LightColors
+    }
+
+    val density = LocalDensity.current
+    CompositionLocalProvider(
+        LocalThemeManager provides themeManager,
+        LocalAccessibilityManager provides accessibilityManager,
+        LocalDensity provides Density(density.density, textScale)
+    ) {
         MaterialTheme(
             colorScheme = colors,
             content = content

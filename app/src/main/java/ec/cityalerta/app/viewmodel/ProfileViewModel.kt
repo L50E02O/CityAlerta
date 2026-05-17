@@ -372,6 +372,10 @@ class ProfileViewModel(
         return Triple(imageUrl, imagen.id, imagen.storage_uuid)
     }
 
+    suspend fun getUserEmail(): String? {
+        return authRepository.getUserEmail().getOrNull()
+    }
+
     fun logOut(onSuccess: () -> Unit) {
         viewModelScope.launch {
             authRepository.logOut()

@@ -42,8 +42,11 @@ import androidx.navigation.NavController
 import ec.cityalerta.app.view.camera.PhotoScreen
 import ec.cityalerta.app.view.reporte.ReporteScreen
 import ec.cityalerta.app.viewmodel.ReporteViewModel
+import ec.cityalerta.app.view.profile.AccessibilityScreen
+import ec.cityalerta.app.view.profile.AppearanceScreen
 import ec.cityalerta.app.view.profile.MyReportsScreen
 import ec.cityalerta.app.view.profile.ProfileDashboardScreen
+import ec.cityalerta.app.view.profile.SettingsScreen
 
 @Composable
 fun AppNavigation(
@@ -142,6 +145,15 @@ fun AppNavigation(
             }
             composable(Routes.MyReports.route) {
                 MyReportsScreen(navController, profileViewModel)
+            }
+            composable(Routes.Settings.route) {
+                SettingsScreen(navController, profileViewModel)
+            }
+            composable(Routes.Appearance.route) {
+                AppearanceScreen(navController)
+            }
+            composable(Routes.Accessibility.route) {
+                AccessibilityScreen(navController)
             }
         }
     }
