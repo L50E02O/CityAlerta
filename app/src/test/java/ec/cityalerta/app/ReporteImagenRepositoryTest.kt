@@ -1,5 +1,6 @@
 package ec.cityalerta.app
 
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagen
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
@@ -171,5 +172,10 @@ class ReporteImagenRepositoryTest {
     fun testReporteImagenRepositoryInitialization() {
         assertNotNull(repository)
         assertTrue(repository is ReporteImagenRepository)
+    }
+
+    @Test
+    fun testReporteImagenRepositoryImplementaContratoCrud() {
+        assertTrue(repository is CrudRepositoryContract<*, *, *>)
     }
 }
