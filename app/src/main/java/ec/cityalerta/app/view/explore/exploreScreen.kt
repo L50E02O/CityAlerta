@@ -30,6 +30,8 @@ import ec.cityalerta.app.viewmodel.ExploreViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 import androidx.navigation.NavController
 import ec.cityalerta.app.navigation.Routes
+import androidx.compose.ui.res.stringResource
+import ec.cityalerta.app.R
 
 @Composable
 fun ExploreScreen(
@@ -65,14 +67,14 @@ fun ExploreScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                text = "Explorar",
+                text = stringResource(R.string.explore_title),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1B2633)
             )
             
             Text(
-                text = "Mantente informado sobre lo que sucede en tiempo real en tu comunidad.",
+                text = stringResource(R.string.explore_subtitle),
                 fontSize = 14.sp,
                 color = Color(0xFF6C757D),
                 modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)

@@ -1,0 +1,94 @@
+<resources>
+    <string name="app_name">CityAlerta</string>
+    <string name="home_welcome">Welcome</string>
+
+    <string name="nav_explore">EXPLORE</string>
+    <string name="nav_report">REPORT</string>
+    <string name="nav_map">MAP</string>
+
+    <string name="auth_login_title">Sign in</string>
+    <string name="auth_register_title">Sign up</string>
+    <string name="auth_login_button">Sign in</string>
+    <string name="auth_register_button">Sign up</string>
+    <string name="auth_no_account">Don\'t have an account? Sign up</string>
+    <string name="auth_has_account">Already have an account? Sign in</string>
+    <string name="auth_forgot_password">Forgot your password?</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_email_invalid">Invalid email address</string>
+    <string name="auth_password_min_length">Password must be at least 8 characters</string>
+    <string name="auth_resend_activation">Resend activation email</string>
+    <string name="auth_city_manta_missing">City of Manta was not found</string>
+    <string name="auth_city_load_error">Failed to load cities</string>
+
+    <string name="profile_title">Profile</string>
+    <string name="profile_tap_photo">Tap the photo to change it</string>
+    <string name="profile_user_fallback">User</string>
+    <string name="profile_city_unavailable">City unavailable</string>
+    <string name="profile_reports">REPORTS</string>
+    <string name="profile_resolved">RESOLVED</string>
+    <string name="profile_view_reports">View my reports</string>
+    <string name="profile_logout">Sign out</string>
+    <string name="profile_active_member">ACTIVE MEMBER</string>
+    <string name="profile_settings_config">Settings</string>
+    <string name="profile_settings_config_sub">Profile, language and account</string>
+    <string name="profile_settings_appearance">Appearance</string>
+    <string name="profile_settings_appearance_sub">Light or dark theme</string>
+    <string name="profile_settings_accessibility">Accessibility</string>
+    <string name="profile_settings_accessibility_sub">Text and contrast</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Manage your profile and account security preferences.</string>
+    <string name="settings_full_name_label">Full name</string>
+    <string name="settings_email_label">Current email</string>
+    <string name="settings_location_label">Location</string>
+    <string name="settings_language_title">Change language</string>
+    <string name="settings_language_spanish">Spanish</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_system">Device language</string>
+    <string name="settings_delete_title">Delete data</string>
+    <string name="settings_delete_desc">This action is permanent and will delete your report history and settings.</string>
+    <string name="settings_delete_button">Delete account</string>
+    <string name="settings_not_available">Not available</string>
+    <string name="settings_edit_name_title">Edit name</string>
+    <string name="settings_edit_name_hint">Full name</string>
+    <string name="settings_edit_email_title">Change email</string>
+    <string name="settings_edit_email_hint">New email address</string>
+    <string name="settings_edit_email_info">We will send a confirmation email to the new address, just like during registration.</string>
+    <string name="settings_language_dialog_title">Language</string>
+    <string name="settings_delete_dialog_title">Delete account</string>
+    <string name="settings_delete_dialog_message">Your session will be closed. Contact support to permanently delete server data.</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_confirm">Confirm</string>
+    <string name="settings_close">Close</string>
+    <string name="settings_name_empty">Name cannot be empty</string>
+    <string name="settings_name_updated">Name updated successfully</string>
+    <string name="settings_email_updated">Email updated. Check your inbox to confirm the change.</string>
+    <string name="settings_email_same">The new email must be different from the current one</string>
+    <string name="settings_email_update_error">Could not update email</string>
+    <string name="settings_name_update_error">Could not update name</string>
+    <string name="settings_language_changed">Language updated</string>
+
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_subtitle">Choose the app theme.</string>
+    <string name="appearance_light">Light Mode</string>
+    <string name="appearance_dark">Dark Mode</string>
+    <string name="appearance_system">System Default</string>
+    <string name="appearance_system_desc">Automatically match your device system theme.</string>
+
+    <string name="accessibility_title">Accessibility</string>
+    <string name="accessibility_section_visual">Display</string>
+    <string name="accessibility_text_size">Text size</string>
+    <string name="accessibility_text_size_hint">Drag to adjust reading size</string>
+    <string name="accessibility_section_assist">Assistance</string>
+    <string name="accessibility_high_contrast">High contrast</string>
+    <string name="accessibility_high_contrast_desc">Improves readability with stronger colors.</string>
+
+    <string name="explore_location_label">LOCATION</string>
+    <string name="explore_title">Explore</string>
+    <string name="explore_subtitle">Stay informed about what is happening in your community in real time.</string>
+    <string name="explore_loading_city">Loading...</string>
+
+    <string name="back">Back</string>
+</resources>

@@ -32,7 +32,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import ec.cityalerta.app.R
 import ec.cityalerta.app.theme.AccessibilityManager
 import ec.cityalerta.app.theme.LocalAccessibilityManager
 import ec.cityalerta.app.view.profile.components.ProfileSettingsScaffold
@@ -44,14 +46,14 @@ fun AccessibilityScreen(navController: NavController) {
     val textScale by accessibilityManager.textScaleState
     val highContrast by accessibilityManager.highContrastState
 
-    ProfileSettingsScaffold(navController = navController, title = "Accesibilidad") {
+    ProfileSettingsScaffold(navController = navController, title = stringResource(R.string.accessibility_title)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            SettingsSectionLabel("Visualizacion")
+            SettingsSectionLabel(stringResource(R.string.accessibility_section_visual))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -73,7 +75,7 @@ fun AccessibilityScreen(navController: NavController) {
                                 .padding(6.dp)
                         )
                         Text(
-                            "Tamano de texto",
+                            stringResource(R.string.accessibility_text_size),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
                             color = Color(0xFF1B2633)
@@ -104,7 +106,7 @@ fun AccessibilityScreen(navController: NavController) {
                     }
 
                     Text(
-                        "Arrastra para ajustar el tamano de lectura",
+                        stringResource(R.string.accessibility_text_size_hint),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp),
@@ -116,7 +118,7 @@ fun AccessibilityScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SettingsSectionLabel("Asistencia")
+            SettingsSectionLabel(stringResource(R.string.accessibility_section_assist))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -131,13 +133,13 @@ fun AccessibilityScreen(navController: NavController) {
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Alto contraste",
+                            stringResource(R.string.accessibility_high_contrast),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
                             color = Color(0xFF1B2633)
                         )
                         Text(
-                            "Mejora la legibilidad con colores mas definidos.",
+                            stringResource(R.string.accessibility_high_contrast_desc),
                             modifier = Modifier.padding(top = 4.dp),
                             fontSize = 13.sp,
                             color = Color(0xFF6C757D)

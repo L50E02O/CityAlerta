@@ -24,7 +24,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import ec.cityalerta.app.R
 import ec.cityalerta.app.theme.LocalThemeManager
 import ec.cityalerta.app.theme.ThemePreference
 import ec.cityalerta.app.view.profile.components.ProfileSettingsScaffold
@@ -35,7 +37,7 @@ fun AppearanceScreen(navController: NavController) {
     val themeManager = LocalThemeManager.current
     val currentTheme by themeManager.themeState
 
-    ProfileSettingsScaffold(navController = navController, title = "Apariencia") {
+    ProfileSettingsScaffold(navController = navController, title = stringResource(R.string.appearance_title)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -43,13 +45,13 @@ fun AppearanceScreen(navController: NavController) {
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
             Text(
-                "Apariencia",
+                stringResource(R.string.appearance_title),
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1B2633)
             )
             Text(
-                "Elige el tema de la aplicacion.",
+                stringResource(R.string.appearance_subtitle),
                 modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
                 fontSize = 14.sp,
                 color = Color(0xFF6C757D)
@@ -60,14 +62,14 @@ fun AppearanceScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ThemePreviewCard(
-                    label = "Light Mode",
+                    label = stringResource(R.string.appearance_light),
                     isSelected = currentTheme == ThemePreference.LIGHT,
                     isDarkPreview = false,
                     onClick = { themeManager.setTheme(ThemePreference.LIGHT) },
                     modifier = Modifier.weight(1f)
                 )
                 ThemePreviewCard(
-                    label = "Dark Mode",
+                    label = stringResource(R.string.appearance_dark),
                     isSelected = currentTheme == ThemePreference.DARK,
                     isDarkPreview = true,
                     onClick = { themeManager.setTheme(ThemePreference.DARK) },
@@ -90,13 +92,13 @@ fun AppearanceScreen(navController: NavController) {
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "System Default",
+                            stringResource(R.string.appearance_system),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
                             color = Color(0xFF1B2633)
                         )
                         Text(
-                            "Ajustar automaticamente al tema del sistema de tu dispositivo.",
+                            stringResource(R.string.appearance_system_desc),
                             modifier = Modifier.padding(top = 4.dp),
                             fontSize = 13.sp,
                             color = Color(0xFF6C757D),

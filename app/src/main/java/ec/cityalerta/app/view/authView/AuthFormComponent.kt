@@ -26,7 +26,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.R
 import ec.cityalerta.app.viewmodel.AuthViewModel
 
 @Composable
@@ -49,7 +51,7 @@ fun AuthFormComponent(
 
         if (email.isNotEmpty() && !isEmailValid) {
             Text(
-                text = "Correo electronico invalido",
+                text = stringResource(R.string.auth_email_invalid),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 4.dp)
@@ -67,7 +69,7 @@ fun AuthFormComponent(
 
         if (password.isNotEmpty() && !isPasswordValid) {
             Text(
-                text = "La contrasena debe tener al menos 8 caracteres",
+                text = stringResource(R.string.auth_password_min_length),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 4.dp)
@@ -100,7 +102,7 @@ fun AuthFormComponent(
                 enabled = !viewModel.uiState.isLoading,
                 modifier = Modifier.padding(top = 4.dp)
             ) {
-                Text("Reenviar correo de activacion")
+                Text(stringResource(R.string.auth_resend_activation))
             }
         }
     }
@@ -115,7 +117,7 @@ private fun EmailField(
     OutlinedTextField(
         value = email,
         onValueChange = onEmailChange,
-        label = { Text(text = "Correo electronico") },
+        label = { Text(text = stringResource(R.string.auth_email_label)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
@@ -139,7 +141,7 @@ private fun PasswordField(
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChange,
-        label = { Text(text = "Contrasena") },
+        label = { Text(text = stringResource(R.string.auth_password_label)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,

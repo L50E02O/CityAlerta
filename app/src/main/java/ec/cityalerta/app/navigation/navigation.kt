@@ -36,7 +36,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import ec.cityalerta.app.R
 import ec.cityalerta.app.view.explore.ExploreScreen
 import androidx.navigation.NavController
 import ec.cityalerta.app.view.camera.PhotoScreen
@@ -198,7 +200,7 @@ fun BottomNavigationBar(navController: NavController) {
                             modifier = Modifier.size(22.dp)
                         )
                     },
-                    label = { Text("EXPLORE", fontSize = 9.sp) },
+                    label = { Text(stringResource(R.string.nav_explore), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
                         selectedTextColor = Color.White,
@@ -232,7 +234,7 @@ fun BottomNavigationBar(navController: NavController) {
                             )
                         }
                     },
-                    label = { Text("REPORT", fontSize = 9.sp) },
+                    label = { Text(stringResource(R.string.nav_report), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
                         selectedTextColor = Color.White,
@@ -257,7 +259,7 @@ fun BottomNavigationBar(navController: NavController) {
                             modifier = Modifier.size(22.dp)
                         )
                     },
-                    label = { Text("MAP", fontSize = 9.sp) },
+                    label = { Text(stringResource(R.string.nav_map), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
                         selectedTextColor = Color.White,

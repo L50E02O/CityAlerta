@@ -11,12 +11,16 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.repository.CiudadRepository
+import androidx.compose.ui.res.stringResource
+import ec.cityalerta.app.R
 
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
     var ciudades by remember { mutableStateOf<List<Ciudad>>(emptyList()) }
     var ciudadError by remember { mutableStateOf<String?>(null) }
     var mantaCiudad by remember { mutableStateOf<Ciudad?>(null) }
+    val mantaMissingMessage = stringResource(R.string.auth_city_manta_missing)
+    val cityLoadErrorMessage = stringResource(R.string.auth_city_load_error)
 
     LaunchedEffect(Unit) {
         val repo = CiudadRepository()
@@ -24,22 +28,22 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
             onSuccess = { result ->
                 ciudades = result
                 mantaCiudad = result.firstOrNull { it.nombre.equals("Manta", ignoreCase = true) }
-                ciudadError = if (mantaCiudad == null) "No se encontró la ciudad de Manta" else null
+                ciudadError = if (mantaCiudad == null) mantaMissingMessage else null
                 mantaCiudad?.let { ciudad ->
                     viewModel.onCiudadSelected(ciudad.nombre, ciudad.id)
                 }
             },
             onFailure = { error ->
-                ciudadError = error.message ?: "Error al cargar ciudades"
+                ciudadError = error.message ?: cityLoadErrorMessage
             }
         )
     }
     AuthScreenScaffold(
         viewModel = viewModel,
         config = AuthScreenConfig(
-            title = "Registrarse",
-            primaryButtonText = "Registrarse",
-            secondaryActionText = "¿Ya tienes cuenta? Inicia sesion",
+            title = stringResource(R.string.auth_register_title),
+            primaryButtonText = stringResource(R.string.auth_register_button),
+            secondaryActionText = stringResource(R.string.auth_has_account),
             showCitySection = true,
             ciudades = ciudades,
             fixedCity = mantaCiudad,

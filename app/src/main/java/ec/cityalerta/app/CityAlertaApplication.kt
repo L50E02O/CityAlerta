@@ -8,6 +8,11 @@ import coil.memory.MemoryCache
 
 class CityAlertaApplication : Application(), ImageLoaderFactory {
 
+    override fun onCreate() {
+        super.onCreate()
+        ec.cityalerta.app.theme.LocaleManager.applyStoredLocale(this)
+    }
+
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)
             .memoryCache {

@@ -10,6 +10,7 @@ import ec.cityalerta.app.model.repository.LocationRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.repository.PerfilImagenRepository
+import ec.cityalerta.app.model.repository.PerfilRepository
 import ec.cityalerta.app.model.repository.PerfilResumenRepository
 import ec.cityalerta.app.model.repository.PerfilStorageRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
@@ -37,6 +38,10 @@ class AppViewModelFactory(
 
     private val barrioRepository by lazy {
         BarrioRepository()
+    }
+
+    private val perfilRepository by lazy {
+        PerfilRepository()
     }
 
     private val perfilResumenRepository by lazy {
@@ -94,6 +99,7 @@ class AppViewModelFactory(
                 @Suppress("UNCHECKED_CAST")
                 ProfileViewModel(
                     authRepository,
+                    perfilRepository,
                     perfilResumenRepository,
                     ciudadRepository,
                     reporteRepository,

@@ -170,6 +170,40 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
+    override suspend fun updateEmail(newEmail: String): Result<Unit> {
+        return try {
+            val session = SupabaseProvider.client.auth.currentSessionOrNull()
+                ?: return Result.failure(Exception("No hay sesion activa"))
+
+            val accessToken = session.accessToken
+            val httpClient = HttpClient(Android)
+            try {
+                val resp: HttpResponse = httpClient.patch("${BuildConfig.SUPABASE_URL.trimEnd('/')}/auth/v1/user") {
+                    header("Authorization", "Bearer $accessToken")
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        buildJsonObject {
+                            put("email", newEmail)
+                        }.toString()
+                    )
+                }
+
+                if (resp.status.value !in 200..299) {
+                    val body = resp.bodyAsText()
+                    return Result.failure(mapAuthException(Exception(parseAuthError(body, resp.status.value))))
+                }
+            } finally {
+                httpClient.close()
+            }
+
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(mapAuthException(e))
+        }
+    }
+
     override suspend fun updatePassword(newPassword: String): Result<Unit> {
         return try {
             val session = SupabaseProvider.client.auth.currentSessionOrNull()
@@ -271,6 +305,22 @@ class AuthRepository : AuthRepositoryContract {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun parseAuthError(body: String, statusCode: Int): String {
+        val fromJson = runCatching {
+            Json.parseToJsonElement(body)
+                .jsonObject["msg"]
+                ?.jsonPrimitive
+                ?.content
+                ?: Json.parseToJsonElement(body)
+                    .jsonObject["error_description"]
+                    ?.jsonPrimitive
+                    ?.content
+        }.getOrNull()
+
+        return fromJson?.takeIf { it.isNotBlank() }
+            ?: "No se pudo completar la operacion ($statusCode)"
     }
 
     private fun mapAuthException(exception: Exception): Exception {

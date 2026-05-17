@@ -21,6 +21,10 @@ val LocalAccessibilityManager = staticCompositionLocalOf<AccessibilityManager> {
     error("No AccessibilityManager provided")
 }
 
+val LocalLocaleManager = staticCompositionLocalOf<LocaleManager> {
+    error("No LocaleManager provided")
+}
+
 private val LightColors = lightColorScheme(
     primary = Color(0xFF3B5B7A),
     onPrimary = Color.White,
@@ -39,6 +43,7 @@ private val DarkColors = darkColorScheme(
 fun CityAlertaTheme(
     themeManager: ThemeManager,
     accessibilityManager: AccessibilityManager,
+    localeManager: LocaleManager,
     content: @Composable () -> Unit
 ) {
     val themePreference by themeManager.themeState
@@ -70,6 +75,7 @@ fun CityAlertaTheme(
     CompositionLocalProvider(
         LocalThemeManager provides themeManager,
         LocalAccessibilityManager provides accessibilityManager,
+        LocalLocaleManager provides localeManager,
         LocalDensity provides Density(density.density, textScale)
     ) {
         MaterialTheme(

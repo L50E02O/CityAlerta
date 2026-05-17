@@ -8,6 +8,7 @@ interface AuthRepositoryContract {
     suspend fun resetPasswordByEmail(email: String, newPassword: String): Result<Unit>
     suspend fun resendSignupConfirmation(email: String): Result<Unit>
     suspend fun updatePassword(newPassword: String): Result<Unit>
+    suspend fun updateEmail(newEmail: String): Result<Unit>
     suspend fun getUserId(): Result<String>
     suspend fun getUserEmail(): Result<String>
     suspend fun getCiudadId(): Result<String>

@@ -1,5 +1,7 @@
 package ec.cityalerta.app.view.profile
 
+import android.app.Activity
+import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
@@ -20,7 +23,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,15 +40,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import ec.cityalerta.app.R
 import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.theme.AppLanguage
+import ec.cityalerta.app.theme.LocalLocaleManager
 import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.profile.components.ProfileSettingsScaffold
 import ec.cityalerta.app.view.profile.components.SettingsEditIcon
 import ec.cityalerta.app.view.profile.components.SettingsInfoField
+import ec.cityalerta.app.view.profile.components.LanguagePickerSheet
 import ec.cityalerta.app.view.profile.components.SettingsNavigationRow
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
@@ -53,19 +66,53 @@ fun SettingsScreen(
     viewModel: ProfileViewModel
 ) {
     val state by viewModel.state.collectAsState()
+    val localeManager = LocalLocaleManager.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
     var userEmail by remember { mutableStateOf("") }
+    var showNameDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var selectedLanguage by remember { mutableStateOf("Espanol") }
+    var editName by remember { mutableStateOf("") }
+    var editEmail by remember { mutableStateOf("") }
+    var emailFieldError by remember { mutableStateOf<String?>(null) }
+    var pendingNameSave by remember { mutableStateOf(false) }
+    var pendingEmailSave by remember { mutableStateOf(false) }
+
+    val nameEmptyMessage = stringResource(R.string.settings_name_empty)
+    val nameUpdatedMessage = stringResource(R.string.settings_name_updated)
+    val nameUpdateErrorMessage = stringResource(R.string.settings_name_update_error)
+    val emailInvalidMessage = stringResource(R.string.auth_email_invalid)
+    val emailSameMessage = stringResource(R.string.settings_email_same)
+    val emailUpdatedMessage = stringResource(R.string.settings_email_updated)
+    val emailUpdateErrorMessage = stringResource(R.string.settings_email_update_error)
+
+    val currentLanguage = localeManager.languageState.value
+    val languageSubtitle = when (currentLanguage) {
+        AppLanguage.SPANISH -> stringResource(R.string.settings_language_spanish)
+        AppLanguage.ENGLISH -> stringResource(R.string.settings_language_english)
+        AppLanguage.SYSTEM -> stringResource(R.string.settings_language_system)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadSummaryIfNeeded()
         userEmail = viewModel.getUserEmail().orEmpty()
     }
 
-    ProfileSettingsScaffold(navController = navController, title = "Configuracion") {
+    LaunchedEffect(state.settingsInfoMessage) {
+        if (state.settingsInfoMessage?.contains("email", ignoreCase = true) == true ||
+            state.settingsInfoMessage?.contains("correo", ignoreCase = true) == true
+        ) {
+            userEmail = viewModel.getUserEmail().orEmpty()
+        }
+    }
+
+    ProfileSettingsScaffold(
+        navController = navController,
+        title = stringResource(R.string.settings_title)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -73,18 +120,35 @@ fun SettingsScreen(
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
             Text(
-                "Configuracion",
+                stringResource(R.string.settings_title),
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1B2633)
             )
             Text(
-                "Gestiona tu perfil y las preferencias de seguridad de tu cuenta.",
+                stringResource(R.string.settings_subtitle),
                 modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
                 fontSize = 14.sp,
                 color = Color(0xFF6C757D),
                 lineHeight = 20.sp
             )
+
+            state.settingsInfoMessage?.let { message ->
+                Text(
+                    message,
+                    color = Color(0xFF1B5E20),
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+            state.errorMessage?.let { message ->
+                Text(
+                    message,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 13.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -103,13 +167,13 @@ fun SettingsScreen(
                     )
                     Column {
                         Text(
-                            state.fullName.ifBlank { "Usuario" },
+                            state.fullName.ifBlank { stringResource(R.string.profile_user_fallback) },
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp,
                             color = Color(0xFF1B2633)
                         )
                         Text(
-                            "MIEMBRO ACTIVO",
+                            stringResource(R.string.profile_active_member),
                             modifier = Modifier.padding(top = 4.dp),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
@@ -123,16 +187,38 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             SettingsInfoField(
-                label = "Correo actual",
-                value = userEmail.ifBlank { "No disponible" },
-                trailing = { SettingsEditIcon { showEmailDialog = true } }
+                label = stringResource(R.string.settings_full_name_label),
+                value = state.fullName.ifBlank { stringResource(R.string.settings_not_available) },
+                trailing = {
+                    SettingsEditIcon {
+                        editName = state.fullName
+                        emailFieldError = null
+                        viewModel.clearSettingsMessages()
+                        showNameDialog = true
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             SettingsInfoField(
-                label = "Ubicacion",
-                value = state.cityName.ifBlank { "Ciudad no disponible" },
+                label = stringResource(R.string.settings_email_label),
+                value = userEmail.ifBlank { stringResource(R.string.settings_not_available) },
+                trailing = {
+                    SettingsEditIcon {
+                        editEmail = userEmail
+                        emailFieldError = null
+                        viewModel.clearSettingsMessages()
+                        showEmailDialog = true
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SettingsInfoField(
+                label = stringResource(R.string.settings_location_label),
+                value = state.cityName.ifBlank { stringResource(R.string.profile_city_unavailable) },
                 trailing = {
                     Icon(
                         Icons.Default.LocationOn,
@@ -147,9 +233,12 @@ fun SettingsScreen(
 
             SettingsNavigationRow(
                 icon = Icons.Default.Language,
-                title = "Cambiar idioma",
-                subtitle = selectedLanguage,
-                onClick = { showLanguageDialog = true }
+                title = stringResource(R.string.settings_language_title),
+                subtitle = languageSubtitle,
+                onClick = {
+                    viewModel.clearSettingsMessages()
+                    showLanguageDialog = true
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -161,13 +250,13 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Eliminar datos",
+                        stringResource(R.string.settings_delete_title),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = Color(0xFF1B2633)
                     )
                     Text(
-                        "Esta accion es permanente y eliminara todo tu historial de reportes y configuracion.",
+                        stringResource(R.string.settings_delete_desc),
                         modifier = Modifier.padding(vertical = 8.dp),
                         fontSize = 13.sp,
                         color = Color(0xFF6C757D),
@@ -179,7 +268,7 @@ fun SettingsScreen(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE74C3C))
                     ) {
-                        Text("Borrar la cuenta", color = Color.White)
+                        Text(stringResource(R.string.settings_delete_button), color = Color.White)
                     }
                 }
             }
@@ -188,44 +277,161 @@ fun SettingsScreen(
         }
     }
 
-    if (showEmailDialog) {
+    if (showNameDialog) {
         AlertDialog(
-            onDismissRequest = { showEmailDialog = false },
-            title = { Text("Correo de la cuenta") },
-            text = { Text(userEmail.ifBlank { "No hay correo asociado a esta sesion." }) },
+            onDismissRequest = { if (!state.isSavingSettings) showNameDialog = false },
+            title = { Text(stringResource(R.string.settings_edit_name_title)) },
+            text = {
+                OutlinedTextField(
+                    value = editName,
+                    onValueChange = { editName = it },
+                    label = { Text(stringResource(R.string.settings_edit_name_hint)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isSavingSettings
+                )
+            },
             confirmButton = {
-                TextButton(onClick = { showEmailDialog = false }) {
-                    Text("Cerrar")
+                TextButton(
+                    onClick = {
+                        pendingNameSave = true
+                        viewModel.updateFullName(
+                            newName = editName,
+                            emptyNameMessage = nameEmptyMessage,
+                            successMessage = nameUpdatedMessage,
+                            errorMessage = nameUpdateErrorMessage
+                        )
+                    },
+                    enabled = !state.isSavingSettings
+                ) {
+                    if (state.isSavingSettings) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.settings_save))
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNameDialog = false }, enabled = !state.isSavingSettings) {
+                    Text(stringResource(R.string.settings_cancel))
                 }
             }
         )
     }
 
-    if (showLanguageDialog) {
+    LaunchedEffect(state.isSavingSettings, state.settingsInfoMessage, pendingNameSave) {
+        if (pendingNameSave && !state.isSavingSettings) {
+            if (state.settingsInfoMessage != null) {
+                showNameDialog = false
+            }
+            pendingNameSave = false
+        }
+    }
+
+    if (showEmailDialog) {
+        val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(editEmail.trim()).matches()
         AlertDialog(
-            onDismissRequest = { showLanguageDialog = false },
-            title = { Text("Idioma") },
+            onDismissRequest = { if (!state.isSavingSettings) showEmailDialog = false },
+            title = { Text(stringResource(R.string.settings_edit_email_title)) },
             text = {
-                Column {
-                    listOf("Espanol", "English").forEach { language ->
-                        TextButton(
-                            onClick = {
-                                selectedLanguage = language
-                                showLanguageDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                language,
-                                fontWeight = if (selectedLanguage == language) FontWeight.Bold else FontWeight.Normal
-                            )
-                        }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = editEmail,
+                        onValueChange = {
+                            editEmail = it
+                            emailFieldError = null
+                        },
+                        label = { Text(stringResource(R.string.settings_edit_email_hint)) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        isError = editEmail.isNotEmpty() && !isEmailValid,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.isSavingSettings
+                    )
+                    if (editEmail.isNotEmpty() && !isEmailValid) {
+                        Text(
+                            stringResource(R.string.auth_email_invalid),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.settings_edit_email_info),
+                        fontSize = 12.sp,
+                        color = Color(0xFF6C757D)
+                    )
+                    emailFieldError?.let {
+                        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("Cancelar")
+                TextButton(
+                    onClick = {
+                        pendingEmailSave = true
+                        when (
+                            viewModel.updateEmail(
+                                newEmail = editEmail,
+                                currentEmail = userEmail,
+                                invalidEmailMessage = emailInvalidMessage,
+                                sameEmailMessage = emailSameMessage,
+                                successMessage = emailUpdatedMessage,
+                                errorMessage = emailUpdateErrorMessage
+                            )
+                        ) {
+                            ProfileViewModel.EmailUpdateValidation.INVALID -> {
+                                pendingEmailSave = false
+                                emailFieldError = emailInvalidMessage
+                            }
+                            ProfileViewModel.EmailUpdateValidation.SAME -> {
+                                pendingEmailSave = false
+                                emailFieldError = emailSameMessage
+                            }
+                            ProfileViewModel.EmailUpdateValidation.OK -> Unit
+                        }
+                    },
+                    enabled = !state.isSavingSettings && isEmailValid
+                ) {
+                    if (state.isSavingSettings) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(R.string.settings_save))
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEmailDialog = false }, enabled = !state.isSavingSettings) {
+                    Text(stringResource(R.string.settings_cancel))
+                }
+            }
+        )
+    }
+
+    LaunchedEffect(state.isSavingSettings, state.settingsInfoMessage, pendingEmailSave) {
+        if (pendingEmailSave && !state.isSavingSettings) {
+            if (state.settingsInfoMessage != null) {
+                userEmail = viewModel.getUserEmail().orEmpty().ifBlank { editEmail.trim() }
+                showEmailDialog = false
+            }
+            pendingEmailSave = false
+        }
+    }
+
+    if (showLanguageDialog) {
+        LanguagePickerSheet(
+            title = stringResource(R.string.settings_language_dialog_title),
+            currentLanguage = currentLanguage,
+            spanishLabel = stringResource(R.string.settings_language_spanish),
+            englishLabel = stringResource(R.string.settings_language_english),
+            systemLabel = stringResource(R.string.settings_language_system),
+            onDismiss = { showLanguageDialog = false },
+            onLanguageSelected = { selected ->
+                if (selected != currentLanguage) {
+                    localeManager.setLanguage(selected)
+                    showLanguageDialog = false
+                    (context as? Activity)?.recreate()
+                } else {
+                    showLanguageDialog = false
                 }
             }
         )
@@ -234,10 +440,8 @@ fun SettingsScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Borrar cuenta") },
-            text = {
-                Text("Se cerrara tu sesion y deberas contactar soporte para eliminar permanentemente los datos del servidor.")
-            },
+            title = { Text(stringResource(R.string.settings_delete_dialog_title)) },
+            text = { Text(stringResource(R.string.settings_delete_dialog_message)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -251,12 +455,12 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text("Confirmar", color = Color(0xFFE74C3C))
+                    Text(stringResource(R.string.settings_confirm), color = Color(0xFFE74C3C))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.settings_cancel))
                 }
             }
         )

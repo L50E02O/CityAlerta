@@ -24,7 +24,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import ec.cityalerta.app.R
 
 @Composable
 fun ExploreHeader(
@@ -42,7 +44,7 @@ fun ExploreHeader(
     ) {
         Column {
             Text(
-                text = "UBICACIÓN",
+                text = stringResource(R.string.explore_location_label),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF3B5B7A),

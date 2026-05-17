@@ -38,8 +38,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import ec.cityalerta.app.R
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.profile.components.SettingsNavigationRow
@@ -66,7 +68,7 @@ fun ProfileDashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Perfil") },
+                title = { Text(stringResource(R.string.profile_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atras")
@@ -103,19 +105,19 @@ fun ProfileDashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Toca la foto para cambiarla",
+                            stringResource(R.string.profile_tap_photo),
                             fontSize = 12.sp,
                             color = Color(0xFF6C757D)
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            state.fullName.ifBlank { "Usuario" },
+                            state.fullName.ifBlank { stringResource(R.string.profile_user_fallback) },
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1B2633)
                         )
                         Text(
-                            state.cityName.ifBlank { "Ciudad no disponible" },
+                            state.cityName.ifBlank { stringResource(R.string.profile_city_unavailable) },
                             fontSize = 14.sp,
                             color = Color(0xFF6C757D)
                         )
@@ -137,7 +139,7 @@ fun ProfileDashboardScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(state.totalReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text("REPORTES", fontSize = 12.sp, color = Color.Gray)
+                                    Text(stringResource(R.string.profile_reports), fontSize = 12.sp, color = Color.Gray)
                                 }
                             }
                             Card(
@@ -150,7 +152,7 @@ fun ProfileDashboardScreen(
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(state.resolvedReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text("RESUELTOS", fontSize = 12.sp, color = Color.Gray)
+                                    Text(stringResource(R.string.profile_resolved), fontSize = 12.sp, color = Color.Gray)
                                 }
                             }
                         }
@@ -162,20 +164,20 @@ fun ProfileDashboardScreen(
                         ) {
                             SettingsNavigationRow(
                                 icon = Icons.Default.Settings,
-                                title = "Configuracion",
-                                subtitle = "Perfil, idioma y cuenta",
+                                title = stringResource(R.string.profile_settings_config),
+                                subtitle = stringResource(R.string.profile_settings_config_sub),
                                 onClick = { navController.navigate(Routes.Settings.route) }
                             )
                             SettingsNavigationRow(
                                 icon = Icons.Default.Palette,
-                                title = "Apariencia",
-                                subtitle = "Tema claro u oscuro",
+                                title = stringResource(R.string.profile_settings_appearance),
+                                subtitle = stringResource(R.string.profile_settings_appearance_sub),
                                 onClick = { navController.navigate(Routes.Appearance.route) }
                             )
                             SettingsNavigationRow(
                                 icon = Icons.Default.AccessibilityNew,
-                                title = "Accesibilidad",
-                                subtitle = "Texto y contraste",
+                                title = stringResource(R.string.profile_settings_accessibility),
+                                subtitle = stringResource(R.string.profile_settings_accessibility_sub),
                                 onClick = { navController.navigate(Routes.Accessibility.route) }
                             )
                         }
@@ -189,7 +191,7 @@ fun ProfileDashboardScreen(
                                 onClick = { navController.navigate(Routes.MyReports.route) },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("Ver mis reportes")
+                                Text(stringResource(R.string.profile_view_reports))
                             }
                             Button(
                                 onClick = {
@@ -202,7 +204,7 @@ fun ProfileDashboardScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE74C3C))
                             ) {
-                                Text("Cerrar sesion", color = Color.White)
+                                Text(stringResource(R.string.profile_logout), color = Color.White)
                             }
                         }
                         Spacer(modifier = Modifier.height(24.dp))

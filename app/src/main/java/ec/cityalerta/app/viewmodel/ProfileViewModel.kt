@@ -11,9 +11,12 @@ import ec.cityalerta.app.model.data.perfilimagen.PerfilImagenCreateDto
 import ec.cityalerta.app.model.data.perfilimagen.PerfilImagenUpdateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
+import ec.cityalerta.app.model.data.perfil.PerfilUpdateDto
 import ec.cityalerta.app.model.repository.AuthRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
+import ec.cityalerta.app.model.repository.PerfilRepository
+import ec.cityalerta.app.model.utils.EmailValidator
 import ec.cityalerta.app.model.repository.PerfilImagenRepository
 import ec.cityalerta.app.model.repository.PerfilResumenRepository
 import ec.cityalerta.app.model.repository.PerfilStorageRepository
@@ -53,7 +56,9 @@ data class UserReportUi(
 data class ProfileState(
     val isLoading: Boolean = false,
     val isUploadingImage: Boolean = false,
+    val isSavingSettings: Boolean = false,
     val errorMessage: String? = null,
+    val settingsInfoMessage: String? = null,
     val fullName: String = "",
     val initials: String = "",
     val profileImageUrl: String? = null,
@@ -67,6 +72,7 @@ data class ProfileState(
 
 class ProfileViewModel(
     private val authRepository: AuthRepositoryContract,
+    private val perfilRepository: PerfilRepository,
     private val perfilResumenRepository: PerfilResumenRepository,
     private val ciudadRepository: CiudadRepository,
     private val reporteRepository: ReporteRepository,
@@ -374,6 +380,88 @@ class ProfileViewModel(
 
     suspend fun getUserEmail(): String? {
         return authRepository.getUserEmail().getOrNull()
+    }
+
+    fun clearSettingsMessages() {
+        _state.value = _state.value.copy(settingsInfoMessage = null, errorMessage = null)
+    }
+
+    fun updateFullName(newName: String, emptyNameMessage: String, successMessage: String, errorMessage: String) {
+        val trimmed = newName.trim()
+        if (trimmed.isBlank()) {
+            _state.value = _state.value.copy(errorMessage = emptyNameMessage, settingsInfoMessage = null)
+            return
+        }
+
+        viewModelScope.launch {
+            val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
+                ?: authRepository.getUserId().getOrNull()
+                ?: run {
+                    _state.value = _state.value.copy(errorMessage = errorMessage)
+                    return@launch
+                }
+
+            _state.value = _state.value.copy(isSavingSettings = true, errorMessage = null, settingsInfoMessage = null)
+
+            perfilRepository.update(PerfilUpdateDto(nombreCompleto = trimmed), userId)
+                .onSuccess {
+                    summaryLoaded = false
+                    loadSummaryIfNeeded(force = true)
+                    _state.value = _state.value.copy(
+                        isSavingSettings = false,
+                        settingsInfoMessage = successMessage,
+                        errorMessage = null
+                    )
+                }
+                .onFailure { error ->
+                    _state.value = _state.value.copy(
+                        isSavingSettings = false,
+                        errorMessage = error.message?.ifBlank { null } ?: errorMessage
+                    )
+                }
+        }
+    }
+
+    fun updateEmail(
+        newEmail: String,
+        currentEmail: String,
+        invalidEmailMessage: String,
+        sameEmailMessage: String,
+        successMessage: String,
+        errorMessage: String
+    ): EmailUpdateValidation {
+        val trimmed = newEmail.trim()
+        if (!EmailValidator.isValid(trimmed)) {
+            return EmailUpdateValidation.INVALID
+        }
+        if (trimmed.equals(currentEmail.trim(), ignoreCase = true)) {
+            _state.value = _state.value.copy(errorMessage = sameEmailMessage, settingsInfoMessage = null)
+            return EmailUpdateValidation.SAME
+        }
+
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSavingSettings = true, errorMessage = null, settingsInfoMessage = null)
+
+            authRepository.updateEmail(trimmed)
+                .onSuccess {
+                    _state.value = _state.value.copy(
+                        isSavingSettings = false,
+                        settingsInfoMessage = successMessage,
+                        errorMessage = null
+                    )
+                }
+                .onFailure { error ->
+                    _state.value = _state.value.copy(
+                        isSavingSettings = false,
+                        errorMessage = error.message?.ifBlank { null } ?: errorMessage
+                    )
+                }
+        }
+        return EmailUpdateValidation.OK
+    }
+
+    enum class EmailUpdateValidation {
+        OK, INVALID, SAME
     }
 
     fun logOut(onSuccess: () -> Unit) {
