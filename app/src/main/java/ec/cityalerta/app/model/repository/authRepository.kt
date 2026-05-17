@@ -4,6 +4,7 @@ import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.remote.SupabaseAuthHttp
 import ec.cityalerta.app.model.remote.SupabaseProvider
+import ec.cityalerta.app.model.utils.AuthApiResponseParser
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
@@ -171,6 +172,23 @@ class AuthRepository : AuthRepositoryContract {
     }
 
     override suspend fun updateEmail(newEmail: String): Result<Unit> {
+        return postManageAccount(
+            body = buildJsonObject {
+                put("mode", "update_email")
+                put("email", newEmail.trim())
+            }
+        )
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> {
+        return postManageAccount(
+            body = buildJsonObject {
+                put("mode", "delete_account")
+            }
+        )
+    }
+
+    private suspend fun postManageAccount(body: JsonObject): Result<Unit> {
         return try {
             val session = SupabaseProvider.client.auth.currentSessionOrNull()
                 ?: return Result.failure(Exception("No hay sesion activa"))
@@ -178,22 +196,29 @@ class AuthRepository : AuthRepositoryContract {
             val accessToken = session.accessToken
             val httpClient = HttpClient(Android)
             try {
-                val resp: HttpResponse = httpClient.patch("${BuildConfig.SUPABASE_URL.trimEnd('/')}/auth/v1/user") {
+                val resp: HttpResponse = httpClient.post(
+                    "${BuildConfig.SUPABASE_URL.trimEnd('/')}/functions/v1/manage-account"
+                ) {
                     header("Authorization", "Bearer $accessToken")
+                    header("apikey", BuildConfig.SUPABASE_ANON_KEY)
                     contentType(ContentType.Application.Json)
-                    setBody(
-                        buildJsonObject {
-                            put("email", newEmail)
-                        }.toString()
-                    )
+                    setBody(body.toString())
                 }
 
                 if (resp.status.value !in 200..299) {
-                    val body = resp.bodyAsText()
-                    return Result.failure(mapAuthException(Exception(parseAuthError(body, resp.status.value))))
+                    val responseBody = resp.bodyAsText()
+                    return Result.failure(
+                        mapAuthException(
+                            Exception(AuthApiResponseParser.parseErrorMessage(responseBody, resp.status.value))
+                        )
+                    )
                 }
             } finally {
                 httpClient.close()
+            }
+
+            if (body["mode"]?.jsonPrimitive?.content == "update_email") {
+                runCatching { SupabaseProvider.client.auth.refreshCurrentSession() }
             }
 
             Result.success(Unit)
@@ -305,22 +330,6 @@ class AuthRepository : AuthRepositoryContract {
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    private fun parseAuthError(body: String, statusCode: Int): String {
-        val fromJson = runCatching {
-            Json.parseToJsonElement(body)
-                .jsonObject["msg"]
-                ?.jsonPrimitive
-                ?.content
-                ?: Json.parseToJsonElement(body)
-                    .jsonObject["error_description"]
-                    ?.jsonPrimitive
-                    ?.content
-        }.getOrNull()
-
-        return fromJson?.takeIf { it.isNotBlank() }
-            ?: "No se pudo completar la operacion ($statusCode)"
     }
 
     private fun mapAuthException(exception: Exception): Exception {

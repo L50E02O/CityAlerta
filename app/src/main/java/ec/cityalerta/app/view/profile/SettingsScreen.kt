@@ -1,7 +1,7 @@
 package ec.cityalerta.app.view.profile
 
 import android.app.Activity
-import android.util.Patterns
+import ec.cityalerta.app.model.utils.EmailValidator
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -329,7 +329,7 @@ fun SettingsScreen(
     }
 
     if (showEmailDialog) {
-        val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(editEmail.trim()).matches()
+        val isEmailValid = EmailValidator.isValid(editEmail)
         AlertDialog(
             onDismissRequest = { if (!state.isSavingSettings) showEmailDialog = false },
             title = { Text(stringResource(R.string.settings_edit_email_title)) },
@@ -438,28 +438,46 @@ fun SettingsScreen(
     }
 
     if (showDeleteDialog) {
+        val deleteErrorMessage = stringResource(R.string.settings_delete_error)
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = {
+                if (!state.isDeletingAccount) {
+                    showDeleteDialog = false
+                }
+            },
             title = { Text(stringResource(R.string.settings_delete_dialog_title)) },
-            text = { Text(stringResource(R.string.settings_delete_dialog_message)) },
+            text = {
+                Text(
+                    if (state.isDeletingAccount) {
+                        stringResource(R.string.settings_deleting_account)
+                    } else {
+                        stringResource(R.string.settings_delete_dialog_message)
+                    }
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        showDeleteDialog = false
-                        scope.launch {
-                            viewModel.logOut {
-                                navController.navigate(Routes.Login.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
+                        viewModel.deleteAccount(
+                            successMessage = "",
+                            errorMessage = deleteErrorMessage
+                        ) {
+                            showDeleteDialog = false
+                            navController.navigate(Routes.Login.route) {
+                                popUpTo(0) { inclusive = true }
                             }
                         }
-                    }
+                    },
+                    enabled = !state.isDeletingAccount
                 ) {
                     Text(stringResource(R.string.settings_confirm), color = Color(0xFFE74C3C))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    enabled = !state.isDeletingAccount
+                ) {
                     Text(stringResource(R.string.settings_cancel))
                 }
             }

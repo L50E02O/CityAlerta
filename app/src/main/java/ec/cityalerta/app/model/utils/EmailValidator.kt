@@ -1,9 +1,12 @@
 package ec.cityalerta.app.model.utils
 
-import android.util.Patterns
-
 object EmailValidator {
+    private val emailPattern = Regex(
+        "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$",
+        RegexOption.IGNORE_CASE
+    )
+
     fun isValid(email: String): Boolean {
-        return Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
+        return emailPattern.matches(email.trim())
     }
 }

@@ -57,6 +57,7 @@ data class ProfileState(
     val isLoading: Boolean = false,
     val isUploadingImage: Boolean = false,
     val isSavingSettings: Boolean = false,
+    val isDeletingAccount: Boolean = false,
     val errorMessage: String? = null,
     val settingsInfoMessage: String? = null,
     val fullName: String = "",
@@ -462,6 +463,34 @@ class ProfileViewModel(
 
     enum class EmailUpdateValidation {
         OK, INVALID, SAME
+    }
+
+    fun deleteAccount(
+        successMessage: String,
+        errorMessage: String,
+        onSuccess: () -> Unit
+    ) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                isDeletingAccount = true,
+                errorMessage = null,
+                settingsInfoMessage = null
+            )
+
+            authRepository.deleteAccount()
+                .onSuccess {
+                    summaryLoaded = false
+                    _state.value = ProfileState()
+                    authRepository.logOut()
+                    onSuccess()
+                }
+                .onFailure { error ->
+                    _state.value = _state.value.copy(
+                        isDeletingAccount = false,
+                        errorMessage = error.message?.ifBlank { null } ?: errorMessage
+                    )
+                }
+        }
     }
 
     fun logOut(onSuccess: () -> Unit) {
