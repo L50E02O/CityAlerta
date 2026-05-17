@@ -1,7 +1,5 @@
 package ec.cityalerta.app.view.profile
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,7 +30,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.components.ProfileAvatar
-import ec.cityalerta.app.view.utils.readBytesFromUri
+import ec.cityalerta.app.view.utils.rememberProfileImagePicker
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,16 +47,8 @@ fun ProfileScreen(
     viewModel: ProfileViewModel
 ) {
     val state by viewModel.state.collectAsState()
-    val context = LocalContext.current
-
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            readBytesFromUri(context, it)?.let { bytes ->
-                viewModel.updateProfileImage(bytes)
-            }
-        }
+    val launchProfileImagePicker = rememberProfileImagePicker { bytes ->
+        viewModel.updateProfileImage(bytes)
     }
 
     LaunchedEffect(Unit) {
@@ -102,7 +91,7 @@ fun ProfileScreen(
                             imageUrl = state.profileImageUrl,
                             size = 96.dp,
                             isLoading = state.isUploadingImage,
-                            onClick = { galleryLauncher.launch("image/*") }
+                            onClick = launchProfileImagePicker
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(

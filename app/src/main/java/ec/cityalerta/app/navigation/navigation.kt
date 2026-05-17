@@ -120,7 +120,9 @@ fun AppNavigation(
 
             composable(Routes.ReporteForm.route) {
                 ReporteScreen(
+                    navController = navController,
                     viewModel = reporteViewModel,
+                    profileViewModel = profileViewModel,
                     onReportSent = {
                         // Limpiar el back stack hasta Post y navegar a Explore
                         navController.navigate(Routes.Explore.route) {

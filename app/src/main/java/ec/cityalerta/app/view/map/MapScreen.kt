@@ -109,7 +109,12 @@ fun MapScreen(
                     }
                 },
                 actions = {
-                    ProfileAvatar(initials = profileState.initials, onClick = { navController.navigate(Routes.Profile.route) })
+                    ProfileAvatar(
+                        initials = profileState.initials,
+                        imageUrl = profileState.profileImageUrl,
+                        isLoading = profileState.isUploadingImage,
+                        onClick = { navController.navigate(Routes.Profile.route) }
+                    )
                 }
             )
         },

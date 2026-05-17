@@ -285,12 +285,14 @@ class ProfileViewModel(
         perfilId: String,
         imageBytes: ByteArray
     ): Result<Triple<String?, String?, String?>> = runCatching {
+        val existing = perfilImagenRepository.getImagenByPerfilId(perfilId).getOrNull()
+        val previousStorageUuid = existing?.storage_uuid
+        val existingImageId = existing?.id
+
         val storageUuid = UUID.randomUUID().toString()
         val storagePath = perfilStorageRepository.uploadProfileImage(imageBytes, storageUuid).getOrThrow()
-        val previousStorageUuid = _state.value.profileStorageUuid
-        val imageId = _state.value.profileImageId
 
-        val savedImageId = if (imageId.isNullOrBlank()) {
+        val savedImageId = if (existingImageId.isNullOrBlank()) {
             perfilImagenRepository.create(
                 PerfilImagenCreateDto(
                     perfil_id = perfilId,
@@ -304,12 +306,12 @@ class ProfileViewModel(
                     storage_uuid = storageUuid,
                     url_path = storagePath
                 ),
-                imageId
+                existingImageId
             ).getOrThrow().id
         }
 
         if (!previousStorageUuid.isNullOrBlank() && previousStorageUuid != storageUuid) {
-            perfilStorageRepository.deleteProfileImage(previousStorageUuid)
+            perfilStorageRepository.deleteProfileImage(previousStorageUuid).getOrNull()
         }
 
         val imageUrl = perfilStorageRepository.generateSignedImageUrl(storageUuid).getOrNull()
