@@ -7,12 +7,16 @@ import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.reporte.ReporteUpdateDto
+import ec.cityalerta.app.model.data.perfilimagen.PerfilImagenCreateDto
+import ec.cityalerta.app.model.data.perfilimagen.PerfilImagenUpdateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
 import ec.cityalerta.app.model.repository.AuthRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
+import ec.cityalerta.app.model.repository.PerfilImagenRepository
 import ec.cityalerta.app.model.repository.PerfilResumenRepository
+import ec.cityalerta.app.model.repository.PerfilStorageRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
@@ -48,9 +52,13 @@ data class UserReportUi(
 
 data class ProfileState(
     val isLoading: Boolean = false,
+    val isUploadingImage: Boolean = false,
     val errorMessage: String? = null,
     val fullName: String = "",
     val initials: String = "",
+    val profileImageUrl: String? = null,
+    val profileImageId: String? = null,
+    val profileStorageUuid: String? = null,
     val cityName: String = "",
     val totalReports: Int = 0,
     val resolvedReports: Int = 0,
@@ -63,8 +71,10 @@ class ProfileViewModel(
     private val ciudadRepository: CiudadRepository,
     private val reporteRepository: ReporteRepository,
     private val reporteImagenRepository: ReporteImagenRepository,
+    private val perfilImagenRepository: PerfilImagenRepository,
     private val reporteUbicacionRepository: ReporteUbicacionRepository,
     private val reporteStorageRepository: ReporteStorageRepository,
+    private val perfilStorageRepository: PerfilStorageRepository,
     private val barrioRepository: BarrioRepository
 ) : ViewModel() {
 
@@ -76,10 +86,14 @@ class ProfileViewModel(
             setLoading(true)
             loadSummaryInternal()?.let { resumen ->
                 val cityName = ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty()
+                val profileImage = loadProfileImage(resumen.id)
                 _state.value = _state.value.copy(
                     errorMessage = null,
                     fullName = resumen.nombreCompleto,
                     initials = buildInitials(resumen.nombreCompleto),
+                    profileImageUrl = profileImage?.first,
+                    profileImageId = profileImage?.second,
+                    profileStorageUuid = profileImage?.third,
                     cityName = cityName,
                     totalReports = resumen.totalReportes,
                     resolvedReports = resumen.reportesResueltos,
@@ -100,11 +114,15 @@ class ProfileViewModel(
 
             val cityName = ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty()
             val reportes = loadUserReports(resumen.id)
+            val profileImage = loadProfileImage(resumen.id)
 
             _state.value = _state.value.copy(
                 errorMessage = null,
                 fullName = resumen.nombreCompleto,
                 initials = buildInitials(resumen.nombreCompleto),
+                profileImageUrl = profileImage?.first,
+                profileImageId = profileImage?.second,
+                profileStorageUuid = profileImage?.third,
                 cityName = cityName,
                 totalReports = resumen.totalReportes,
                 resolvedReports = resumen.reportesResueltos,
@@ -232,6 +250,78 @@ class ProfileViewModel(
                     _state.value = _state.value.copy(errorMessage = error.message ?: "No se pudo eliminar el reporte")
                 }
         }
+    }
+
+    fun updateProfileImage(imageBytes: ByteArray) {
+        viewModelScope.launch {
+            val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
+                ?: authRepository.getUserId().getOrNull()
+                ?: run {
+                    _state.value = _state.value.copy(errorMessage = "Usuario no autenticado")
+                    return@launch
+                }
+
+            _state.value = _state.value.copy(isUploadingImage = true, errorMessage = null)
+
+            replaceProfileImage(userId, imageBytes)
+                .onSuccess { profileImage ->
+                    _state.value = _state.value.copy(
+                        profileImageUrl = profileImage.first,
+                        profileImageId = profileImage.second,
+                        profileStorageUuid = profileImage.third,
+                        isUploadingImage = false
+                    )
+                }
+                .onFailure { error ->
+                    _state.value = _state.value.copy(
+                        isUploadingImage = false,
+                        errorMessage = error.message ?: "No se pudo actualizar la foto de perfil"
+                    )
+                }
+        }
+    }
+
+    private suspend fun replaceProfileImage(
+        perfilId: String,
+        imageBytes: ByteArray
+    ): Result<Triple<String?, String?, String?>> = runCatching {
+        val storageUuid = UUID.randomUUID().toString()
+        val storagePath = perfilStorageRepository.uploadProfileImage(imageBytes, storageUuid).getOrThrow()
+        val previousStorageUuid = _state.value.profileStorageUuid
+        val imageId = _state.value.profileImageId
+
+        val savedImageId = if (imageId.isNullOrBlank()) {
+            perfilImagenRepository.create(
+                PerfilImagenCreateDto(
+                    perfil_id = perfilId,
+                    storage_uuid = storageUuid,
+                    url_path = storagePath
+                )
+            ).getOrThrow().id
+        } else {
+            perfilImagenRepository.update(
+                PerfilImagenUpdateDto(
+                    storage_uuid = storageUuid,
+                    url_path = storagePath
+                ),
+                imageId
+            ).getOrThrow().id
+        }
+
+        if (!previousStorageUuid.isNullOrBlank() && previousStorageUuid != storageUuid) {
+            perfilStorageRepository.deleteProfileImage(previousStorageUuid)
+        }
+
+        val imageUrl = perfilStorageRepository.generateSignedImageUrl(storageUuid).getOrNull()
+        Triple(imageUrl, savedImageId, storageUuid)
+    }
+
+    private suspend fun loadProfileImage(perfilId: String): Triple<String?, String?, String?>? {
+        val imagen = perfilImagenRepository.getImagenByPerfilId(perfilId).getOrNull() ?: return null
+        val imageUrl = imagen.storage_uuid.takeIf { it.isNotBlank() }?.let { objectPath ->
+            perfilStorageRepository.generateSignedImageUrl(objectPath).getOrNull()
+        }
+        return Triple(imageUrl, imagen.id, imagen.storage_uuid)
     }
 
     fun logOut(onSuccess: () -> Unit) {

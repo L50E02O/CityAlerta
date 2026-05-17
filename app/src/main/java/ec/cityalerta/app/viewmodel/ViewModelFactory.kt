@@ -9,7 +9,9 @@ import ec.cityalerta.app.model.repository.MapRepository
 import ec.cityalerta.app.model.repository.LocationRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
+import ec.cityalerta.app.model.repository.PerfilImagenRepository
 import ec.cityalerta.app.model.repository.PerfilResumenRepository
+import ec.cityalerta.app.model.repository.PerfilStorageRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
@@ -49,8 +51,16 @@ class AppViewModelFactory(
         ReporteImagenRepository()
     }
 
+    private val imagenPerfil by lazy {
+        PerfilImagenRepository()
+    }
+
     private val storageReporte by lazy {
         ReporteStorageRepository()
+    }
+
+    private val storagePerfil by lazy {
+        PerfilStorageRepository()
     }
 
     private val locationProvider by lazy {
@@ -88,8 +98,10 @@ class AppViewModelFactory(
                     ciudadRepository,
                     reporteRepository,
                     imagenReporte,
+                    imagenPerfil,
                     ubicacionReporte,
                     storageReporte,
+                    storagePerfil,
                     barrioRepository
                 ) as T
             }
