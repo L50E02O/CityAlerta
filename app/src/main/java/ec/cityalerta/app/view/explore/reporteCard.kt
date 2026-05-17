@@ -1,6 +1,5 @@
 package ec.cityalerta.app.view.explore
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,7 +46,6 @@ fun ReporteCard(reporte: ReporteUI) {
                     .height(200.dp)
             ) {
                 if (reporte.imageUrl != null) {
-                    Log.d("ReporteCard", "URL de la imagen: ${reporte.imageUrl}")
                     AsyncImage(
                         model = reporte.imageUrl,
                         contentDescription = null,

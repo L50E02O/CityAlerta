@@ -47,9 +47,11 @@ fun ProfileDashboardScreen(
     viewModel: ProfileViewModel
 ) {
     val state by viewModel.state.collectAsState()
-    val launchProfileImagePicker = rememberProfileImagePicker { bytes ->
-        viewModel.updateProfileImage(bytes)
-    }
+    val launchProfileImagePicker = rememberProfileImagePicker(
+        hasCustomImage = !state.profileImageId.isNullOrBlank(),
+        onImageBytes = { bytes -> viewModel.updateProfileImage(bytes) },
+        onDeleteImage = { viewModel.deleteProfileImage() }
+    )
 
     LaunchedEffect(Unit) {
         viewModel.loadDashboard()
@@ -87,7 +89,6 @@ fun ProfileDashboardScreen(
                     ) {
                         Spacer(modifier = Modifier.height(28.dp))
                         ProfileAvatar(
-                            initials = state.initials,
                             imageUrl = state.profileImageUrl,
                             size = 96.dp,
                             isLoading = state.isUploadingImage,

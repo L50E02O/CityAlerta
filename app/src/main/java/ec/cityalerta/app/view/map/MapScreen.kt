@@ -69,7 +69,7 @@ fun MapScreen(
     }
 
     LaunchedEffect(Unit) {
-        profileViewModel.loadSummary()
+        profileViewModel.loadSummaryIfNeeded()
     }
 
     LaunchedEffect(uiState.ciudad, uiState.cameraZoom) {
@@ -110,7 +110,6 @@ fun MapScreen(
                 },
                 actions = {
                     ProfileAvatar(
-                        initials = profileState.initials,
                         imageUrl = profileState.profileImageUrl,
                         isLoading = profileState.isUploadingImage,
                         onClick = { navController.navigate(Routes.Profile.route) }

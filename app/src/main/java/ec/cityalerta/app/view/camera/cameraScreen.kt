@@ -67,7 +67,7 @@ fun PhotoScreen(
     val profileState = profileViewModel.state.collectAsState().value
 
     LaunchedEffect(Unit) {
-        profileViewModel.loadSummary()
+        profileViewModel.loadSummaryIfNeeded()
     }
 
     fun handleSelectedImage(uri: Uri) {
@@ -120,7 +120,6 @@ fun PhotoScreen(
                 },
                 actions = {
                     ProfileAvatar(
-                        initials = profileState.initials,
                         imageUrl = profileState.profileImageUrl,
                         isLoading = profileState.isUploadingImage,
                         onClick = { navController.navigate(Routes.Profile.route) }

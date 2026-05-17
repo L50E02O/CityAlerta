@@ -1,41 +1,40 @@
 package ec.cityalerta.app.view.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import ec.cityalerta.app.R
 
 @Composable
 fun ProfileAvatar(
-    initials: String,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     size: Dp = 40.dp,
     isLoading: Boolean = false,
     onClick: () -> Unit = {}
 ) {
+    val hasCustomImage = !imageUrl.isNullOrBlank()
+
     Box(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(Color(0xFF3B5B7A))
+            .background(Color(0xFFE9ECEF))
             .clickable(enabled = !isLoading) { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -43,11 +42,11 @@ fun ProfileAvatar(
             isLoading -> {
                 CircularProgressIndicator(
                     modifier = Modifier.size(size / 2),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.dp
                 )
             }
-            !imageUrl.isNullOrBlank() -> {
+            hasCustomImage -> {
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = "Foto de perfil",
@@ -55,20 +54,12 @@ fun ProfileAvatar(
                     contentScale = ContentScale.Crop
                 )
             }
-            initials.isBlank() -> {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(size / 2)
-                )
-            }
             else -> {
-                Text(
-                    initials,
-                    color = Color.White,
-                    fontSize = (size.value / 3).sp,
-                    fontWeight = FontWeight.Bold
+                Image(
+                    painter = painterResource(R.drawable.ic_profile_default),
+                    contentDescription = "Avatar por defecto",
+                    modifier = Modifier.matchParentSize(),
+                    contentScale = ContentScale.Crop
                 )
             }
         }

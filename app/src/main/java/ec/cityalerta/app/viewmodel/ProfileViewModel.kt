@@ -81,12 +81,22 @@ class ProfileViewModel(
     private val _state = MutableStateFlow(ProfileState())
     val state: StateFlow<ProfileState> = _state
 
+    private var summaryLoaded = false
+
+    fun loadSummaryIfNeeded(force: Boolean = false) {
+        if (!force && summaryLoaded && _state.value.fullName.isNotBlank()) return
+        loadSummary()
+    }
+
     fun loadSummary() {
         viewModelScope.launch {
             setLoading(true)
             loadSummaryInternal()?.let { resumen ->
-                val cityName = ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty()
-                val profileImage = loadProfileImage(resumen.id)
+                val (cityName, profileImage) = coroutineScope {
+                    val cityDeferred = async { ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty() }
+                    val imageDeferred = async { loadProfileImage(resumen.id) }
+                    cityDeferred.await() to imageDeferred.await()
+                }
                 _state.value = _state.value.copy(
                     errorMessage = null,
                     fullName = resumen.nombreCompleto,
@@ -99,6 +109,7 @@ class ProfileViewModel(
                     resolvedReports = resumen.reportesResueltos,
                     myReports = emptyList()
                 )
+                summaryLoaded = true
             }
             setLoading(false)
         }
@@ -112,9 +123,12 @@ class ProfileViewModel(
                 return@launch
             }
 
-            val cityName = ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty()
-            val reportes = loadUserReports(resumen.id)
-            val profileImage = loadProfileImage(resumen.id)
+            val (cityName, reportes, profileImage) = coroutineScope {
+                val cityDeferred = async { ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty() }
+                val reportesDeferred = async { loadUserReports(resumen.id) }
+                val imageDeferred = async { loadProfileImage(resumen.id) }
+                Triple(cityDeferred.await(), reportesDeferred.await(), imageDeferred.await())
+            }
 
             _state.value = _state.value.copy(
                 errorMessage = null,
@@ -128,6 +142,7 @@ class ProfileViewModel(
                 resolvedReports = resumen.reportesResueltos,
                 myReports = reportes
             )
+            summaryLoaded = true
             setLoading(false)
         }
     }
@@ -252,6 +267,37 @@ class ProfileViewModel(
         }
     }
 
+    fun deleteProfileImage() {
+        viewModelScope.launch {
+            val imageId = _state.value.profileImageId
+            val storageUuid = _state.value.profileStorageUuid
+
+            if (imageId.isNullOrBlank()) return@launch
+
+            _state.value = _state.value.copy(isUploadingImage = true, errorMessage = null)
+
+            if (!storageUuid.isNullOrBlank()) {
+                perfilStorageRepository.deleteProfileImage(storageUuid).getOrNull()
+            }
+            perfilImagenRepository.delete(imageId)
+                .onSuccess {
+                    _state.value = _state.value.copy(
+                        profileImageUrl = null,
+                        profileImageId = null,
+                        profileStorageUuid = null,
+                        isUploadingImage = false,
+                        errorMessage = null
+                    )
+                }
+                .onFailure { error ->
+                    _state.value = _state.value.copy(
+                        isUploadingImage = false,
+                        errorMessage = error.message ?: "No se pudo eliminar la foto de perfil"
+                    )
+                }
+        }
+    }
+
     fun updateProfileImage(imageBytes: ByteArray) {
         viewModelScope.launch {
             val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
@@ -329,12 +375,19 @@ class ProfileViewModel(
     fun logOut(onSuccess: () -> Unit) {
         viewModelScope.launch {
             authRepository.logOut()
-                .onSuccess { onSuccess() }
+                .onSuccess {
+                    summaryLoaded = false
+                    _state.value = ProfileState()
+                    onSuccess()
+                }
                 .onFailure { error ->
                     _state.value = _state.value.copy(errorMessage = error.message ?: "No se pudo cerrar la sesion")
                 }
         }
     }
+
+    val hasCustomProfileImage: Boolean
+        get() = !_state.value.profileImageId.isNullOrBlank()
 
     private suspend fun loadSummaryInternal(): PerfilResumen? {
         val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id

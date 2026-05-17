@@ -73,7 +73,7 @@ fun ReporteScreen(
     val profileState by profileViewModel.state.collectAsState()
 
     LaunchedEffect(Unit) {
-        profileViewModel.loadSummary()
+        profileViewModel.loadSummaryIfNeeded()
     }
     val descripcion by viewModel.descripcion.collectAsState()
     val categoria by viewModel.categoria.collectAsState()
@@ -114,7 +114,6 @@ fun ReporteScreen(
                 },
                 actions = {
                     ProfileAvatar(
-                        initials = profileState.initials,
                         imageUrl = profileState.profileImageUrl,
                         isLoading = profileState.isUploadingImage,
                         onClick = { navController.navigate(Routes.Profile.route) }

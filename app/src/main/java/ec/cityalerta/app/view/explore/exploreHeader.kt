@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ExploreHeader(
     city: String,
-    profileInitials: String,
     profileImageUrl: String? = null,
     onSearchClick: () -> Unit,
     onProfileClick: () -> Unit
@@ -71,7 +70,6 @@ fun ExploreHeader(
 
             // Profile avatar
             ec.cityalerta.app.view.components.ProfileAvatar(
-                initials = profileInitials,
                 imageUrl = profileImageUrl,
                 onClick = onProfileClick
             )

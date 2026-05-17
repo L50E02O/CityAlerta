@@ -42,17 +42,13 @@ fun ExploreScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadData()
-    }
-
-    LaunchedEffect(Unit) {
-        profileViewModel.loadSummary()
+        profileViewModel.loadSummaryIfNeeded()
     }
 
     Scaffold(
         topBar = {
             ExploreHeader(
                 city = state.ciudadNombre,
-                profileInitials = profileState.initials,
                 profileImageUrl = profileState.profileImageUrl,
                 onSearchClick = { /* No functionality yet */ },
                 onProfileClick = { navController.navigate(Routes.Profile.route) }
@@ -91,7 +87,10 @@ fun ExploreScreen(
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
-                    items(state.reportes) { reporte ->
+                    items(
+                        items = state.reportes,
+                        key = { it.id }
+                    ) { reporte ->
                         ReporteCard(reporte = reporte)
                     }
                 }
