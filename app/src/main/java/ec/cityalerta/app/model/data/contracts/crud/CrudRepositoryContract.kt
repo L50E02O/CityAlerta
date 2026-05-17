@@ -1,0 +1,9 @@
+package ec.cityalerta.app.model.data.contracts.crud
+
+interface CrudRepositoryContract<T, CreateDto, UpdateDto> {
+    suspend fun create(entity: CreateDto): Result<T>
+    suspend fun update(entity: UpdateDto, id: String): Result<T>
+    suspend fun getAll(): Result<List<T>>
+    suspend fun getById(id: String): Result<T?>
+    suspend fun delete(id: String): Result<Unit>
+}

@@ -9,16 +9,20 @@ plugins {
     jacoco
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 jacoco {
     toolVersion = "0.8.11"
 }
 
 android {
-    namespace = "man.tap"
+    namespace = "ec.cityalerta.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "man.tap"
+        applicationId = "ec.cityalerta.app"
         minSdk = 28
         targetSdk = 36
         versionCode = 1
@@ -44,8 +48,16 @@ android {
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
+        val storageBaseUrl = providers.gradleProperty("STORAGE_BASE_URL")
+            .orElse(properties.getProperty("STORAGE_BASE_URL") ?: "")
+            .getOrElse("")
+
         val googleMapsApiKey = providers.gradleProperty("GOOGLE_MAPS_API_KEY")
             .orElse(properties.getProperty("GOOGLE_MAPS_API_KEY") ?: "")
+            .getOrElse("")
+
+        val passwordResetSecret = providers.gradleProperty("PASSWORD_RESET_SECRET")
+            .orElse(properties.getProperty("PASSWORD_RESET_SECRET") ?: "")
             .getOrElse("")
 
         if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
@@ -56,10 +68,16 @@ android {
             project.logger.warn("WARNING: Missing Google Maps API Key. Define GOOGLE_MAPS_API_KEY in local.properties or gradle.properties. Maps will not display.")
         }
 
+        if (passwordResetSecret.isEmpty()) {
+            project.logger.warn("WARNING: Missing PASSWORD_RESET_SECRET. Define PASSWORD_RESET_SECRET in local.properties or gradle.properties to use the password reset edge function.")
+        }
+
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseKey\"")
+        buildConfigField("String", "STORAGE_BASE_URL", "\"$storageBaseUrl\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsApiKey\"")
-        
+        buildConfigField("String", "PASSWORD_RESET_SECRET", "\"$passwordResetSecret\"")
+
         // Inyectar API Key al manifest
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
     }
@@ -73,16 +91,22 @@ android {
             )
         }
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
 }
 
@@ -107,8 +131,16 @@ tasks.matching { task ->
             .orElse(properties.getProperty("SUPABASE_ANON_KEY") ?: "")
             .getOrElse("")
 
+        val passwordResetSecret = providers.gradleProperty("PASSWORD_RESET_SECRET")
+            .orElse(properties.getProperty("PASSWORD_RESET_SECRET") ?: "")
+            .getOrElse("")
+
         require(supabaseUrl.isNotBlank() && supabaseKey.isNotBlank()) {
             "Missing SUPABASE_URL / SUPABASE_ANON_KEY for Release build."
+        }
+
+        require(passwordResetSecret.isNotBlank()) {
+            "Missing PASSWORD_RESET_SECRET for Release build."
         }
     }
 }
@@ -138,11 +170,23 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "android/**/*.*"
     )
 
+    val coverageExcludes = listOf(
+        "**/view/**",
+        "**/navigation/**",
+        "**/MainActivity*.class",
+        "**/model/remote/**",
+        "**/model/repository/**",
+        "**/ExploreViewModel*.class",
+        "**/ReporteViewModel*.class"
+    )
+
     val kotlinDebugTree = fileTree("${layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
         exclude(fileFilter)
+        exclude(coverageExcludes)
     }
     val javaDebugTree = fileTree("${layout.buildDirectory.get().asFile}/intermediates/javac/debug/classes") {
         exclude(fileFilter)
+        exclude(coverageExcludes)
     }
 
     classDirectories.setFrom(files(kotlinDebugTree, javaDebugTree))
@@ -169,19 +213,30 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.play.services.auth)
+    implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
+    implementation(libs.coil.compose)
 
     // Network / backend
     implementation(libs.supabase.gotrue)
     implementation(libs.supabase.core)
+    implementation(libs.supabase.postgrest)
+    implementation(libs.supabase.storage)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
+    implementation(platform(libs.kotlinx.coroutines.bom))
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.androidx.concurrent.futures.ktx)
 
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
 
     // Unit tests
+    testImplementation(platform(libs.kotlinx.coroutines.bom))
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -190,10 +245,15 @@ dependencies {
     testImplementation(libs.mockito.inline)
 
     // Instrumentation tests
+    androidTestImplementation(platform(libs.kotlinx.coroutines.bom))
+    androidTestImplementation(libs.androidx.concurrent.futures)
+    androidTestImplementation(libs.androidx.concurrent.futures.ktx)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.mockito.android)
+    androidTestImplementation(libs.mockito.kotlin)
 
     // Debug only
     debugImplementation(libs.androidx.compose.ui.tooling)
@@ -201,5 +261,4 @@ dependencies {
 
     // Annotation processors
     kapt(libs.androidx.room.compiler)
-
 }

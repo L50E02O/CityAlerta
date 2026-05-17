@@ -1,4 +1,4 @@
-# ManTap
+# CityAlerta
 
 Aplicación móvil nativa para Android que permite a los usuarios de Manta, Manabí, Ecuador reportar incidentes urbanos y dar seguimiento a su resolución mediante la interacción con administradores y agencias responsables.
 
@@ -6,7 +6,7 @@ Aplicación móvil nativa para Android que permite a los usuarios de Manta, Mana
 
 ## Descripción
 
-ManTap es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
+CityAlerta es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
 
 El sistema está diseñado con un enfoque escalable, permitiendo su evolución hacia un backend centralizado y un panel web administrativo.
 
@@ -92,25 +92,37 @@ El proyecto implementa **MVVM + Clean Architecture**, separando responsabilidade
 ```mermaid
 erDiagram
     direction TB
-    ciudades {
+    ciudad {
         uuid id PK ""
         varchar nombre ""
         varchar pais ""
         jsonb geojson "Límites de la ciudad"
-        decimal centro_lat ""
-        decimal centro_lng ""
+        decimal centroLat ""
+        decimal centroLng ""
         timestamp created_at ""
+        timestamp updated_at ""
     }
 
-    barrios {
+    barrio {
         uuid id PK ""
         uuid ciudad_id FK ""
         varchar nombre ""
         varchar nivel_peligrosidad ""
         geometry perimetro ""
+        timestamp created_at ""
+        timestamp updated_at ""
     }
 
-    reportes {
+    perfil {
+        uuid id PK ""
+        varchar nombre_completo ""
+        varchar rol_slug ""
+        boolean activo ""
+        timestamp created_at ""
+        timestamp updated_at ""
+    }
+
+    reporte {
         uuid id PK ""
         uuid usuario_id FK ""
         uuid ciudad_id FK ""
@@ -119,38 +131,33 @@ erDiagram
         varchar estado_slug ""
         timestamp fecha_reporte ""
         varchar categoria ""
+        timestamp created_at ""
         timestamp updated_at ""
     }
 
-    reporte_ubicaciones {
+    reporte_ubicacion {
         uuid id PK ""
         decimal lat ""
         decimal lng ""
         varchar direccion_aproximada ""
+        timestamp created_at ""
+        timestamp updated_at ""
     }
 
-    reporte_imagenes {
+    reporte_imagen {
         uuid id PK ""
         uuid reporte_id FK ""
         uuid storage_uuid ""
         varchar url_path ""
         timestamp created_at ""
+        timestamp updated_at ""
     }
 
-    usuarios {
-        uuid id PK ""
-        varchar nombre_completo ""
-        varchar email UK ""
-        varchar password_hash ""
-        varchar rol_slug ""
-        boolean activo ""
-    }
-
-    usuarios ||--o{ reportes : "crea"
-    ciudades ||--o{ barrios : "contiene"
-    ciudades ||--o{ reportes : "registra"
-    reportes ||--|| reporte_ubicaciones : "se ubica en"
-    reportes ||--o{ reporte_imagenes : "contiene"
+    perfil ||--o{ reporte : "crea"
+    ciudad ||--o{ barrio : "contiene"
+    ciudad ||--o{ reporte : "registra"
+    reporte ||--|| reporte_ubicacion : "se ubica en"
+    reporte ||--o{ reporte_imagen : "contiene"
 ```
 ---
 
@@ -279,7 +286,7 @@ Buenas Prácticas:
   Pasos:
   
     git clone <repositorio>
-    cd ManTap
+    cd CityAlerta
     ./gradlew build
     ./gradlew installDebug
 

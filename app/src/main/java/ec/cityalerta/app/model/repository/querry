@@ -1,0 +1,368 @@
+CREATE OR REPLACE FUNCTION get_barrios()
+RETURNS TABLE (
+  id uuid,
+  ciudad_id uuid,
+  nombre text,
+  nivel_peligrosidad text,
+  perimetro json,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+AS $$
+SELECT
+  id,
+  ciudad_id,
+  nombre,
+  nivel_peligrosidad,
+  CASE
+    WHEN perimetro IS NOT NULL
+    THEN ST_AsGeoJSON(perimetro)::json
+    ELSE NULL
+  END,
+  created_at,
+  updated_at
+FROM barrio;
+$$ LANGUAGE sql STABLE;
+
+
+CREATE OR REPLACE FUNCTION get_barrio_by_id(p_id uuid)
+RETURNS TABLE (
+  id uuid,
+  ciudad_id uuid,
+  nombre text,
+  nivel_peligrosidad text,
+  perimetro json,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+AS $$
+BEGIN
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'El ID del barrio no puede ser nulo';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    b.id,
+    b.ciudad_id,
+    b.nombre,
+    b.nivel_peligrosidad,
+    CASE
+      WHEN b.perimetro IS NOT NULL
+      THEN ST_AsGeoJSON(b.perimetro)::json
+      ELSE NULL
+    END,
+    b.created_at,
+    b.updated_at
+  FROM barrio b
+  WHERE b.id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Barrio con ID % no encontrado', p_id;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION get_ciudades()
+RETURNS TABLE (
+  id uuid,
+  nombre text,
+  pais text,
+  geojson json,
+  centro_lat double precision,
+  centro_lng double precision,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+AS $$
+SELECT
+  id,
+  nombre,
+  pais,
+  CASE
+    WHEN geojson IS NOT NULL
+    THEN ST_AsGeoJSON(geojson)::json
+    ELSE NULL
+  END,
+  centro_lat,
+  centro_lng,
+  created_at,
+  updated_at
+FROM ciudad;
+$$ LANGUAGE sql STABLE;
+
+
+CREATE OR REPLACE FUNCTION get_ciudad_by_id(p_id uuid)
+RETURNS TABLE (
+  id uuid,
+  nombre text,
+  pais text,
+  geojson json,
+  centro_lat double precision,
+  centro_lng double precision,
+  created_at timestamptz,
+  updated_at timestamptz
+)
+AS $$
+BEGIN
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'El ID de la ciudad no puede ser nulo';
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    c.id,
+    c.nombre,
+    c.pais,
+    CASE
+      WHEN c.geojson IS NOT NULL
+      THEN ST_AsGeoJSON(c.geojson)::json
+      ELSE NULL
+    END,
+    c.centro_lat,
+    c.centro_lng,
+    c.created_at,
+    c.updated_at
+  FROM ciudad c
+  WHERE c.id = p_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Ciudad con ID % no encontrada', p_id;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION create_ciudad(
+  p_nombre text,
+  p_pais text,
+  p_geojson json,
+  p_centro_lat double precision,
+  p_centro_lng double precision
+)
+RETURNS uuid AS $$
+DECLARE new_id uuid;
+BEGIN
+  IF p_nombre IS NULL OR p_nombre = '' THEN
+    RAISE EXCEPTION 'El nombre de la ciudad no puede estar vacío';
+  END IF;
+
+  IF p_pais IS NULL OR p_pais = '' THEN
+    RAISE EXCEPTION 'El pais de la ciudad no puede estar vacío';
+  END IF;
+
+  IF p_centro_lat IS NULL THEN
+    RAISE EXCEPTION 'La latitud central no puede ser nula';
+  END IF;
+
+  IF p_centro_lng IS NULL THEN
+    RAISE EXCEPTION 'La longitud central no puede ser nula';
+  END IF;
+
+  INSERT INTO ciudad (
+    nombre,
+    pais,
+    geojson,
+    centro_lat,
+    centro_lng
+  )
+  VALUES (
+    p_nombre,
+    p_pais,
+    CASE
+      WHEN p_geojson IS NOT NULL
+      THEN ST_SetSRID(ST_GeomFromGeoJSON(p_geojson::text), 4326)
+      ELSE NULL
+    END,
+    p_centro_lat,
+    p_centro_lng
+  )
+  RETURNING id INTO new_id;
+
+  RETURN new_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION update_ciudad(
+  p_id uuid,
+  p_nombre text,
+  p_pais text,
+  p_geojson json,
+  p_centro_lat double precision,
+  p_centro_lng double precision
+)
+RETURNS void AS $$
+BEGIN
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'El ID de la ciudad no puede ser nulo';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM ciudad WHERE id = p_id) THEN
+    RAISE EXCEPTION 'Ciudad con ID % no encontrada', p_id;
+  END IF;
+
+  IF p_nombre = '' THEN
+    RAISE EXCEPTION 'El nombre de la ciudad no puede estar vacío';
+  END IF;
+
+  IF p_pais = '' THEN
+    RAISE EXCEPTION 'El pais de la ciudad no puede estar vacío';
+  END IF;
+
+  UPDATE ciudad
+  SET
+    nombre = COALESCE(p_nombre, nombre),
+    pais = COALESCE(p_pais, pais),
+    geojson = CASE
+      WHEN p_geojson IS NOT NULL
+      THEN ST_SetSRID(ST_GeomFromGeoJSON(p_geojson::text), 4326)
+      ELSE geojson
+    END,
+    centro_lat = COALESCE(p_centro_lat, centro_lat),
+    centro_lng = COALESCE(p_centro_lng, centro_lng)
+  WHERE id = p_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION delete_ciudad(p_id uuid)
+RETURNS void AS $$
+BEGIN
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'El ID de la ciudad no puede ser nulo';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM ciudad WHERE id = p_id) THEN
+    RAISE EXCEPTION 'Ciudad con ID % no encontrada', p_id;
+  END IF;
+
+  DELETE FROM ciudad WHERE id = p_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION create_barrio(
+  p_ciudad_id uuid,
+  p_nombre text,
+  p_nivel_peligrosidad text,
+  p_geojson json
+)
+RETURNS uuid AS $$
+DECLARE new_id uuid;
+BEGIN
+  IF p_ciudad_id IS NULL THEN
+    RAISE EXCEPTION 'El ID de la ciudad no puede ser nulo';
+  END IF;
+
+  IF p_nombre IS NULL OR p_nombre = '' THEN
+    RAISE EXCEPTION 'El nombre del barrio no puede estar vacío';
+  END IF;
+
+  IF p_nivel_peligrosidad IS NULL OR p_nivel_peligrosidad = '' THEN
+    RAISE EXCEPTION 'El nivel de peligrosidad no puede estar vacío';
+  END IF;
+
+  IF p_geojson IS NULL THEN
+    RAISE EXCEPTION 'El perímetro GeoJSON no puede ser nulo';
+  END IF;
+
+  INSERT INTO barrio (
+    ciudad_id,
+    nombre,
+    nivel_peligrosidad,
+    perimetro
+  )
+  VALUES (
+    p_ciudad_id,
+    p_nombre,
+    p_nivel_peligrosidad,
+    ST_SetSRID(ST_GeomFromGeoJSON(p_geojson::text), 4326)
+  )
+  RETURNING id INTO new_id;
+
+  RETURN new_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION update_barrio(
+  p_id uuid,
+  p_nombre text,
+  p_nivel_peligrosidad text,
+  p_geojson json
+)
+RETURNS void AS $$
+BEGIN
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'El ID del barrio no puede ser nulo';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM barrio WHERE id = p_id) THEN
+    RAISE EXCEPTION 'Barrio con ID % no encontrado', p_id;
+  END IF;
+
+  IF p_nombre = '' THEN
+    RAISE EXCEPTION 'El nombre del barrio no puede estar vacío';
+  END IF;
+
+  IF p_nivel_peligrosidad = '' THEN
+    RAISE EXCEPTION 'El nivel de peligrosidad no puede estar vacío';
+  END IF;
+
+  UPDATE barrio
+  SET
+    nombre = COALESCE(p_nombre, nombre),
+    nivel_peligrosidad = COALESCE(p_nivel_peligrosidad, nivel_peligrosidad),
+    perimetro = CASE
+      WHEN p_geojson IS NOT NULL
+      THEN ST_SetSRID(ST_GeomFromGeoJSON(p_geojson::text), 4326)
+      ELSE perimetro
+    END
+  WHERE id = p_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION update_barrio_perimetro(
+  p_id uuid,
+  p_geojson json
+)
+RETURNS void AS $$
+BEGIN
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'El ID del barrio no puede ser nulo';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM barrio WHERE id = p_id) THEN
+    RAISE EXCEPTION 'Barrio con ID % no encontrado', p_id;
+  END IF;
+
+  IF p_geojson IS NULL THEN
+    RAISE EXCEPTION 'El perímetro GeoJSON no puede ser nulo';
+  END IF;
+
+  UPDATE barrio
+  SET
+    perimetro = ST_SetSRID(ST_GeomFromGeoJSON(p_geojson::text), 4326)
+  WHERE id = p_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION delete_barrio(p_id uuid)
+RETURNS void AS $$
+BEGIN
+  IF p_id IS NULL THEN
+    RAISE EXCEPTION 'El ID del barrio no puede ser nulo';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM barrio WHERE id = p_id) THEN
+    RAISE EXCEPTION 'Barrio con ID % no encontrado', p_id;
+  END IF;
+
+  DELETE FROM barrio WHERE id = p_id;
+END;
+$$ LANGUAGE plpgsql;
+
