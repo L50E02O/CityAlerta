@@ -268,9 +268,7 @@ class CiudadRepositoryTest {
         // Arrange & Act
         val repo = CiudadRepository()
 
-        // Assert
         assertNotNull(repo)
-        assertTrue(repo is CiudadRepository)
     }
 
     @Test

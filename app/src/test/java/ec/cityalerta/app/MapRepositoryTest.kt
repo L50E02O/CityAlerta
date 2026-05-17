@@ -27,9 +27,7 @@ class MapRepositoryTest {
         // Arrange & Act
         val repo = MapRepository()
 
-        // Assert
         assertNotNull(repo)
-        assertTrue(repo is MapRepository)
     }
 
     @Test

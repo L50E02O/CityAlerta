@@ -247,9 +247,7 @@ class BarrioRepositoryTest {
         // Arrange & Act
         val repo = BarrioRepository()
 
-        // Assert
         assertNotNull(repo)
-        assertTrue(repo is BarrioRepository)
     }
 
     @Test
