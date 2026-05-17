@@ -1,5 +1,6 @@
 package ec.cityalerta.app
 
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.data.perfil.Perfil
 import ec.cityalerta.app.model.data.perfil.PerfilCreateDto
 import ec.cityalerta.app.model.data.perfil.PerfilUpdateDto
@@ -197,5 +198,10 @@ class PerfilRepositoryTest {
     fun testPerfilRepositoryInitialization() {
         assertNotNull(repository)
         assertTrue(repository is PerfilRepository)
+    }
+
+    @Test
+    fun testPerfilRepositoryImplementaContratoCrud() {
+        assertTrue(repository is CrudRepositoryContract<*, *, *>)
     }
 }

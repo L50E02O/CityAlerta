@@ -122,9 +122,9 @@ class PasswordRecoveryViewModelTest {
         viewModel.verifyEmail()
 
         // Assert
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage?.contains("correo") ?: false)
+        assertEquals("Ingresa tu correo electronico", viewModel.uiState.errorMessage)
         assertFalse(viewModel.uiState.isEmailVerified)
+        assertFalse(viewModel.uiState.isLoading)
     }
 
     @Test
@@ -202,12 +202,14 @@ class PasswordRecoveryViewModelTest {
         val password1 = "Password123"
         val password2 = "Password456"
 
-        // Act & Assert
+        // Act
         viewModel.onNewPasswordChange(password1)
         viewModel.onConfirmPasswordChange(password2)
-        assertNotNull(viewModel.uiState.newPassword)
-        assertNotNull(viewModel.uiState.confirmPassword)
-        assertNotNull(viewModel.uiState.newPassword != viewModel.uiState.confirmPassword)
+
+        // Assert
+        assertEquals(password1, viewModel.uiState.newPassword)
+        assertEquals(password2, viewModel.uiState.confirmPassword)
+        assertTrue(viewModel.uiState.newPassword != viewModel.uiState.confirmPassword)
     }
 
     @Test
@@ -273,16 +275,30 @@ class PasswordRecoveryViewModelTest {
     }
 
     @Test
-    fun testResetPasswordCallsOnSuccessCallback() {
+    fun testResetPasswordSinCorreo() {
         // Arrange
         var callbackCalled = false
-        
+
         // Act
         viewModel.resetPassword { callbackCalled = true }
 
         // Assert
-        // Should not call callback due to validation errors (email not verified)
         assertFalse(callbackCalled)
+        assertEquals("Ingresa tu correo electronico", viewModel.uiState.errorMessage)
+    }
+
+    @Test
+    fun testResetPasswordSinCorreoVerificado() {
+        // Arrange
+        var callbackCalled = false
+        viewModel.onEmailChange("usuario@example.com")
+
+        // Act
+        viewModel.resetPassword { callbackCalled = true }
+
+        // Assert
+        assertFalse(callbackCalled)
+        assertEquals("Primero verifica que el correo exista", viewModel.uiState.errorMessage)
     }
 
     @Test

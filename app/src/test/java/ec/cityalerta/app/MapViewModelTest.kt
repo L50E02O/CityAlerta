@@ -201,10 +201,10 @@ class MapViewModelTest {
         val categories = viewModel.uiState.categories
 
         // Assert
-        assertNotNull(categories)
-        assertTrue(categories.isNotEmpty())
-        assertTrue(categories.contains(ReportType.BACHE))
-        assertTrue(categories.contains(ReportType.ZONA_DE_RIESGO))
+        assertEquals(ReportType.entries, categories)
+        ReportType.entries.forEach { tipo ->
+            assertTrue(categories.contains(tipo))
+        }
     }
 
     @Test
