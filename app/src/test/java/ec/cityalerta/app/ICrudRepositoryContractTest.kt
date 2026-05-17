@@ -128,6 +128,7 @@ class ICrudRepositoryContractTest {
         // Arrange
         val estados = listOf(
             ReporteEstado.PENDIENTE,
+            ReporteEstado.EN_PROCESO,
             ReporteEstado.RESUELTO
         )
 

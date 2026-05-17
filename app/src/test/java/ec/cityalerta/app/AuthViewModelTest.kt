@@ -1,7 +1,6 @@
 package ec.cityalerta.app
 
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
-import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.viewmodel.AuthState
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Before
@@ -159,8 +158,10 @@ class AuthViewModelTest {
 
         // Assert
         assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage?.contains("correo") ?: false)
+        assertEquals(
+            "El correo y la contrasena no pueden estar vacios",
+            viewModel.uiState.errorMessage
+        )
     }
 
     @Test
@@ -174,8 +175,10 @@ class AuthViewModelTest {
 
         // Assert
         assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage?.contains("contrasena") ?: false)
+        assertEquals(
+            "El correo y la contrasena no pueden estar vacios",
+            viewModel.uiState.errorMessage
+        )
     }
 
     @Test
@@ -220,8 +223,7 @@ class AuthViewModelTest {
 
         // Assert
         assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage?.contains("ciudad") ?: false)
+        assertEquals("Selecciona tu ciudad", viewModel.uiState.errorMessage)
     }
 
     @Test
@@ -254,8 +256,10 @@ class AuthViewModelTest {
         viewModel.resendActivationEmail()
 
         // Assert
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage?.contains("correo") ?: false)
+        assertEquals(
+            "Ingresa tu correo para reenviar la activacion",
+            viewModel.uiState.errorMessage
+        )
     }
 
     @Test

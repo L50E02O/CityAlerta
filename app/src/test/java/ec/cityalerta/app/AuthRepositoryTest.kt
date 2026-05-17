@@ -44,13 +44,11 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun testAuthMappedExceptionIsException() {
-        // Arrange
+    fun testAuthMappedExceptionHasMessage() {
         val exception = AuthMappedException("Error de autenticacion", false)
 
-        // Assert
-        assertTrue(exception is Exception)
         assertNotNull(exception.message)
+        assertEquals("Error de autenticacion", exception.message)
     }
 
     @Test
@@ -147,27 +145,15 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun testAuthExceptionInheritance() {
-        // Arrange & Act
-        val exception = AuthMappedException("Mensaje de error", true)
-
-        // Assert
-        assertTrue(exception is Throwable, "AuthMappedException debe ser Throwable")
-        assertTrue(exception is Exception, "AuthMappedException debe ser Exception")
-    }
-
-    @Test
     fun testAuthExceptionWithMultipleScenarios() {
-        // Arrange - Different error scenarios
         val scenarios = listOf(
-            Triple("Correo no confirmado", true, "unconfirmed_email"),
-            Triple("Usuario no encontrado", false, "user_not_found"),
-            Triple("Contrasena incorrecta", false, "invalid_password"),
-            Triple("Cuenta deshabilitada", false, "account_disabled")
+            Pair("Correo no confirmado", true),
+            Pair("Usuario no encontrado", false),
+            Pair("Contrasena incorrecta", false),
+            Pair("Cuenta deshabilitada", false)
         )
 
-        // Act & Assert
-        scenarios.forEach { (message, isUnconfirmed, scenario) ->
+        scenarios.forEach { (message, isUnconfirmed) ->
             val exception = AuthMappedException(message, isUnconfirmed)
             assertEquals(message, exception.message)
             assertEquals(isUnconfirmed, exception.isEmailUnconfirmed)
