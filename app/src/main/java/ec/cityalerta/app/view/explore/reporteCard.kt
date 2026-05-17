@@ -46,16 +46,15 @@ fun ReporteCard(reporte: ReporteUI) {
                     .fillMaxWidth()
                     .height(200.dp)
             ) {
-                Log.d("ReporteCard", "URL de la imagen: ${reporte.imageUrl}")
-                AsyncImage(
-                    model = reporte.imageUrl,
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Fallback if no image
-                if (reporte.imageUrl == null) {
+                if (reporte.imageUrl != null) {
+                    Log.d("ReporteCard", "URL de la imagen: ${reporte.imageUrl}")
+                    AsyncImage(
+                        model = reporte.imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()

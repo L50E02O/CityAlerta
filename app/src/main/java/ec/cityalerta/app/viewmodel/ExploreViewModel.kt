@@ -3,7 +3,6 @@ package ec.cityalerta.app.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.data.perfil.Perfil
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
@@ -137,10 +136,8 @@ class ExploreViewModel(
 
     private suspend fun mapReporteToUi(reporte: Reporte): ReporteUI {
         val primerImagen = reporteImagenRepository.getFirstImagenByReporteId(reporte.id).getOrNull()
-        val imageUrl = primerImagen?.let { imagen ->
-            reporteStorageRepository.generateSignedImageUrl(imagen.url_path)
-                .getOrNull()
-                ?.let { signedPath -> "${BuildConfig.STORAGE_BASE_URL}$signedPath" }
+        val imageUrl = primerImagen?.storage_uuid?.takeIf { it.isNotBlank() }?.let { objectPath ->
+            reporteStorageRepository.generateSignedImageUrl(objectPath).getOrNull()
         }
         Log.d("ExploreViewModel", "URL generada para imagen: $imageUrl")
 

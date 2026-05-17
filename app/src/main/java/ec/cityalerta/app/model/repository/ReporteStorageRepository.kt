@@ -1,5 +1,6 @@
 package ec.cityalerta.app.model.repository
 
+import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import io.github.jan.supabase.storage.storage
@@ -20,11 +21,25 @@ class ReporteStorageRepository {
         objectName
     }
 
+    /**
+     * Genera una URL firmada lista para usar en Coil.
+     * Supabase ya devuelve la URL absoluta (https://...); no requiere STORAGE_BASE_URL.
+     */
     suspend fun generateSignedImageUrl(
-        imageUUID: String
+        objectPath: String
     ): Result<String> = safeSupabaseCall {
-        SupabaseProvider.client.storage[bucketName]
-            .createSignedUrl(imageUUID, expirationDuration)
+        val signedUrl = SupabaseProvider.client.storage[bucketName]
+            .createSignedUrl(objectPath, expirationDuration)
+        normalizeSignedUrl(signedUrl)
+    }
+
+    private fun normalizeSignedUrl(url: String): String {
+        val trimmed = url.trim()
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed
+        }
+        val base = BuildConfig.SUPABASE_URL.trimEnd('/')
+        return "$base/storage/v1/${trimmed.trimStart('/')}"
     }
 
     suspend fun deleteReportImage(

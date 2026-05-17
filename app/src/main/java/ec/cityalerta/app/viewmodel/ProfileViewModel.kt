@@ -2,7 +2,6 @@ package ec.cityalerta.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.data.perfil.PerfilResumen
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
@@ -266,10 +265,8 @@ class ProfileViewModel(
 
     private suspend fun mapReportToUi(reporte: Reporte): UserReportUi? {
         val primerImagen = reporteImagenRepository.getFirstImagenByReporteId(reporte.id).getOrNull()
-        val imageUrl = primerImagen?.let { imagen ->
-            reporteStorageRepository.generateSignedImageUrl(imagen.storage_uuid)
-                .getOrNull()
-                ?.let { signedPath -> "${BuildConfig.STORAGE_BASE_URL}$signedPath" }
+        val imageUrl = primerImagen?.storage_uuid?.takeIf { it.isNotBlank() }?.let { objectPath ->
+            reporteStorageRepository.generateSignedImageUrl(objectPath).getOrNull()
         }
 
         val ubicacion = reporteUbicacionRepository.getById(reporte.ubicacion_id).getOrNull()
