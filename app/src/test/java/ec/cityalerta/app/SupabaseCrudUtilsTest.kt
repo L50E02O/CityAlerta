@@ -1,11 +1,14 @@
 package ec.cityalerta.app
 
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
+import ec.cityalerta.app.model.data.reporte.ReportType
+import kotlin.coroutines.cancellation.CancellationException
 import ec.cityalerta.app.model.utils.booleanOrFalse
 import ec.cityalerta.app.model.utils.doubleOrZero
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.stringOrEmpty
 import ec.cityalerta.app.model.utils.toReporteEstadoOrDefault
+import ec.cityalerta.app.model.utils.toReportTypeOrDefault
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
@@ -36,6 +39,29 @@ class SupabaseCrudUtilsTest {
         val result = ec.cityalerta.app.model.utils.safeSupabaseCall { throw exception }
         assertTrue(result.isFailure)
         assertEquals(exception, result.exceptionOrNull())
+    }
+
+    @Test
+    fun testSafeSupabaseCallRethrowsCancellation() = kotlinx.coroutines.test.runTest {
+        val cancellation = CancellationException("cancelled")
+        try {
+            ec.cityalerta.app.model.utils.safeSupabaseCall<String> { throw cancellation }
+            assertTrue(false, "Debe relanzar CancellationException")
+        } catch (e: CancellationException) {
+            assertEquals(cancellation, e)
+        }
+    }
+
+    @Test
+    fun testToReportTypeOrDefaultReturnsMatch() {
+        val json = JsonObject(mapOf("categoria" to JsonPrimitive("BACHE")))
+        assertEquals(ReportType.BACHE, json.toReportTypeOrDefault("categoria"))
+    }
+
+    @Test
+    fun testToReportTypeOrDefaultReturnsFallback() {
+        val json = JsonObject(mapOf("categoria" to JsonPrimitive("DESCONOCIDO")))
+        assertEquals(ReportType.ZONA_DE_RIESGO, json.toReportTypeOrDefault("categoria"))
     }
 
     @Test

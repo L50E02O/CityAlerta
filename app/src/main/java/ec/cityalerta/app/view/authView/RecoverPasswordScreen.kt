@@ -49,6 +49,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
+import ec.cityalerta.app.viewmodel.PasswordRecoveryState
 import androidx.navigation.NavController
 
 @Composable
@@ -86,149 +87,28 @@ fun RecoverPasswordScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "ATRAS",
-                color = Color(0xFF1B2633),
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clickable { navController.popBackStack() }
+            RecoverPasswordHeader(onBack = { navController.popBackStack() })
+
+            EmailVerificationCard(
+                state = state,
+                canVerifyEmail = canVerifyEmail,
+                onEmailChange = viewModel::onEmailChange,
+                onVerifyEmail = viewModel::verifyEmail
             )
 
-            Column {
-                Text(
-                    text = "Restablecer Contrasena",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFF1B2633),
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Box(
-                    modifier = Modifier
-                        .size(width = 38.dp, height = 4.dp)
-                        .background(ReportUiColors.AccentRed, RoundedCornerShape(999.dp))
-                )
-            }
-
-            Card(
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    SectionLabel("PASO 01")
-                    Text(
-                        text = "Verifica tu correo",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF1B2633),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    OutlinedTextField(
-                        value = state.email,
-                        onValueChange = viewModel::onEmailChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        enabled = !state.isLoading,
-                        label = { Text("Correo electronico") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                    )
-                    Text(
-                        text = "La app validara que el correo exista y luego actualizara la contrasena con la edge function.",
-                        color = ReportUiColors.HintText,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    Button(
-                        onClick = viewModel::verifyEmail,
-                        enabled = canVerifyEmail,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(if (state.isLoading) "Verificando..." else "Verificar correo")
-                    }
-
-                    if (state.isEmailVerified) {
-                        Text(
-                            text = "Correo verificado. Paso 02 habilitado.",
-                            color = Color(0xFF1B5E20),
-                            style = MaterialTheme.typography.bodySmall
-                        )
+            PasswordResetCard(
+                state = state,
+                canUpdatePassword = canUpdatePassword,
+                onNewPasswordChange = viewModel::onNewPasswordChange,
+                onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
+                onResetPassword = {
+                    viewModel.resetPassword {
+                        navController.navigate(Routes.Login.route) {
+                            popUpTo(Routes.RecoverPassword.route) { inclusive = true }
+                        }
                     }
                 }
-            }
-
-            Card(
-                shape = RoundedCornerShape(28.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
-                modifier = Modifier
-                        .fillMaxWidth()
-                        .alpha(if (state.isEmailVerified) 1f else 0.55f)
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    SectionLabel("PASO 02")
-                    Text(
-                        text = "Restablecer Contrasena",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF1B2633),
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Escribe una nueva contrasena y confirmala. Si el correo existe, la edge function la guardara en Supabase Auth.",
-                        color = ReportUiColors.HintText,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    PasswordField(
-                        value = state.newPassword,
-                        label = "Escribe tu contrasena nueva",
-                        onValueChange = viewModel::onNewPasswordChange,
-                        enabled = state.isEmailVerified && !state.isLoading
-                    )
-
-                    PasswordField(
-                        value = state.confirmPassword,
-                        label = "Vuelve a escribir tu contrasena nueva",
-                        onValueChange = viewModel::onConfirmPasswordChange,
-                        enabled = state.isEmailVerified && !state.isLoading
-                    )
-
-                    Button(
-                        onClick = {
-                            viewModel.resetPassword {
-                                navController.navigate(Routes.Login.route) {
-                                    popUpTo(Routes.RecoverPassword.route) { inclusive = true }
-                                }
-                            }
-                        },
-                        enabled = canUpdatePassword,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-
-                        Text(if (state.isLoading) "Procesando..." else "Actualizar Contrasena")
-                    }
-
-                    if (state.successMessage != null) {
-                        Text(
-                            text = state.successMessage!!,
-                            color = Color(0xFF1B5E20),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-
-                    if (state.errorMessage != null) {
-                        Text(
-                            text = state.errorMessage!!,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            }
+            )
 
             Text(
                 text = "Regresar al login",
@@ -242,6 +122,174 @@ fun RecoverPasswordScreen(
                     }
             )
         }
+    }
+}
+
+@Composable
+private fun RecoverPasswordHeader(onBack: () -> Unit) {
+    Text(
+        text = "ATRAS",
+        color = Color(0xFF1B2633),
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.clickable(onClick = onBack)
+    )
+
+    Column {
+        Text(
+            text = "Restablecer Contrasena",
+            style = MaterialTheme.typography.headlineMedium,
+            color = Color(0xFF1B2633),
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(
+            modifier = Modifier
+                .size(width = 38.dp, height = 4.dp)
+                .background(ReportUiColors.AccentRed, RoundedCornerShape(999.dp))
+        )
+    }
+}
+
+@Composable
+private fun EmailVerificationCard(
+    state: PasswordRecoveryState,
+    canVerifyEmail: Boolean,
+    onEmailChange: (String) -> Unit,
+    onVerifyEmail: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            SectionLabel("PASO 01")
+            Text(
+                text = "Verifica tu correo",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFF1B2633),
+                fontWeight = FontWeight.SemiBold
+            )
+            OutlinedTextField(
+                value = state.email,
+                onValueChange = onEmailChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = !state.isLoading,
+                label = { Text("Correo electronico") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
+            Text(
+                text = "La app validara que el correo exista y luego actualizara la contrasena con la edge function.",
+                color = ReportUiColors.HintText,
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Button(
+                onClick = onVerifyEmail,
+                enabled = canVerifyEmail,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (state.isLoading) "Verificando..." else "Verificar correo")
+            }
+
+            if (state.isEmailVerified) {
+                Text(
+                    text = "Correo verificado. Paso 02 habilitado.",
+                    color = Color(0xFF1B5E20),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PasswordResetCard(
+    state: PasswordRecoveryState,
+    canUpdatePassword: Boolean,
+    onNewPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
+    onResetPassword: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .alpha(if (state.isEmailVerified) 1f else 0.55f)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            SectionLabel("PASO 02")
+            Text(
+                text = "Restablecer Contrasena",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFF1B2633),
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = "Escribe una nueva contrasena y confirmala. Si el correo existe, la edge function la guardara en Supabase Auth.",
+                color = ReportUiColors.HintText,
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            PasswordField(
+                value = state.newPassword,
+                label = "Escribe tu contrasena nueva",
+                onValueChange = onNewPasswordChange,
+                enabled = state.isEmailVerified && !state.isLoading
+            )
+
+            PasswordField(
+                value = state.confirmPassword,
+                label = "Vuelve a escribir tu contrasena nueva",
+                onValueChange = onConfirmPasswordChange,
+                enabled = state.isEmailVerified && !state.isLoading
+            )
+
+            Button(
+                onClick = onResetPassword,
+                enabled = canUpdatePassword,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (state.isLoading) "Procesando..." else "Actualizar Contrasena")
+            }
+
+            RecoverPasswordStatusMessages(
+                successMessage = state.successMessage,
+                errorMessage = state.errorMessage
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecoverPasswordStatusMessages(
+    successMessage: String?,
+    errorMessage: String?
+) {
+    successMessage?.let { message ->
+        Text(
+            text = message,
+            color = Color(0xFF1B5E20),
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+
+    errorMessage?.let { message ->
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 

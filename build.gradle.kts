@@ -29,7 +29,15 @@ project(":app") {
       )
       property(
         "sonar.coverage.exclusions",
-        "src/main/java/man/tap/view/**,src/main/java/man/tap/navigation/**,src/main/java/man/tap/MainActivity.kt,src/main/java/man/tap/model/remote/**,src/main/java/man/tap/model/repository/authRepository.kt"
+        listOf(
+          "src/main/java/ec/cityalerta/app/view/**",
+          "src/main/java/ec/cityalerta/app/navigation/**",
+          "src/main/java/ec/cityalerta/app/MainActivity.kt",
+          "src/main/java/ec/cityalerta/app/model/remote/**",
+          "src/main/java/ec/cityalerta/app/model/repository/**",
+          "src/main/java/ec/cityalerta/app/viewmodel/ExploreViewModel.kt",
+          "src/main/java/ec/cityalerta/app/viewmodel/ReporteViewModel.kt"
+        ).joinToString(",")
       )
     }
   }

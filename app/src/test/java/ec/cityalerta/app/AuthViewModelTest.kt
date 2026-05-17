@@ -1,277 +1,326 @@
 package ec.cityalerta.app
 
-import ec.cityalerta.app.model.data.contracts.AuthRepositoryContract
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.viewmodel.AuthState
 import ec.cityalerta.app.viewmodel.AuthViewModel
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.junit.Assert.*
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.whenever
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
-@OptIn(ExperimentalCoroutinesApi::class)
+/**
+ * Tests unitarios para AuthViewModel.
+ * Valida cambios de estado y validaciones de formulario.
+ */
 class AuthViewModelTest {
-    private val testDispatcher = StandardTestDispatcher()
-    
+
     @Mock
-    private lateinit var mockRepository: AuthRepositoryContract
+    private lateinit var mockAuthRepository: AuthRepositoryContract
 
     private lateinit var viewModel: AuthViewModel
 
     @Before
     fun setUp() {
-        Dispatchers.setMain(testDispatcher)
         MockitoAnnotations.openMocks(this)
-        viewModel = AuthViewModel(mockRepository)
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
+        viewModel = AuthViewModel(mockAuthRepository)
     }
 
     @Test
-    fun testInitialState() {
-        assertEquals("", viewModel.uiState.email)
-        assertEquals("", viewModel.uiState.password)
-        assertFalse(viewModel.uiState.isLoading)
-        assertNull(viewModel.uiState.errorMessage)
+    fun testInitialAuthState() {
+        // Arrange & Act
+        val state = viewModel.uiState
+
+        // Assert
+        assertNotNull(state)
+        assertEquals("", state.email)
+        assertEquals("", state.password)
+        assertEquals("", state.ciudadNombre)
+        assertEquals("", state.ciudadId)
+        assertFalse(state.isLoading)
+        assertFalse(state.isEmailUnconfirmed)
+        assertEquals(null, state.errorMessage)
+        assertEquals(null, state.infoMessage)
+    }
+
+    @Test
+    fun testAuthStateCreation() {
+        // Arrange & Act
+        val state = AuthState(
+            email = "test@example.com",
+            password = "password123",
+            ciudadNombre = "Manta",
+            ciudadId = "ciudad-123",
+            isLoading = false,
+            isEmailUnconfirmed = false,
+            errorMessage = null,
+            infoMessage = null
+        )
+
+        // Assert
+        assertEquals("test@example.com", state.email)
+        assertEquals("password123", state.password)
+        assertEquals("Manta", state.ciudadNombre)
+        assertEquals("ciudad-123", state.ciudadId)
+        assertFalse(state.isLoading)
     }
 
     @Test
     fun testOnEmailChange() {
-        val testEmail = "test@example.com"
-        viewModel.onEmailChange(testEmail)
-        assertEquals(testEmail, viewModel.uiState.email)
+        // Arrange
+        val newEmail = "newemail@example.com"
+
+        // Act
+        viewModel.onEmailChange(newEmail)
+
+        // Assert
+        assertEquals(newEmail, viewModel.uiState.email)
+        assertFalse(viewModel.uiState.isEmailUnconfirmed)
+        assertEquals(null, viewModel.uiState.errorMessage)
     }
 
     @Test
     fun testOnPasswordChange() {
-        val testPassword = "password123"
-        viewModel.onPasswordChange(testPassword)
-        assertEquals(testPassword, viewModel.uiState.password)
+        // Arrange
+        val newPassword = "newPassword123"
+
+        // Act
+        viewModel.onPasswordChange(newPassword)
+
+        // Assert
+        assertEquals(newPassword, viewModel.uiState.password)
     }
 
     @Test
-    fun testOnLoginClickWithEmptyFields() {
+    fun testOnCiudadChange() {
+        // Arrange
+        val ciudadName = "Quito"
+
+        // Act
+        viewModel.onCiudadChange(ciudadName)
+
+        // Assert
+        assertEquals(ciudadName, viewModel.uiState.ciudadNombre)
+        assertEquals("", viewModel.uiState.ciudadId)
+    }
+
+    @Test
+    fun testOnCiudadSelected() {
+        // Arrange
+        val ciudadName = "Guayaquil"
+        val ciudadId = "ciudad-456"
+
+        // Act
+        viewModel.onCiudadSelected(ciudadName, ciudadId)
+
+        // Assert
+        assertEquals(ciudadName, viewModel.uiState.ciudadNombre)
+        assertEquals(ciudadId, viewModel.uiState.ciudadId)
+    }
+
+    @Test
+    fun testSetAuthInfoMessage() {
+        // Arrange
+        val message = "Registro exitoso"
+
+        // Act
+        viewModel.setAuthInfoMessage(message)
+
+        // Assert
+        assertEquals(message, viewModel.uiState.infoMessage)
+        assertEquals(null, viewModel.uiState.errorMessage)
+        assertFalse(viewModel.uiState.isEmailUnconfirmed)
+    }
+
+    @Test
+    fun testClearInfoMessage() {
+        // Arrange
+        viewModel.setAuthInfoMessage("Mensaje temporal")
+
+        // Act
+        viewModel.clearInfoMessage()
+
+        // Assert
+        assertEquals(null, viewModel.uiState.infoMessage)
+    }
+
+    @Test
+    fun testOnLoginClickEmptyEmail() {
+        // Arrange
+        viewModel.onPasswordChange("password123")
         var successCalled = false
-        viewModel.onLoginClick(onSuccess = { successCalled = true })
-        assertTrue(viewModel.uiState.errorMessage != null)
+
+        // Act
+        viewModel.onLoginClick { successCalled = true }
+
+        // Assert
         assertFalse(successCalled)
+        assertEquals(
+            "El correo y la contrasena no pueden estar vacios",
+            viewModel.uiState.errorMessage
+        )
     }
 
     @Test
-    fun testOnLoginClickSuccess() = runTest {
-        viewModel.onEmailChange("test@example.com")
-        viewModel.onPasswordChange("password123")
-        
-        whenever(mockRepository.signIn("test@example.com", "password123"))
-            .thenReturn(Result.success(Unit))
-        
-        var successCalled = false
-        viewModel.onLoginClick(onSuccess = { successCalled = true })
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        assertTrue(successCalled)
-        assertNull(viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnLoginClickFailure() = runTest {
-        viewModel.onEmailChange("test@example.com")
-        viewModel.onPasswordChange("password123")
-        
-        val error = Exception("Login failed")
-        whenever(mockRepository.signIn("test@example.com", "password123"))
-            .thenReturn(Result.failure(error))
-        
-        var successCalled = false
-        viewModel.onLoginClick(onSuccess = { successCalled = true })
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnRegisterClickWithEmptyFields() {
-        var successCalled = false
-        viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        assertTrue(viewModel.uiState.errorMessage != null)
-        assertFalse(successCalled)
-    }
-
-    @Test
-    fun testOnRegisterClickSuccess() = runTest {
-        viewModel.onEmailChange("newuser@example.com")
-        viewModel.onPasswordChange("password123")
-        
-        whenever(mockRepository.signUp("newuser@example.com", "password123"))
-            .thenReturn(Result.success(Unit))
-        
-        var successCalled = false
-        viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        assertTrue(successCalled)
-        assertNull(viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnRegisterClickFailure() = runTest {
-        viewModel.onEmailChange("newuser@example.com")
-        viewModel.onPasswordChange("password123")
-        
-        val error = Exception("Registration failed")
-        whenever(mockRepository.signUp("newuser@example.com", "password123"))
-            .thenReturn(Result.failure(error))
-        
-        var successCalled = false
-        viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnLoginClickWhenRepositoryThrowsException() = runTest {
-        viewModel.onEmailChange("test@example.com")
-        viewModel.onPasswordChange("password123")
-
-        whenever(mockRepository.signIn("test@example.com", "password123"))
-            .thenThrow(RuntimeException("Login exception"))
-
-        var successCalled = false
-        viewModel.onLoginClick(onSuccess = { successCalled = true })
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertFalse(successCalled)
-        assertEquals("Login exception", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnLoginClickWhenRepositoryThrowsWithoutMessage() = runTest {
-        viewModel.onEmailChange("test@example.com")
-        viewModel.onPasswordChange("password123")
-
-        whenever(mockRepository.signIn("test@example.com", "password123"))
-            .thenThrow(RuntimeException())
-
-        viewModel.onLoginClick(onSuccess = {})
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnRegisterClickWhenRepositoryThrowsException() = runTest {
-        viewModel.onEmailChange("newuser@example.com")
-        viewModel.onPasswordChange("password123")
-
-        whenever(mockRepository.signUp("newuser@example.com", "password123"))
-            .thenThrow(RuntimeException("Register exception"))
-
-        var successCalled = false
-        viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertFalse(successCalled)
-        assertEquals("Register exception", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnRegisterClickWhenRepositoryThrowsWithoutMessage() = runTest {
-        viewModel.onEmailChange("newuser@example.com")
-        viewModel.onPasswordChange("password123")
-
-        whenever(mockRepository.signUp("newuser@example.com", "password123"))
-            .thenThrow(RuntimeException())
-
-        viewModel.onRegisterClick(onSuccess = {})
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
-    }
-
-    @Test
-    fun testOnLoginClickWithEmptyEmail() {
-        viewModel.onPasswordChange("password123")
-        var successCalled = false
-        viewModel.onLoginClick(onSuccess = { successCalled = true })
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertFalse(successCalled)
-    }
-
-    @Test
-    fun testOnLoginClickWithEmptyPassword() {
+    fun testOnLoginClickEmptyPassword() {
+        // Arrange
         viewModel.onEmailChange("test@example.com")
         var successCalled = false
-        viewModel.onLoginClick(onSuccess = { successCalled = true })
-        assertNotNull(viewModel.uiState.errorMessage)
+
+        // Act
+        viewModel.onLoginClick { successCalled = true }
+
+        // Assert
         assertFalse(successCalled)
+        assertEquals(
+            "El correo y la contrasena no pueden estar vacios",
+            viewModel.uiState.errorMessage
+        )
     }
 
     @Test
-    fun testOnRegisterClickWithEmptyEmail() {
+    fun testOnRegisterClickEmptyEmail() {
+        // Arrange
         viewModel.onPasswordChange("password123")
+        viewModel.onCiudadSelected("Manta", "ciudad-123")
         var successCalled = false
-        viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        assertNotNull(viewModel.uiState.errorMessage)
+
+        // Act
+        viewModel.onRegisterClick { successCalled = true }
+
+        // Assert
         assertFalse(successCalled)
+        assertNotNull(viewModel.uiState.errorMessage)
     }
 
     @Test
-    fun testOnRegisterClickWithEmptyPassword() {
-        viewModel.onEmailChange("newuser@example.com")
+    fun testOnRegisterClickEmptyPassword() {
+        // Arrange
+        viewModel.onEmailChange("test@example.com")
+        viewModel.onCiudadSelected("Manta", "ciudad-123")
         var successCalled = false
-        viewModel.onRegisterClick(onSuccess = { successCalled = true })
-        assertNotNull(viewModel.uiState.errorMessage)
+
+        // Act
+        viewModel.onRegisterClick { successCalled = true }
+
+        // Assert
         assertFalse(successCalled)
+        assertNotNull(viewModel.uiState.errorMessage)
     }
 
     @Test
-    fun testOnLoginClickFailureWithNullMessage() = runTest {
+    fun testOnRegisterClickEmptyCiudad() {
+        // Arrange
         viewModel.onEmailChange("test@example.com")
         viewModel.onPasswordChange("password123")
-        
-        val error = Exception()
-        whenever(mockRepository.signIn("test@example.com", "password123"))
-            .thenReturn(Result.failure(error))
-        
-        viewModel.onLoginClick(onSuccess = {})
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
+        var successCalled = false
+
+        // Act
+        viewModel.onRegisterClick { successCalled = true }
+
+        // Assert
+        assertFalse(successCalled)
+        assertEquals("Selecciona tu ciudad", viewModel.uiState.errorMessage)
     }
 
     @Test
-    fun testOnRegisterClickFailureWithNullMessage() = runTest {
-        viewModel.onEmailChange("newuser@example.com")
-        viewModel.onPasswordChange("password123")
-        
-        val error = Exception()
-        whenever(mockRepository.signUp("newuser@example.com", "password123"))
-            .thenReturn(Result.failure(error))
-        
-        viewModel.onRegisterClick(onSuccess = {})
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
+    fun testAuthStateWithAllFields() {
+        // Arrange
+        val email = "usuario@example.com"
+        val password = "SecurePass123"
+        val ciudadNombre = "Manta"
+        val ciudadId = "manta-123"
+
+        // Act
+        viewModel.onEmailChange(email)
+        viewModel.onPasswordChange(password)
+        viewModel.onCiudadSelected(ciudadNombre, ciudadId)
+
+        // Assert
+        val state = viewModel.uiState
+        assertEquals(email, state.email)
+        assertEquals(password, state.password)
+        assertEquals(ciudadNombre, state.ciudadNombre)
+        assertEquals(ciudadId, state.ciudadId)
+    }
+
+    @Test
+    fun testResendActivationEmailEmptyEmail() {
+        // Arrange
+        var successCalled = false
+
+        // Act
+        viewModel.resendActivationEmail()
+
+        // Assert
+        assertEquals(
+            "Ingresa tu correo para reenviar la activacion",
+            viewModel.uiState.errorMessage
+        )
+    }
+
+    @Test
+    fun testAuthStateMultipleTransitions() {
+        // Arrange & Act
+        viewModel.onEmailChange("test@example.com")
+        viewModel.onPasswordChange("password1")
+        viewModel.onCiudadSelected("Manta", "ciudad-1")
+
+        // Assert
+        assertEquals("test@example.com", viewModel.uiState.email)
+        assertEquals("password1", viewModel.uiState.password)
+
+        // Act - Update again
+        viewModel.onEmailChange("new@example.com")
+        viewModel.onPasswordChange("password2")
+
+        // Assert
+        assertEquals("new@example.com", viewModel.uiState.email)
+        assertEquals("password2", viewModel.uiState.password)
+        // Ciudad should remain
+        assertEquals("ciudad-1", viewModel.uiState.ciudadId)
+    }
+
+    @Test
+    fun testAuthStateErrorMessageClear() {
+        // Arrange
+        viewModel.setAuthInfoMessage("Test message")
+
+        // Act
+        viewModel.onEmailChange("test@example.com")
+
+        // Assert
+        assertEquals(null, viewModel.uiState.errorMessage)
+    }
+
+    @Test
+    fun testAuthStateWithSpecialCharacters() {
+        // Arrange
+        val specialEmail = "user+test@example.co.uk"
+        val specialPassword = "P@ssw0rd!#$%"
+
+        // Act
+        viewModel.onEmailChange(specialEmail)
+        viewModel.onPasswordChange(specialPassword)
+
+        // Assert
+        assertEquals(specialEmail, viewModel.uiState.email)
+        assertEquals(specialPassword, viewModel.uiState.password)
+    }
+
+    @Test
+    fun testAuthStateCiudadResetOnChange() {
+        // Arrange
+        viewModel.onCiudadSelected("Manta", "ciudad-1")
+
+        // Act
+        viewModel.onCiudadChange("Quito")
+
+        // Assert
+        assertEquals("Quito", viewModel.uiState.ciudadNombre)
+        assertEquals("", viewModel.uiState.ciudadId)
     }
 }

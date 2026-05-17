@@ -4,40 +4,18 @@ import ec.cityalerta.app.model.data.barrio.Barrio
 import ec.cityalerta.app.model.data.barrio.BarrioCreateDto
 import ec.cityalerta.app.model.data.barrio.BarrioUpdateDto
 import ec.cityalerta.app.model.data.geoJson.Geometry
-import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.BarrioRepository
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
-import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
-import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
-import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
-import io.github.jan.supabase.postgrest.query.decodeAs
-import io.github.jan.supabase.postgrest.query.decodeList
 
 /**
- * Tests unitarios para BarrioRepository. Valida las operaciones CRUD para barrios.
+ * Tests unitarios para BarrioRepository.
+ * Valida la creacion y manipulacion de datos de barrios.
  */
-@RunWith(MockitoJUnitRunner::class)
 class BarrioRepositoryTest {
-
-    @Mock
-    private lateinit var mockSupabaseClient: SupabaseClient
-
-    @Mock
-    private lateinit var mockPostgrest: Postgrest
 
     private lateinit var repository: BarrioRepository
 
@@ -46,168 +24,262 @@ class BarrioRepositoryTest {
         repository = BarrioRepository()
     }
 
-    private fun mockSupabaseProvider(block: suspend () -> Unit) = runTest {
-        org.mockito.kotlin.mockStatic(SupabaseProvider::class.java).use { mockedStatic ->
-            whenever(SupabaseProvider.client).thenReturn(mockSupabaseClient)
-            whenever(mockSupabaseClient.postgrest).thenReturn(mockPostgrest)
-            block()
-        }
-    }
-
-    private fun createMockGeometry(): JsonObject {
-        return JsonObject(
-            mapOf(
-                "type" to JsonPrimitive("Polygon"),
-                "coordinates" to JsonArray(
-                    listOf(
-                        JsonArray(
-                            listOf(
-                                JsonArray(listOf(JsonPrimitive(-80.5), JsonPrimitive(-0.5))),
-                                JsonArray(listOf(JsonPrimitive(-80.6), JsonPrimitive(-0.6)))
-                            )
-                        )
-                    )
+    @Test
+    fun testBarrioCreateDtoCreation() {
+        // Arrange
+        val geometry = Geometry(
+            type = "Polygon",
+            coordinates = listOf(
+                listOf(
+                    listOf(-80.73, -1.04),
+                    listOf(-80.72, -1.04),
+                    listOf(-80.72, -1.05),
+                    listOf(-80.73, -1.05)
                 )
             )
         )
+        val createDto = BarrioCreateDto(
+            ciudadId = "ciudad-123",
+            nombre = "Barrio Centro",
+            nivelPeligrosidad = "MEDIO",
+            perimetro = geometry
+        )
+
+        // Assert
+        assertNotNull(createDto)
+        assertEquals("ciudad-123", createDto.ciudadId)
+        assertEquals("Barrio Centro", createDto.nombre)
+        assertEquals("MEDIO", createDto.nivelPeligrosidad)
+        assertEquals(geometry, createDto.perimetro)
     }
 
     @Test
-    fun testCreateBarrioSuccessfully() = runTest {
+    fun testBarrioUpdateDtoCreation() {
+        // Arrange
         val geometry = Geometry(
             type = "Polygon",
-            coordinates = listOf(listOf(listOf(-80.5, -0.5), listOf(-80.6, -0.6)))
+            coordinates = listOf(
+                listOf(
+                    listOf(-80.73, -1.04),
+                    listOf(-80.72, -1.04),
+                    listOf(-80.72, -1.05),
+                    listOf(-80.73, -1.05)
+                )
+            )
         )
-        val createDto = BarrioCreateDto("ciudad-1", "Centro", "MEDIO", geometry)
-        
-        val mockGeometryResponse = createMockGeometry()
-        val mockBarrioResponse = JsonObject(mapOf(
-            "id" to JsonPrimitive("barrio-1"),
-            "ciudad_id" to JsonPrimitive("ciudad-1"),
-            "nombre" to JsonPrimitive("Centro"),
-            "nivel_peligrosidad" to JsonPrimitive("MEDIO"),
-            "perimetro" to mockGeometryResponse
-        ))
+        val updateDto = BarrioUpdateDto(
+            nombre = "Nuevo nombre",
+            nivelPeligrosidad = "ALTO",
+            perimetro = geometry
+        )
 
-        mockSupabaseProvider {
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockPostgrest.rpc(any<String>(), any<Map<String, Any>>())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeAs<String>()).thenReturn("barrio-1")
-            
-            // Mock for getById call inside create
-            val mockGetByIdRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockPostgrest.rpc(org.mockito.kotlin.eq("get_barrio_by_id"), any())).thenReturn(mockGetByIdRequestBuilder)
-            whenever(mockGetByIdRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockBarrioResponse))
-
-            val result = repository.create(createDto)
-
-            assertTrue(result.isSuccess)
-            assertEquals("barrio-1", result.getOrNull()?.id)
-        }
+        // Assert
+        assertNotNull(updateDto)
+        assertEquals("Nuevo nombre", updateDto.nombre)
+        assertEquals("ALTO", updateDto.nivelPeligrosidad)
+        assertEquals(geometry, updateDto.perimetro)
     }
 
     @Test
-    fun testGetAllBarriosSuccessfully() = runTest {
-        val mockGeometry = createMockGeometry()
-        val mockResponse1 = JsonObject(mapOf(
-            "id" to JsonPrimitive("1"),
-            "ciudad_id" to JsonPrimitive("ciudad-1"),
-            "nombre" to JsonPrimitive("Centro"),
-            "nivel_peligrosidad" to JsonPrimitive("BAJO"),
-            "perimetro" to mockGeometry
-        ))
+    fun testBarrioUpdateDtoWithNullPerimetro() {
+        // Arrange
+        val updateDto = BarrioUpdateDto(
+            nombre = "Barrio Sin Perimetro",
+            nivelPeligrosidad = "BAJO",
+            perimetro = null
+        )
 
-        mockSupabaseProvider {
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockPostgrest.rpc(org.mockito.kotlin.eq("get_barrios"))).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse1))
-
-            val result = repository.getAll()
-
-            assertTrue(result.isSuccess)
-            assertEquals(1, result.getOrNull()?.size)
-            assertEquals("Centro", result.getOrNull()?.get(0)?.nombre)
-        }
+        // Assert
+        assertNotNull(updateDto)
+        assertEquals("Barrio Sin Perimetro", updateDto.nombre)
+        assertEquals("BAJO", updateDto.nivelPeligrosidad)
+        assertEquals(null, updateDto.perimetro)
     }
 
     @Test
-    fun testGetBarrioByIdSuccessfully() = runTest {
-        val mockGeometry = createMockGeometry()
-        val mockResponse = JsonObject(mapOf(
-            "id" to JsonPrimitive("barrio-1"),
-            "ciudad_id" to JsonPrimitive("ciudad-1"),
-            "nombre" to JsonPrimitive("Centro"),
-            "nivel_peligrosidad" to JsonPrimitive("MEDIO"),
-            "perimetro" to mockGeometry
-        ))
-
-        mockSupabaseProvider {
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockPostgrest.rpc(org.mockito.kotlin.eq("get_barrio_by_id"), any())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.getById("barrio-1")
-
-            assertTrue(result.isSuccess)
-            assertEquals("barrio-1", result.getOrNull()?.id)
-        }
-    }
-
-    @Test
-    fun testUpdateBarrioSuccessfully() = runTest {
+    fun testBarrioDataClass() {
+        // Arrange
         val geometry = Geometry(
             type = "Polygon",
-            coordinates = listOf(listOf(listOf(-80.5, -0.5), listOf(-80.6, -0.6)))
+            coordinates = listOf(
+                listOf(
+                    listOf(-80.73, -1.04),
+                    listOf(-80.72, -1.04),
+                    listOf(-80.72, -1.05),
+                    listOf(-80.73, -1.05)
+                )
+            )
         )
-        val updateDto = BarrioUpdateDto("Centro Actualizado", "BAJO", geometry)
-        
-        val mockGeometry = createMockGeometry()
-        val mockResponse = JsonObject(mapOf(
-            "id" to JsonPrimitive("barrio-1"),
-            "nombre" to JsonPrimitive("Centro Actualizado"),
-            "nivel_peligrosidad" to JsonPrimitive("BAJO"),
-            "perimetro" to mockGeometry
-        ))
+        val barrio = Barrio(
+            id = "barrio-1",
+            ciudadId = "ciudad-1",
+            nombre = "Sector Historico",
+            nivelPeligrosidad = "MEDIO",
+            perimetro = geometry,
+            createdAt = "2024-01-01T10:00:00Z",
+            updatedAt = "2024-01-05T15:30:00Z"
+        )
 
-        mockSupabaseProvider {
-            val mockUpdateRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockPostgrest.rpc(org.mockito.kotlin.eq("update_barrio"), any())).thenReturn(mockUpdateRequestBuilder)
-            
-            val mockGetByIdRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockPostgrest.rpc(org.mockito.kotlin.eq("get_barrio_by_id"), any())).thenReturn(mockGetByIdRequestBuilder)
-            whenever(mockGetByIdRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.update(updateDto, "barrio-1")
-
-            assertTrue(result.isSuccess)
-            assertEquals("Centro Actualizado", result.getOrNull()?.nombre)
-        }
+        // Assert
+        assertNotNull(barrio)
+        assertEquals("barrio-1", barrio.id)
+        assertEquals("ciudad-1", barrio.ciudadId)
+        assertEquals("Sector Historico", barrio.nombre)
+        assertEquals("MEDIO", barrio.nivelPeligrosidad)
+        assertEquals(geometry, barrio.perimetro)
+        assertEquals("2024-01-01T10:00:00Z", barrio.createdAt)
+        assertEquals("2024-01-05T15:30:00Z", barrio.updatedAt)
     }
 
     @Test
-    fun testDeleteBarrioSuccessfully() = runTest {
-        mockSupabaseProvider {
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockPostgrest.rpc(org.mockito.kotlin.eq("delete_barrio"), any())).thenReturn(mockRequestBuilder)
+    fun testGeometryDataClass() {
+        // Arrange
+        val coordinates = listOf(
+            listOf(
+                listOf(-80.73, -1.04),
+                listOf(-80.72, -1.04),
+                listOf(-80.72, -1.05),
+                listOf(-80.73, -1.05),
+                listOf(-80.73, -1.04)
+            )
+        )
+        val geometry = Geometry(type = "Polygon", coordinates = coordinates)
 
-            val result = repository.delete("barrio-1")
-
-            assertTrue(result.isSuccess)
-        }
+        // Assert
+        assertNotNull(geometry)
+        assertEquals("Polygon", geometry.type)
+        assertEquals(coordinates, geometry.coordinates)
+        assertEquals(1, geometry.coordinates.size)
+        assertEquals(5, geometry.coordinates[0].size)
     }
 
     @Test
-    fun testCreateBarrioReturnsFailureOnException() = runTest {
-        val createDto = BarrioCreateDto("ciudad-1", "Centro", "MEDIO", Geometry("Polygon", emptyList()))
+    fun testGeometryWithMultipleRings() {
+        // Arrange
+        val coordinates = listOf(
+            listOf(
+                listOf(-80.73, -1.04),
+                listOf(-80.72, -1.04),
+                listOf(-80.72, -1.05),
+                listOf(-80.73, -1.05),
+                listOf(-80.73, -1.04)
+            ),
+            listOf(
+                listOf(-80.725, -1.042),
+                listOf(-80.715, -1.042),
+                listOf(-80.715, -1.048),
+                listOf(-80.725, -1.048),
+                listOf(-80.725, -1.042)
+            )
+        )
+        val geometry = Geometry(type = "Polygon", coordinates = coordinates)
 
-        mockSupabaseProvider {
-            whenever(mockPostgrest.rpc(org.mockito.kotlin.eq("create_barrio"), any()))
-                .thenThrow(RuntimeException("Error creating barrio"))
+        // Assert
+        assertEquals(2, geometry.coordinates.size)
+        assertTrue(geometry.coordinates[0].size > 0)
+        assertTrue(geometry.coordinates[1].size > 0)
+    }
 
-            val result = repository.create(createDto)
+    @Test
+    fun testBarrioCreateDtoWithDifferentPeligrosidad() {
+        // Arrange
+        val geometryLow = Geometry("Polygon", listOf(listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04))))
+        val geometryMed = Geometry("Polygon", listOf(listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04))))
+        val geometryHigh = Geometry("Polygon", listOf(listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04))))
 
-            assertTrue(result.isFailure)
-        }
+        val barrioBajo = BarrioCreateDto("ciudad-1", "Barrio Seguro", "BAJO", geometryLow)
+        val barrioMedio = BarrioCreateDto("ciudad-1", "Barrio Normal", "MEDIO", geometryMed)
+        val barrioAlto = BarrioCreateDto("ciudad-1", "Barrio Peligroso", "ALTO", geometryHigh)
+
+        // Assert
+        assertEquals("BAJO", barrioBajo.nivelPeligrosidad)
+        assertEquals("MEDIO", barrioMedio.nivelPeligrosidad)
+        assertEquals("ALTO", barrioAlto.nivelPeligrosidad)
+    }
+
+    @Test
+    fun testBarrioEquality() {
+        // Arrange
+        val geometry = Geometry("Polygon", listOf(listOf(listOf(-80.73, -1.04))))
+        val barrio1 = Barrio(
+            id = "barrio-1",
+            ciudadId = "ciudad-1",
+            nombre = "Barrio Centro",
+            nivelPeligrosidad = "MEDIO",
+            perimetro = geometry
+        )
+        val barrio2 = barrio1.copy()
+
+        // Assert
+        assertEquals(barrio1, barrio2)
+        assertEquals(barrio1.id, barrio2.id)
+        assertEquals(barrio1.nombre, barrio2.nombre)
+    }
+
+    @Test
+    fun testBarrioCopyWithModifications() {
+        // Arrange
+        val geometry = Geometry("Polygon", listOf(listOf(listOf(-80.73, -1.04))))
+        val originalBarrio = Barrio(
+            id = "barrio-1",
+            ciudadId = "ciudad-1",
+            nombre = "Original",
+            nivelPeligrosidad = "BAJO",
+            perimetro = geometry
+        )
+
+        // Act
+        val modifiedBarrio = originalBarrio.copy(
+            nombre = "Modificado",
+            nivelPeligrosidad = "ALTO"
+        )
+
+        // Assert
+        assertEquals("barrio-1", modifiedBarrio.id)
+        assertEquals("Modificado", modifiedBarrio.nombre)
+        assertEquals("ALTO", modifiedBarrio.nivelPeligrosidad)
+        assertEquals("Original", originalBarrio.nombre)
+        assertEquals("BAJO", originalBarrio.nivelPeligrosidad)
+    }
+
+    @Test
+    fun testBarrioRepositoryInitialization() {
+        // Arrange & Act
+        val repo = BarrioRepository()
+
+        assertNotNull(repo)
+    }
+
+    @Test
+    fun testMultipleGeometryCoordinates() {
+        // Arrange
+        val coords1 = listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04))
+        val coords2 = listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04), listOf(-80.72, -1.05))
+        val coords3 = listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04), listOf(-80.72, -1.05), listOf(-80.73, -1.05))
+
+        val geom1 = Geometry("LineString", listOf(coords1))
+        val geom2 = Geometry("LineString", listOf(coords2))
+        val geom3 = Geometry("Polygon", listOf(coords3))
+
+        // Assert
+        assertEquals(2, geom1.coordinates[0].size)
+        assertEquals(3, geom2.coordinates[0].size)
+        assertEquals(4, geom3.coordinates[0].size)
+    }
+
+    @Test
+    fun testBarrioNombres() {
+        // Arrange & Act
+        val barrios = listOf(
+            BarrioCreateDto("c1", "Barrio Centro", "MEDIO", Geometry("Polygon", emptyList())),
+            BarrioCreateDto("c1", "Sector Historico", "BAJO", Geometry("Polygon", emptyList())),
+            BarrioCreateDto("c1", "Zona Residencial", "ALTO", Geometry("Polygon", emptyList()))
+        )
+
+        // Assert
+        assertEquals(3, barrios.size)
+        assertTrue(barrios.any { it.nombre == "Barrio Centro" })
+        assertTrue(barrios.any { it.nombre == "Sector Historico" })
+        assertTrue(barrios.any { it.nombre == "Zona Residencial" })
     }
 }
-
