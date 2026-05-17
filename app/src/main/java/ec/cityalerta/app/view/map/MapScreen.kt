@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.navigation.Routes
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -115,12 +116,14 @@ fun MapScreen(
             MapScreenBody(
                 uiState = uiState,
                 ciudadId = ciudadId,
-                context = context,
-                scope = scope,
-                fusedLocationClient = fusedLocationClient,
-                locationPermissionGranted = locationPermissionGranted,
-                cameraPositionState = cameraPositionState,
-                viewModel = viewModel
+                dependencies = MapScreenDependencies(
+                    context = context,
+                    scope = scope,
+                    fusedLocationClient = fusedLocationClient,
+                    locationPermissionGranted = locationPermissionGranted,
+                    cameraPositionState = cameraPositionState,
+                    viewModel = viewModel
+                )
             )
         }
     }
@@ -153,16 +156,20 @@ private fun rememberLocationPermission(): Boolean {
     return locationPermissionGranted
 }
 
+private data class MapScreenDependencies(
+    val context: Context,
+    val scope: CoroutineScope,
+    val fusedLocationClient: FusedLocationProviderClient,
+    val locationPermissionGranted: Boolean,
+    val cameraPositionState: CameraPositionState,
+    val viewModel: MapViewModel
+)
+
 @Composable
 private fun MapScreenBody(
     uiState: MapUiState,
     ciudadId: String,
-    context: Context,
-    scope: CoroutineScope,
-    fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient,
-    locationPermissionGranted: Boolean,
-    cameraPositionState: CameraPositionState,
-    viewModel: MapViewModel
+    dependencies: MapScreenDependencies
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         when {
@@ -182,12 +189,7 @@ private fun MapScreenBody(
                     uiState = uiState,
                     ciudad = uiState.ciudad,
                     ciudadId = ciudadId,
-                    context = context,
-                    scope = scope,
-                    fusedLocationClient = fusedLocationClient,
-                    locationPermissionGranted = locationPermissionGranted,
-                    cameraPositionState = cameraPositionState,
-                    viewModel = viewModel
+                    dependencies = dependencies
                 )
             }
         }
@@ -199,17 +201,12 @@ private fun BoxScope.MapCityContent(
     uiState: MapUiState,
     ciudad: Ciudad,
     ciudadId: String,
-    context: Context,
-    scope: CoroutineScope,
-    fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient,
-    locationPermissionGranted: Boolean,
-    cameraPositionState: CameraPositionState,
-    viewModel: MapViewModel
+    dependencies: MapScreenDependencies
 ) {
     val polygonPoints = remember(ciudad) {
         GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
     }
-    val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(context, ciudadId) }
+    val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(dependencies.context, ciudadId) }
 
     val cityBounds = remember(polygonPoints, assetBounds) {
         assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(
@@ -230,9 +227,9 @@ private fun BoxScope.MapCityContent(
 
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
-        cameraPositionState = cameraPositionState,
+        cameraPositionState = dependencies.cameraPositionState,
         properties = MapProperties(
-            isMyLocationEnabled = locationPermissionGranted,
+            isMyLocationEnabled = dependencies.locationPermissionGranted,
             latLngBoundsForCameraTarget = cityBounds,
             minZoomPreference = 12f,
             maxZoomPreference = 18f
@@ -264,7 +261,7 @@ private fun BoxScope.MapCityContent(
                         title = marker.title,
                         snippet = marker.description ?: "",
                         onClick = {
-                            viewModel.onReportClicked(marker.id)
+                            dependencies.viewModel.onReportClicked(marker.id)
                             true
                         }
                     )
@@ -275,7 +272,7 @@ private fun BoxScope.MapCityContent(
     CategoryFilter(
         categories = uiState.categories,
         selectedCategory = uiState.selectedCategory,
-        onCategoryClick = { viewModel.onCategorySelected(it) },
+        onCategoryClick = { dependencies.viewModel.onCategorySelected(it) },
         modifier = Modifier
             .align(Alignment.TopCenter)
             .padding(top = 8.dp)
@@ -288,14 +285,7 @@ private fun BoxScope.MapCityContent(
             .padding(top = 124.dp, end = 16.dp),
         containerColor = Color(0xFF051C3F),
         contentColor = Color.White,
-        onClick = {
-            centerMapOnUserLocation(
-                locationPermissionGranted = locationPermissionGranted,
-                fusedLocationClient = fusedLocationClient,
-                scope = scope,
-                cameraPositionState = cameraPositionState
-            )
-        }
+        onClick = { centerMapOnUserLocation(dependencies) }
     )
 
     Column(
@@ -307,16 +297,16 @@ private fun BoxScope.MapCityContent(
         MapControlButton(
             icon = Icons.Default.Add,
             onClick = {
-                scope.launch {
-                    cameraPositionState.animate(CameraUpdateFactory.zoomIn())
+                dependencies.scope.launch {
+                    dependencies.cameraPositionState.animate(CameraUpdateFactory.zoomIn())
                 }
             }
         )
         MapControlButton(
             icon = Icons.Default.Remove,
             onClick = {
-                scope.launch {
-                    cameraPositionState.animate(CameraUpdateFactory.zoomOut())
+                dependencies.scope.launch {
+                    dependencies.cameraPositionState.animate(CameraUpdateFactory.zoomOut())
                 }
             }
         )
@@ -326,7 +316,7 @@ private fun BoxScope.MapCityContent(
         ReportDetailCard(
             report = uiState.selectedReport,
             onDetailClick = {},
-            onCloseClick = { viewModel.onDismissReport() },
+            onCloseClick = { dependencies.viewModel.onDismissReport() },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)
@@ -334,19 +324,14 @@ private fun BoxScope.MapCityContent(
     }
 }
 
-private fun centerMapOnUserLocation(
-    locationPermissionGranted: Boolean,
-    fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient,
-    scope: CoroutineScope,
-    cameraPositionState: CameraPositionState
-) {
-    if (!locationPermissionGranted) return
+private fun centerMapOnUserLocation(dependencies: MapScreenDependencies) {
+    if (!dependencies.locationPermissionGranted) return
 
     try {
-        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+        dependencies.fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             location?.let {
-                scope.launch {
-                    cameraPositionState.animate(
+                dependencies.scope.launch {
+                    dependencies.cameraPositionState.animate(
                         CameraUpdateFactory.newLatLngZoom(
                             LatLng(it.latitude, it.longitude),
                             15f
