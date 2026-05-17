@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
 
@@ -30,13 +31,13 @@ class LocaleManager(private val appContext: Context) {
     val languageState = mutableStateOf(loadLanguage())
 
     fun setLanguage(language: AppLanguage) {
-        prefs.edit().apply {
+        prefs.edit {
             if (language.tag == null) {
                 remove(KEY_LANGUAGE)
             } else {
                 putString(KEY_LANGUAGE, language.tag)
             }
-        }.apply()
+        }
 
         languageState.value = language
         applyAppLocales(language)

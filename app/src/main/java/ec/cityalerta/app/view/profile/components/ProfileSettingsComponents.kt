@@ -145,8 +145,8 @@ fun SettingsNavigationRow(
 fun SettingsInfoField(
     label: String,
     value: String,
-    trailing: @Composable (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    trailing: @Composable (() -> Unit)? = null
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -200,67 +200,78 @@ fun ThemePreviewCard(
         modifier = modifier.clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(
-                    width = if (isSelected) 2.dp else 1.dp,
-                    color = if (isSelected) AccentBlue else Color(0xFFDEE2E6),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (isDarkPreview) Color(0xFF0F1720) else Color.White)
-                .padding(12.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(if (isDarkPreview) Color(0xFF2A3A4D) else Color(0xFFE9ECEF))
-                        .padding(vertical = 6.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.5f)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(if (isDarkPreview) Color(0xFF2A3A4D) else Color(0xFFE9ECEF))
-                        .padding(vertical = 4.dp)
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.55f)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(AccentBlue)
-                        .padding(vertical = 8.dp)
-                )
-            }
-            if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(22.dp)
-                        .clip(CircleShape)
-                        .background(AccentBlue),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .size(22.dp)
-                        .border(1.dp, Color(0xFFCED4DA), CircleShape)
-                )
-            }
-        }
+        ThemePreviewFrame(isSelected = isSelected, isDarkPreview = isDarkPreview)
         Text(
             label,
             modifier = Modifier.padding(top = 10.dp),
             fontWeight = FontWeight.SemiBold,
             color = TitleColor,
             fontSize = 14.sp
+        )
+    }
+}
+
+@Composable
+private fun ThemePreviewFrame(isSelected: Boolean, isDarkPreview: Boolean) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) AccentBlue else Color(0xFFDEE2E6),
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isDarkPreview) Color(0xFF0F1720) else Color.White)
+            .padding(12.dp)
+    ) {
+        ThemePreviewSkeleton(isDarkPreview = isDarkPreview)
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(AccentBlue),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(22.dp)
+                    .border(1.dp, Color(0xFFCED4DA), CircleShape)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemePreviewSkeleton(isDarkPreview: Boolean) {
+    val skeletonColor = if (isDarkPreview) Color(0xFF2A3A4D) else Color(0xFFE9ECEF)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .clip(RoundedCornerShape(4.dp))
+                .background(skeletonColor)
+                .padding(vertical = 6.dp)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+                .clip(RoundedCornerShape(4.dp))
+                .background(skeletonColor)
+                .padding(vertical = 4.dp)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.55f)
+                .clip(RoundedCornerShape(6.dp))
+                .background(AccentBlue)
+                .padding(vertical = 8.dp)
         )
     }
 }

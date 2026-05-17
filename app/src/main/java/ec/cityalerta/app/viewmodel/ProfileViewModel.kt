@@ -66,6 +66,7 @@ data class ProfileState(
     val profileImageId: String? = null,
     val profileStorageUuid: String? = null,
     val cityName: String = "",
+    val userEmail: String = "",
     val totalReports: Int = 0,
     val resolvedReports: Int = 0,
     val myReports: List<UserReportUi> = emptyList()
@@ -99,10 +100,11 @@ class ProfileViewModel(
         viewModelScope.launch {
             setLoading(true)
             loadSummaryInternal()?.let { resumen ->
-                val (cityName, profileImage) = coroutineScope {
+                val (cityName, profileImage, userEmail) = coroutineScope {
                     val cityDeferred = async { ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty() }
                     val imageDeferred = async { loadProfileImage(resumen.id) }
-                    cityDeferred.await() to imageDeferred.await()
+                    val emailDeferred = async { authRepository.getUserEmail().getOrNull().orEmpty() }
+                    Triple(cityDeferred.await(), imageDeferred.await(), emailDeferred.await())
                 }
                 _state.value = _state.value.copy(
                     errorMessage = null,
@@ -112,6 +114,7 @@ class ProfileViewModel(
                     profileImageId = profileImage?.second,
                     profileStorageUuid = profileImage?.third,
                     cityName = cityName,
+                    userEmail = userEmail,
                     totalReports = resumen.totalReportes,
                     resolvedReports = resumen.reportesResueltos,
                     myReports = emptyList()
@@ -379,10 +382,6 @@ class ProfileViewModel(
         return Triple(imageUrl, imagen.id, imagen.storage_uuid)
     }
 
-    suspend fun getUserEmail(): String? {
-        return authRepository.getUserEmail().getOrNull()
-    }
-
     fun clearSettingsMessages() {
         _state.value = _state.value.copy(settingsInfoMessage = null, errorMessage = null)
     }
@@ -445,10 +444,12 @@ class ProfileViewModel(
 
             authRepository.updateEmail(trimmed)
                 .onSuccess {
+                    val updatedEmail = authRepository.getUserEmail().getOrNull().orEmpty().ifBlank { trimmed }
                     _state.value = _state.value.copy(
                         isSavingSettings = false,
                         settingsInfoMessage = successMessage,
-                        errorMessage = null
+                        errorMessage = null,
+                        userEmail = updatedEmail
                     )
                 }
                 .onFailure { error ->

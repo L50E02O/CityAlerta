@@ -132,7 +132,7 @@ class ExploreViewModel(
         }.awaitAll()
     }
 
-    private suspend fun CoroutineScope.mapReporteToUi(reporte: Reporte): ReporteUI {
+    private suspend fun mapReporteToUi(reporte: Reporte): ReporteUI = coroutineScope {
         val primerImagen = reporteImagenRepository.getFirstImagenByReporteId(reporte.id).getOrNull()
         val imageUrl = primerImagen?.storage_uuid?.takeIf { it.isNotBlank() }?.let { objectPath ->
             reporteStorageRepository.generateSignedImageUrl(objectPath).getOrNull()
@@ -143,7 +143,7 @@ class ExploreViewModel(
         val ubicacion = ubicacionDeferred.await()
         val barrio = barrioDeferred.await()
 
-        return ReporteUI(
+        ReporteUI(
             id = reporte.id,
             categoria = mapCategoriaLabel(reporte.categoria),
             imageUrl = imageUrl,

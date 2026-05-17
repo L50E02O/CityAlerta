@@ -173,15 +173,6 @@ class ProfileViewModelSettingsTest {
     }
 
     @Test
-    fun getUserEmail_returnsRepositoryValue() = runTest {
-        authRepository.getUserEmailResult = Result.success("correo@example.com")
-
-        val email = viewModel.getUserEmail()
-
-        assertEquals("correo@example.com", email)
-    }
-
-    @Test
     fun logOut_success_resetsState() = runTest {
         viewModel.logOut {}
 

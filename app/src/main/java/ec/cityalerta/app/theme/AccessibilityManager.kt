@@ -2,6 +2,7 @@ package ec.cityalerta.app.theme
 
 import android.content.Context
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.core.content.edit
 import androidx.compose.runtime.mutableStateOf
 
 class AccessibilityManager(context: Context) {
@@ -15,12 +16,12 @@ class AccessibilityManager(context: Context) {
 
     fun setTextScale(scale: Float) {
         val normalized = scale.coerceIn(MIN_TEXT_SCALE, MAX_TEXT_SCALE)
-        prefs.edit().putFloat(KEY_TEXT_SCALE, normalized).apply()
+        prefs.edit { putFloat(KEY_TEXT_SCALE, normalized) }
         textScaleState.floatValue = normalized
     }
 
     fun setHighContrast(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_HIGH_CONTRAST, enabled).apply()
+        prefs.edit { putBoolean(KEY_HIGH_CONTRAST, enabled) }
         highContrastState.value = enabled
     }
 

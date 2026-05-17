@@ -3,6 +3,7 @@ package ec.cityalerta.app.theme
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.edit
 
 enum class ThemePreference { LIGHT, DARK, SYSTEM }
 
@@ -18,7 +19,7 @@ class ThemeManager(private val context: Context) {
     }
 
     fun setTheme(theme: ThemePreference) {
-        prefs.edit().putString(KEY, theme.name).apply()
+        prefs.edit { putString(KEY, theme.name) }
         themeState.value = theme
         when (theme) {
             ThemePreference.LIGHT -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
