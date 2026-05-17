@@ -5,23 +5,20 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 object AuthApiResponseParser {
+    private val errorFieldPriority = listOf("error", "msg", "error_description")
+
     fun parseErrorMessage(body: String, statusCode: Int): String {
         val fromJson = runCatching {
-            Json.parseToJsonElement(body)
-                .jsonObject["error"]
-                ?.jsonPrimitive
-                ?.content
-                ?: Json.parseToJsonElement(body)
-                    .jsonObject["msg"]
+            val jsonObject = Json.parseToJsonElement(body).jsonObject
+            errorFieldPriority.firstNotNullOfOrNull { field ->
+                jsonObject[field]
                     ?.jsonPrimitive
                     ?.content
-                ?: Json.parseToJsonElement(body)
-                    .jsonObject["error_description"]
-                    ?.jsonPrimitive
-                    ?.content
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+            }
         }.getOrNull()
 
-        return fromJson?.takeIf { it.isNotBlank() }
-            ?: "No se pudo completar la operacion ($statusCode)"
+        return fromJson ?: "No se pudo completar la operacion ($statusCode)"
     }
 }

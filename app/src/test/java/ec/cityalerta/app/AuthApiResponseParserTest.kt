@@ -18,7 +18,17 @@ class AuthApiResponseParserTest {
     }
 
     @Test
-    fun parseErrorMessage_readsMsgField() {
+    fun parseErrorMessage_prefersErrorOverMsg() {
+        val message = AuthApiResponseParser.parseErrorMessage(
+            body = """{"error":"Error principal","msg":"Mensaje secundario"}""",
+            statusCode = 400
+        )
+
+        assertEquals("Error principal", message)
+    }
+
+    @Test
+    fun parseErrorMessage_readsMsgFieldWhenErrorMissing() {
         val message = AuthApiResponseParser.parseErrorMessage(
             body = """{"msg":"Sesion invalida"}""",
             statusCode = 401
@@ -28,12 +38,62 @@ class AuthApiResponseParserTest {
     }
 
     @Test
-    fun parseErrorMessage_fallsBackToStatusCode() {
+    fun parseErrorMessage_readsErrorDescriptionWhenOthersMissing() {
         val message = AuthApiResponseParser.parseErrorMessage(
-            body = "not-json",
+            body = """{"error_description":"Token expirado"}""",
+            statusCode = 401
+        )
+
+        assertEquals("Token expirado", message)
+    }
+
+    @Test
+    fun parseErrorMessage_ignoresBlankErrorField() {
+        val message = AuthApiResponseParser.parseErrorMessage(
+            body = """{"error":"   ","msg":"Mensaje valido"}""",
+            statusCode = 422
+        )
+
+        assertEquals("Mensaje valido", message)
+    }
+
+    @Test
+    fun parseErrorMessage_ignoresBlankMsgField() {
+        val message = AuthApiResponseParser.parseErrorMessage(
+            body = """{"msg":"  ","error_description":"Descripcion valida"}""",
+            statusCode = 403
+        )
+
+        assertEquals("Descripcion valida", message)
+    }
+
+    @Test
+    fun parseErrorMessage_fallsBackToStatusCodeForEmptyJson() {
+        val message = AuthApiResponseParser.parseErrorMessage(
+            body = "{}",
             statusCode = 500
         )
 
-        assertTrue(message.contains("500"))
+        assertEquals("No se pudo completar la operacion (500)", message)
+    }
+
+    @Test
+    fun parseErrorMessage_fallsBackToStatusCodeForInvalidJson() {
+        val message = AuthApiResponseParser.parseErrorMessage(
+            body = "not-json",
+            statusCode = 503
+        )
+
+        assertEquals("No se pudo completar la operacion (503)", message)
+    }
+
+    @Test
+    fun parseErrorMessage_fallsBackWhenAllKnownFieldsAreBlank() {
+        val message = AuthApiResponseParser.parseErrorMessage(
+            body = """{"error":"","msg":" ","error_description":"\t"}""",
+            statusCode = 409
+        )
+
+        assertTrue(message.contains("409"))
     }
 }
