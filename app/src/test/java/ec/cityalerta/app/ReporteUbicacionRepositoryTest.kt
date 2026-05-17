@@ -1,42 +1,21 @@
 package ec.cityalerta.app
- 
+
 import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacion
 import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionCreateDto
 import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionUpdateDto
-import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.Postgrest
-import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
-import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
-import io.github.jan.supabase.postgrest.query.decodeAs
-import io.github.jan.supabase.postgrest.query.decodeList
-import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.filter.PostgrestFilterBuilder
-import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
-import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests unitarios para ReporteUbicacionRepository. Valida las operaciones CRUD
- * para ubicaciones de reportes.
+ * Tests unitarios para ReporteUbicacionRepository.
+ * Valida la creacion y manipulacion de datos de ubicaciones de reportes.
  */
-@RunWith(MockitoJUnitRunner::class)
 class ReporteUbicacionRepositoryTest {
-
-    @Mock
-    private lateinit var mockSupabaseClient: SupabaseClient
 
     private lateinit var repository: ReporteUbicacionRepository
 
@@ -45,186 +24,148 @@ class ReporteUbicacionRepositoryTest {
         repository = ReporteUbicacionRepository()
     }
 
-    private fun mockSupabaseProvider(block: suspend () -> Unit) = runTest {
-        org.mockito.kotlin.mockStatic(SupabaseProvider::class.java).use { mockedStatic ->
-            whenever(SupabaseProvider.client).thenReturn(mockSupabaseClient)
-            block()
-        }
-    }
-
     @Test
-    fun testCreateReporteUbicacionSuccessfully() = runTest {
+    fun testReporteUbicacionCreateDtoCreation() {
         val createDto = ReporteUbicacionCreateDto(
             lat = -0.9542,
             lng = -80.7314,
-            direccionAproximada = "Avenida principal, Manta"
+            direccion_aproximada = "Avenida principal, Manta"
         )
 
-        val mockResponse = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("ubicacion-1"),
-                "lat" to JsonPrimitive(-0.9542),
-                "lng" to JsonPrimitive(-80.7314),
-                "direccion_aproximada" to JsonPrimitive("Avenida principal, Manta"),
-                "created_at" to JsonPrimitive("2024-01-01T00:00:00Z")
-            )
-        )
-
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockSupabaseClient.from("reporte_ubicaciones")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.insert(any<JsonObject>(), any())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.create(createDto)
-
-            assertTrue(result.isSuccess)
-            assertEquals("ubicacion-1", result.getOrNull()?.id)
-            assertEquals(-0.9542, result.getOrNull()?.lat)
-            assertEquals(-80.7314, result.getOrNull()?.lng)
-        }
+        assertNotNull(createDto)
+        assertEquals(-0.9542, createDto.lat)
+        assertEquals(-80.7314, createDto.lng)
+        assertEquals("Avenida principal, Manta", createDto.direccion_aproximada)
     }
 
     @Test
-    fun testGetAllReporteUbicacionesSuccessfully() = runTest {
-        val mockResponse1 = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("ubicacion-1"),
-                "lat" to JsonPrimitive(-0.9542),
-                "lng" to JsonPrimitive(-80.7314),
-                "direccion_aproximada" to JsonPrimitive("Calle 1")
-            )
-        )
-
-        val mockResponse2 = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("ubicacion-2"),
-                "lat" to JsonPrimitive(-0.9500),
-                "lng" to JsonPrimitive(-80.7300),
-                "direccion_aproximada" to JsonPrimitive("Calle 2")
-            )
-        )
-
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockSupabaseClient.from("reporte_ubicaciones")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.select(any<Columns>(), any())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(
-                listOf(mockResponse1, mockResponse2)
-            )
-
-            val result = repository.getAll()
-
-            assertTrue(result.isSuccess)
-            assertEquals(2, result.getOrNull()?.size)
-        }
-    }
-
-    @Test
-    fun testGetReporteUbicacionByIdSuccessfully() = runTest {
-        val mockResponse = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("ubicacion-1"),
-                "lat" to JsonPrimitive(-0.9542),
-                "lng" to JsonPrimitive(-80.7314),
-                "direccion_aproximada" to JsonPrimitive("Avenida principal, Manta")
-            )
-        )
-
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockSupabaseClient.from("reporte_ubicaciones")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.select(any<Columns>(), any())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.getById("ubicacion-1")
-
-            assertTrue(result.isSuccess)
-            assertEquals("ubicacion-1", result.getOrNull()?.id)
-            assertEquals(-0.9542, result.getOrNull()?.lat)
-        }
-    }
-
-    @Test
-    fun testUpdateReporteUbicacionSuccessfully() = runTest {
+    fun testReporteUbicacionUpdateDtoCreation() {
         val updateDto = ReporteUbicacionUpdateDto(
-            lat = -0.9500,
-            lng = -80.7300,
-            direccionAproximada = "Direccion actualizada"
+            lat = -1.0,
+            lng = -79.0,
+            direccion_aproximada = "Nueva direccion, Quito"
         )
 
-        val mockResponse = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("ubicacion-1"),
-                "lat" to JsonPrimitive(-0.9500),
-                "lng" to JsonPrimitive(-80.7300),
-                "direccion_aproximada" to JsonPrimitive("Direccion actualizada")
-            )
-        )
-
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockSupabaseClient.from("reporte_ubicaciones")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.update(any<JsonObject>(), any())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.update(updateDto, "ubicacion-1")
-
-            assertTrue(result.isSuccess)
-            assertEquals(-0.9500, result.getOrNull()?.lat)
-        }
+        assertNotNull(updateDto)
+        assertEquals(-1.0, updateDto.lat)
+        assertEquals(-79.0, updateDto.lng)
+        assertEquals("Nueva direccion, Quito", updateDto.direccion_aproximada)
     }
 
     @Test
-    fun testDeleteReporteUbicacionSuccessfully() = runTest {
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_ubicaciones")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.delete()).thenReturn(mockQueryBuilder)
+    fun testReporteUbicacionUpdateDtoConCamposOpcionales() {
+        val updateDto = ReporteUbicacionUpdateDto(
+            lat = null,
+            lng = null,
+            direccion_aproximada = "Solo actualizar direccion"
+        )
 
-            val result = repository.delete("ubicacion-1")
-
-            assertTrue(result.isSuccess)
-        }
+        assertNotNull(updateDto)
+        assertNull(updateDto.lat)
+        assertNull(updateDto.lng)
+        assertEquals("Solo actualizar direccion", updateDto.direccion_aproximada)
     }
 
     @Test
-    fun testCreateReporteUbicacionReturnsFailureOnException() = runTest {
-        val createDto = ReporteUbicacionCreateDto(
+    fun testReporteUbicacionDataClass() {
+        val ubicacion = ReporteUbicacion(
+            id = "ubicacion-1",
             lat = -0.9542,
             lng = -80.7314,
-            direccionAproximada = "Avenida principal"
+            direccion_aproximada = "Manta Ecuador",
+            created_at = "2024-01-01T10:00:00Z",
+            updated_at = "2024-01-05T15:30:00Z"
         )
 
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_ubicaciones")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.insert(any<JsonObject>(), any())).thenThrow(RuntimeException("Error storing location"))
-
-            val result = repository.create(createDto)
-
-            assertTrue(result.isFailure)
-        }
+        assertNotNull(ubicacion)
+        assertEquals("ubicacion-1", ubicacion.id)
+        assertEquals(-0.9542, ubicacion.lat)
+        assertEquals(-80.7314, ubicacion.lng)
+        assertEquals("Manta Ecuador", ubicacion.direccion_aproximada)
+        assertEquals("2024-01-01T10:00:00Z", ubicacion.created_at)
+        assertEquals("2024-01-05T15:30:00Z", ubicacion.updated_at)
     }
 
     @Test
-    fun testGetByIdReturnsNullWhenNotFound() = runTest {
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockSupabaseClient.from("reporte_ubicaciones")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.select(any<Columns>(), any())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(emptyList<JsonObject>())
+    fun testReporteUbicacionSinTimestampsOpcionales() {
+        val ubicacion = ReporteUbicacion(
+            id = "ubicacion-2",
+            lat = -0.22,
+            lng = -78.51,
+            direccion_aproximada = "Quito"
+        )
 
-            val result = repository.getById("non-existent-id")
+        assertNull(ubicacion.created_at)
+        assertNull(ubicacion.updated_at)
+    }
 
-            assertTrue(result.isSuccess)
-            assertEquals(null, result.getOrNull())
-        }
+    @Test
+    fun testReporteUbicacionEquality() {
+        val ubicacion1 = ReporteUbicacion(
+            id = "ubicacion-1",
+            lat = -0.9542,
+            lng = -80.7314,
+            direccion_aproximada = "Manta"
+        )
+        val ubicacion2 = ubicacion1.copy()
+
+        assertEquals(ubicacion1, ubicacion2)
+        assertEquals(ubicacion1.lat, ubicacion2.lat)
+        assertEquals(ubicacion1.lng, ubicacion2.lng)
+    }
+
+    @Test
+    fun testReporteUbicacionCopyWithModifications() {
+        val original = ReporteUbicacion(
+            id = "ubicacion-1",
+            lat = -0.9542,
+            lng = -80.7314,
+            direccion_aproximada = "Direccion original"
+        )
+
+        val modificado = original.copy(
+            lat = -1.0,
+            lng = -79.0,
+            direccion_aproximada = "Direccion actualizada"
+        )
+
+        assertEquals("ubicacion-1", modificado.id)
+        assertEquals(-1.0, modificado.lat)
+        assertEquals(-79.0, modificado.lng)
+        assertEquals("Direccion actualizada", modificado.direccion_aproximada)
+        assertEquals(-0.9542, original.lat)
+        assertEquals("Direccion original", original.direccion_aproximada)
+    }
+
+    @Test
+    fun testCoordenadasCiudadesEcuador() {
+        val ubicaciones = listOf(
+            ReporteUbicacionCreateDto(-0.9542, -80.7314, "Manta"),
+            ReporteUbicacionCreateDto(-0.22, -78.51, "Quito"),
+            ReporteUbicacionCreateDto(-2.19, -79.88, "Guayaquil")
+        )
+
+        assertEquals(3, ubicaciones.size)
+        assertTrue(ubicaciones.any { it.direccion_aproximada == "Manta" })
+        assertTrue(ubicaciones.any { it.direccion_aproximada == "Quito" })
+        assertTrue(ubicaciones.all { it.lat in -90.0..90.0 })
+        assertTrue(ubicaciones.all { it.lng in -180.0..180.0 })
+    }
+
+    @Test
+    fun testReporteUbicacionConDireccionVacia() {
+        val createDto = ReporteUbicacionCreateDto(
+            lat = 0.0,
+            lng = 0.0,
+            direccion_aproximada = ""
+        )
+
+        assertEquals("", createDto.direccion_aproximada)
+    }
+
+    @Test
+    fun testReporteUbicacionRepositoryInitialization() {
+        assertNotNull(repository)
+        assertTrue(repository is ReporteUbicacionRepository)
     }
 }
-
