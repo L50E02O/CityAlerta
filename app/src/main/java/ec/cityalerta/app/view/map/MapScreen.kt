@@ -38,6 +38,7 @@ import ec.cityalerta.app.view.map.components.CategoryFilter
 import ec.cityalerta.app.view.map.components.ReportDetailCard
 import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.MapUiState
+import ec.cityalerta.app.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -46,9 +47,11 @@ import kotlinx.coroutines.launch
 fun MapScreen(
     navController: NavController,
     ciudadId: String = "manta",
-    viewModel: MapViewModel
+    viewModel: MapViewModel,
+    profileViewModel: ProfileViewModel
 ) {
     val uiState = viewModel.uiState
+    val profileState = profileViewModel.state.collectAsState().value
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -63,6 +66,10 @@ fun MapScreen(
 
     LaunchedEffect(ciudadId) {
         viewModel.loadCiudad(ciudadId)
+    }
+
+    LaunchedEffect(Unit) {
+        profileViewModel.loadSummaryIfNeeded()
     }
 
     LaunchedEffect(uiState.ciudad, uiState.cameraZoom) {
@@ -102,7 +109,11 @@ fun MapScreen(
                     }
                 },
                 actions = {
-                    ProfileAvatar(initials = "US", onClick = { navController.navigate(Routes.Profile.route) })
+                    ProfileAvatar(
+                        imageUrl = profileState.profileImageUrl,
+                        isLoading = profileState.isUploadingImage,
+                        onClick = { navController.navigate(Routes.Profile.route) }
+                    )
                 }
             )
         },

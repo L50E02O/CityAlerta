@@ -7,6 +7,7 @@ import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
+import ec.cityalerta.app.viewmodel.ProfileViewModel
 import ec.cityalerta.app.viewmodel.ReporteViewModel
 import androidx.lifecycle.ViewModel
 import org.junit.Before
@@ -75,6 +76,12 @@ class ViewModelFactoryTest {
     @Test
     fun testCreateReporteViewModel() {
         val viewModel = factory.create(ReporteViewModel::class.java)
+        assertNotNull(viewModel)
+    }
+
+    @Test
+    fun testCreateProfileViewModel() {
+        val viewModel = factory.create(ProfileViewModel::class.java)
         assertNotNull(viewModel)
     }
 

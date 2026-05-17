@@ -2,8 +2,9 @@ package ec.cityalerta.app
 
 import ec.cityalerta.app.navigation.AppNavigation
 import ec.cityalerta.app.navigation.Routes
-import android.os.Bundle
+import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,8 +17,17 @@ import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.handleDeeplinks
+import ec.cityalerta.app.theme.AccessibilityManager
+import ec.cityalerta.app.theme.CityAlertaTheme
+import ec.cityalerta.app.theme.LocaleManager
+import ec.cityalerta.app.theme.ThemeManager
 
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleManager.applyLocaleToContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
 
         installSplashScreen()
@@ -54,10 +64,19 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            AppNavigation(
-                startDestination = startDestination,
-                authInfoMessage = authInfoMessage
-            )
+            val themeManager = androidx.compose.runtime.remember { ThemeManager(this@MainActivity) }
+            val accessibilityManager = androidx.compose.runtime.remember { AccessibilityManager(this@MainActivity) }
+            val localeManager = androidx.compose.runtime.remember { LocaleManager(this@MainActivity) }
+            CityAlertaTheme(
+                themeManager = themeManager,
+                accessibilityManager = accessibilityManager,
+                localeManager = localeManager
+            ) {
+                AppNavigation(
+                    startDestination = startDestination,
+                    authInfoMessage = authInfoMessage
+                )
+            }
         }
     }
 

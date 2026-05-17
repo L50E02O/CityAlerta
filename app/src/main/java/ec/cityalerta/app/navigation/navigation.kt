@@ -12,6 +12,7 @@ import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
+import ec.cityalerta.app.viewmodel.ProfileViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -35,12 +36,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import ec.cityalerta.app.R
 import ec.cityalerta.app.view.explore.ExploreScreen
 import androidx.navigation.NavController
 import ec.cityalerta.app.view.camera.PhotoScreen
 import ec.cityalerta.app.view.reporte.ReporteScreen
 import ec.cityalerta.app.viewmodel.ReporteViewModel
+import ec.cityalerta.app.view.profile.AccessibilityScreen
+import ec.cityalerta.app.view.profile.AppearanceScreen
+import ec.cityalerta.app.view.profile.MyReportsScreen
+import ec.cityalerta.app.view.profile.ProfileDashboardScreen
+import ec.cityalerta.app.view.profile.SettingsScreen
 
 @Composable
 fun AppNavigation(
@@ -61,6 +69,10 @@ fun AppNavigation(
     )
 
     val exploreViewModel: ExploreViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
+
+    val profileViewModel: ProfileViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
     
@@ -93,10 +105,10 @@ fun AppNavigation(
                 RecoverPasswordScreen(navController, recoveryViewModel)
             }
             composable(Routes.Home.route) {
-                ExploreScreen(navController, exploreViewModel)
+                ExploreScreen(navController, exploreViewModel, profileViewModel)
             }
             composable(Routes.Explore.route){
-                ExploreScreen(navController, exploreViewModel)
+                ExploreScreen(navController, exploreViewModel, profileViewModel)
             }
 
 
@@ -104,6 +116,7 @@ fun AppNavigation(
                 PhotoScreen(
                     navController = navController,
                     viewModel = reporteViewModel,
+                    profileViewModel = profileViewModel,
                     onPhotoCaptured = {
                         navController.navigate(Routes.ReporteForm.route)
                     }
@@ -112,7 +125,9 @@ fun AppNavigation(
 
             composable(Routes.ReporteForm.route) {
                 ReporteScreen(
+                    navController = navController,
                     viewModel = reporteViewModel,
+                    profileViewModel = profileViewModel,
                     onReportSent = {
                         // Limpiar el back stack hasta Post y navegar a Explore
                         navController.navigate(Routes.Explore.route) {
@@ -125,10 +140,22 @@ fun AppNavigation(
 
             composable(Routes.Map.route) { backStackEntry ->
                 val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
-                MapScreen(navController, ciudadId, mapViewModel)
+                MapScreen(navController, ciudadId, mapViewModel, profileViewModel)
             }
             composable(Routes.Profile.route) {
-                ec.cityalerta.app.view.profile.ProfileScreen(navController)
+                ProfileDashboardScreen(navController, profileViewModel)
+            }
+            composable(Routes.MyReports.route) {
+                MyReportsScreen(navController, profileViewModel)
+            }
+            composable(Routes.Settings.route) {
+                SettingsScreen(navController, profileViewModel)
+            }
+            composable(Routes.Appearance.route) {
+                AppearanceScreen(navController)
+            }
+            composable(Routes.Accessibility.route) {
+                AccessibilityScreen(navController)
             }
         }
     }
@@ -173,7 +200,7 @@ fun BottomNavigationBar(navController: NavController) {
                             modifier = Modifier.size(22.dp)
                         )
                     },
-                    label = { Text("EXPLORE", fontSize = 9.sp) },
+                    label = { Text(stringResource(R.string.nav_explore), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
                         selectedTextColor = Color.White,
@@ -207,7 +234,7 @@ fun BottomNavigationBar(navController: NavController) {
                             )
                         }
                     },
-                    label = { Text("REPORT", fontSize = 9.sp) },
+                    label = { Text(stringResource(R.string.nav_report), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
                         selectedTextColor = Color.White,
@@ -232,7 +259,7 @@ fun BottomNavigationBar(navController: NavController) {
                             modifier = Modifier.size(22.dp)
                         )
                     },
-                    label = { Text("MAP", fontSize = 9.sp) },
+                    label = { Text(stringResource(R.string.nav_map), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = Color.White,
                         selectedTextColor = Color.White,

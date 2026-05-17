@@ -33,6 +33,7 @@ class ReporteImagenRepository : CrudRepositoryContract<ReporteImagen, ReporteIma
             filter {
                 eq("id", id)
             }
+            select()
         }
             .decodeList<JsonObject>()
             .firstOrNull()

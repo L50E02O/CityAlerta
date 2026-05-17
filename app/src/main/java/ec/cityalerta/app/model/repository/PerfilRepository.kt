@@ -31,6 +31,7 @@ class PerfilRepository : CrudRepositoryContract<Perfil, PerfilCreateDto, PerfilU
             filter {
                 eq("id", id)
             }
+            select()
         }
             .decodeList<JsonObject>()
             .firstOrNull()
