@@ -9,6 +9,10 @@ plugins {
     jacoco
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 jacoco {
     toolVersion = "0.8.11"
 }
@@ -196,7 +200,6 @@ dependencies {
     implementation(libs.play.services.auth)
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
-    implementation(libs.play.services.location)
     implementation(libs.maps.compose)
     implementation(libs.coil.compose)
 
@@ -207,12 +210,16 @@ dependencies {
     implementation(libs.supabase.storage)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
+    implementation(platform(libs.kotlinx.coroutines.bom))
+    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.androidx.concurrent.futures.ktx)
 
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
 
     // Unit tests
+    testImplementation(platform(libs.kotlinx.coroutines.bom))
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -221,6 +228,9 @@ dependencies {
     testImplementation(libs.mockito.inline)
 
     // Instrumentation tests
+    androidTestImplementation(platform(libs.kotlinx.coroutines.bom))
+    androidTestImplementation(libs.androidx.concurrent.futures)
+    androidTestImplementation(libs.androidx.concurrent.futures.ktx)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -234,16 +244,4 @@ dependencies {
 
     // Annotation processors
     kapt(libs.androidx.room.compiler)
-
-    // Workaround for version conflicts in test classpath
-    implementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0"))
-    testImplementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0"))
-    androidTestImplementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.9.0"))
-
-    implementation("androidx.concurrent:concurrent-futures:1.2.0")
-    implementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
-    androidTestImplementation("androidx.concurrent:concurrent-futures:1.2.0")
-    androidTestImplementation("androidx.concurrent:concurrent-futures-ktx:1.2.0")
-
-
 }

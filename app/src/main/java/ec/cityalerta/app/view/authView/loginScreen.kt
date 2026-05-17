@@ -24,28 +24,30 @@ fun LoginScreen(
     }
 
     AuthScreenScaffold(
-        title = "Iniciar sesion",
-        primaryButtonText = "Entrar",
-        secondaryActionText = "¿No tienes cuenta? Registrate",
         viewModel = viewModel,
-        onPrimaryAction = {
-            viewModel.onLoginClick {
-                navController.navigate(Routes.Home.route) {
-                    popUpTo(Routes.Login.route) { inclusive = true }
+        config = AuthScreenConfig(
+            title = "Iniciar sesion",
+            primaryButtonText = "Entrar",
+            secondaryActionText = "¿No tienes cuenta? Registrate",
+            onPrimaryAction = {
+                viewModel.onLoginClick {
+                    navController.navigate(Routes.Home.route) {
+                        popUpTo(Routes.Login.route) { inclusive = true }
+                    }
                 }
+            },
+            onSecondaryAction = {
+                navController.navigate(Routes.Register.route)
+            },
+            bottomContent = {
+                Text(
+                    text = "¿Olvidaste tu contrasena?",
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        navController.navigate(Routes.RecoverPassword.route)
+                    }
+                )
             }
-        },
-        onSecondaryAction = {
-            navController.navigate(Routes.Register.route)
-        },
-        bottomContent = {
-            Text(
-                text = "¿Olvidaste tu contrasena?",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable {
-                    navController.navigate(Routes.RecoverPassword.route)
-                }
-            )
-        }
+        )
     )
 }

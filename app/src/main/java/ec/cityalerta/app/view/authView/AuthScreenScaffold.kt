@@ -29,23 +29,28 @@ import androidx.compose.ui.unit.dp
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.viewmodel.AuthViewModel
 
+data class AuthScreenConfig(
+    val title: String,
+    val primaryButtonText: String,
+    val secondaryActionText: String,
+    val showCitySection: Boolean = false,
+    val ciudades: List<Ciudad> = emptyList(),
+    val fixedCity: Ciudad? = null,
+    val cityLoadError: String? = null,
+    val onPrimaryAction: () -> Unit,
+    val onSecondaryAction: () -> Unit,
+    val bottomContent: (@Composable () -> Unit)? = null
+)
+
 @Composable
 fun AuthScreenScaffold(
-    title: String,
-    primaryButtonText: String,
-    secondaryActionText: String,
     viewModel: AuthViewModel,
-    showCitySection: Boolean = false,
-    ciudades: List<Ciudad> = emptyList(),
-    fixedCity: Ciudad? = null,
-    cityLoadError: String? = null,
-    onPrimaryAction: () -> Unit,
-    onSecondaryAction: () -> Unit,
-    bottomContent: (@Composable () -> Unit)? = null
+    config: AuthScreenConfig
 ) {
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
     val isPasswordValid = viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
-    val isCiudadValid = !showCitySection || (fixedCity != null || (ciudades.isNotEmpty() && viewModel.uiState.ciudadId.isNotEmpty()))
+    val isCiudadValid = !config.showCitySection ||
+        (config.fixedCity != null || (config.ciudades.isNotEmpty() && viewModel.uiState.ciudadId.isNotEmpty()))
     val isFormValid = isEmailValid && isPasswordValid && isCiudadValid
 
     Column(
@@ -55,7 +60,7 @@ fun AuthScreenScaffold(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = title, style = MaterialTheme.typography.headlineMedium)
+        Text(text = config.title, style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
 
         AuthFormComponent(
@@ -63,66 +68,76 @@ fun AuthScreenScaffold(
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (showCitySection) {
-            Spacer(modifier = Modifier.height(8.dp))
-            CountryField(country = "Ecuador")
-            Spacer(modifier = Modifier.height(8.dp))
-            if (fixedCity != null) {
-                FixedCityField(city = fixedCity)
-            } else if (ciudades.isNotEmpty()) {
-                CiudadDropdown(
-                    ciudades = ciudades,
-                    query = viewModel.uiState.ciudadNombre,
-                    selectedId = viewModel.uiState.ciudadId,
-                    onQueryChange = viewModel::onCiudadChange,
-                    onSelected = { ciudad ->
-                        viewModel.onCiudadSelected(ciudad.nombre, ciudad.id)
-                    }
-                )
-            } else {
-                OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Ciudad") },
-                    placeholder = { Text("No hay ciudades disponibles") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            if (cityLoadError != null) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = cityLoadError,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
+        if (config.showCitySection) {
+            AuthCitySection(
+                config = config,
+                viewModel = viewModel
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = onPrimaryAction,
+            onClick = config.onPrimaryAction,
             modifier = Modifier.fillMaxWidth(),
             enabled = isFormValid && !viewModel.uiState.isLoading
         ) {
-            Text(text = if (viewModel.uiState.isLoading) "Cargando..." else primaryButtonText)
+            Text(text = if (viewModel.uiState.isLoading) "Cargando..." else config.primaryButtonText)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = secondaryActionText,
+            text = config.secondaryActionText,
             color = MaterialTheme.colorScheme.primary,
             textDecoration = TextDecoration.Underline,
-            modifier = Modifier.clickable(onClick = onSecondaryAction)
+            modifier = Modifier.clickable(onClick = config.onSecondaryAction)
         )
 
-        if (bottomContent != null) {
+        config.bottomContent?.let { content ->
             Spacer(modifier = Modifier.height(12.dp))
-            bottomContent()
+            content()
         }
+    }
+}
+
+@Composable
+private fun AuthCitySection(
+    config: AuthScreenConfig,
+    viewModel: AuthViewModel
+) {
+    Spacer(modifier = Modifier.height(8.dp))
+    CountryField(country = "Ecuador")
+    Spacer(modifier = Modifier.height(8.dp))
+
+    when {
+        config.fixedCity != null -> FixedCityField(city = config.fixedCity)
+        config.ciudades.isNotEmpty() -> CiudadDropdown(
+            ciudades = config.ciudades,
+            query = viewModel.uiState.ciudadNombre,
+            selectedId = viewModel.uiState.ciudadId,
+            onQueryChange = viewModel::onCiudadChange,
+            onSelected = { ciudad ->
+                viewModel.onCiudadSelected(ciudad.nombre, ciudad.id)
+            }
+        )
+        else -> OutlinedTextField(
+            value = "",
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Ciudad") },
+            placeholder = { Text("No hay ciudades disponibles") },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+
+    if (config.cityLoadError != null) {
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = config.cityLoadError,
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 
@@ -153,7 +168,6 @@ fun FixedCityField(
         modifier = modifier.fillMaxWidth()
     )
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

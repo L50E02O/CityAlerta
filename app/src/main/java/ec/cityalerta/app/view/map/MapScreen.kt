@@ -9,14 +9,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import android.content.Context
 import org.json.JSONArray
-import org.json.JSONObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,10 +31,13 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
+import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import ec.cityalerta.app.view.map.components.CategoryFilter
 import ec.cityalerta.app.view.map.components.ReportDetailCard
 import ec.cityalerta.app.viewmodel.MapViewModel
+import ec.cityalerta.app.viewmodel.MapUiState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,27 +53,7 @@ fun MapScreen(
     val scope = rememberCoroutineScope()
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
-    // Gestión de permisos de ubicación
-    var locationPermissionGranted by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        locationPermissionGranted = isGranted
-    }
-
-    LaunchedEffect(Unit) {
-        if (!locationPermissionGranted) {
-            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-    }
+    val locationPermissionGranted = rememberLocationPermission()
 
     val defaultLocation = LatLng(-0.95, -80.73)
     val cameraPositionState = rememberCameraPositionState {
@@ -118,8 +99,7 @@ fun MapScreen(
                             contentDescription = "Atras"
                         )
                     }
-                }
-                ,
+                },
                 actions = {
                     ProfileAvatar(initials = "US", onClick = { navController.navigate(Routes.Profile.route) })
                 }
@@ -132,166 +112,251 @@ fun MapScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
+            MapScreenBody(
+                uiState = uiState,
+                ciudadId = ciudadId,
+                context = context,
+                scope = scope,
+                fusedLocationClient = fusedLocationClient,
+                locationPermissionGranted = locationPermissionGranted,
+                cameraPositionState = cameraPositionState,
+                viewModel = viewModel
+            )
+        }
+    }
+}
 
-                uiState.errorMessage != null -> {
-                    Text(
-                        text = uiState.errorMessage,
-                        modifier = Modifier.align(Alignment.Center).padding(16.dp)
-                    )
-                }
+@Composable
+private fun rememberLocationPermission(): Boolean {
+    val context = LocalContext.current
+    var locationPermissionGranted by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
 
-                uiState.ciudad != null -> {
-                    val ciudad = uiState.ciudad
-                    val polygonPoints = remember(ciudad) {
-                        GeoJsonConverter.extractPolygonPoints(
-                            geometry = ciudad.geojson
-                        )
-                        GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
-                    }
-                    val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(context, ciudadId) }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        locationPermissionGranted = isGranted
+    }
 
-                    val cityBounds = remember(polygonPoints, assetBounds) {
-                        assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(
-                            LatLng(ciudad.centroLat - 0.12, ciudad.centroLng - 0.12),
-                            LatLng(ciudad.centroLat + 0.12, ciudad.centroLng + 0.12)
-                        ))
-                    }
+    LaunchedEffect(Unit) {
+        if (!locationPermissionGranted) {
+            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
 
-                    val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
-                        uiState.reports.filter {
-                            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory
-                        }
-                    }
+    return locationPermissionGranted
+}
 
-                    val visibleReportIds = remember(filteredReports) {
-                        filteredReports.map { it.id }.toSet()
-                    }
+@Composable
+private fun MapScreenBody(
+    uiState: MapUiState,
+    ciudadId: String,
+    context: Context,
+    scope: CoroutineScope,
+    fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient,
+    locationPermissionGranted: Boolean,
+    cameraPositionState: CameraPositionState,
+    viewModel: MapViewModel
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            uiState.isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
 
-                    GoogleMap(
-                        modifier = Modifier.fillMaxSize(),
-                        cameraPositionState = cameraPositionState,
-                        properties = MapProperties(
-                            isMyLocationEnabled = locationPermissionGranted,
-                            latLngBoundsForCameraTarget = cityBounds,
-                            minZoomPreference = 12f,
-                            maxZoomPreference = 18f
+            uiState.errorMessage != null -> {
+                Text(
+                    text = uiState.errorMessage,
+                    modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                )
+            }
+
+            uiState.ciudad != null -> {
+                MapCityContent(
+                    uiState = uiState,
+                    ciudad = uiState.ciudad,
+                    ciudadId = ciudadId,
+                    context = context,
+                    scope = scope,
+                    fusedLocationClient = fusedLocationClient,
+                    locationPermissionGranted = locationPermissionGranted,
+                    cameraPositionState = cameraPositionState,
+                    viewModel = viewModel
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BoxScope.MapCityContent(
+    uiState: MapUiState,
+    ciudad: Ciudad,
+    ciudadId: String,
+    context: Context,
+    scope: CoroutineScope,
+    fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient,
+    locationPermissionGranted: Boolean,
+    cameraPositionState: CameraPositionState,
+    viewModel: MapViewModel
+) {
+    val polygonPoints = remember(ciudad) {
+        GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
+    }
+    val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(context, ciudadId) }
+
+    val cityBounds = remember(polygonPoints, assetBounds) {
+        assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(
+            LatLng(ciudad.centroLat - 0.12, ciudad.centroLng - 0.12),
+            LatLng(ciudad.centroLat + 0.12, ciudad.centroLng + 0.12)
+        ))
+    }
+
+    val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
+        uiState.reports.filter {
+            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory
+        }
+    }
+
+    val visibleReportIds = remember(filteredReports) {
+        filteredReports.map { it.id }.toSet()
+    }
+
+    GoogleMap(
+        modifier = Modifier.fillMaxSize(),
+        cameraPositionState = cameraPositionState,
+        properties = MapProperties(
+            isMyLocationEnabled = locationPermissionGranted,
+            latLngBoundsForCameraTarget = cityBounds,
+            minZoomPreference = 12f,
+            maxZoomPreference = 18f
+        ),
+        uiSettings = MapUiSettings(
+            zoomControlsEnabled = false,
+            myLocationButtonEnabled = false,
+            mapToolbarEnabled = false
+        ),
+        contentPadding = PaddingValues(top = 110.dp, bottom = 165.dp)
+    ) {
+        if (polygonPoints.isNotEmpty()) {
+            Polygon(
+                points = polygonPoints,
+                fillColor = Color(0x4287F5CC),
+                strokeColor = Color(0xFF287FCC),
+                strokeWidth = 2f
+            )
+        }
+
+        uiState.reportMarkers
+            .filter { it.id in visibleReportIds }
+            .forEach { marker ->
+                key(marker.id) {
+                    Marker(
+                        state = rememberMarkerState(
+                            position = LatLng(marker.latitude, marker.longitude)
                         ),
-                        uiSettings = MapUiSettings(
-                            zoomControlsEnabled = false,
-                            myLocationButtonEnabled = false,
-                            mapToolbarEnabled = false
-                        ),
-                        contentPadding = PaddingValues(top = 110.dp, bottom = 165.dp)
-                    ) {
-                        if (polygonPoints.isNotEmpty()) {
-                            Polygon(
-                                points = polygonPoints,
-                                fillColor = Color(0x4287F5CC),
-                                strokeColor = Color(0xFF287FCC),
-                                strokeWidth = 2f
-                            )
-                        }
-
-                        uiState.reportMarkers
-                            .filter { it.id in visibleReportIds }
-                            .forEach { marker ->
-                                key(marker.id) {
-                                    Marker(
-                                        state = rememberMarkerState(
-                                            position = LatLng(marker.latitude, marker.longitude)
-                                        ),
-                                        title = marker.title,
-                                        snippet = marker.description ?: "",
-                                        onClick = {
-                                            viewModel.onReportClicked(marker.id)
-                                            true
-                                        }
-                                    )
-                                }
-                            }
-                    }
-
-                    CategoryFilter(
-                        categories = uiState.categories,
-                        selectedCategory = uiState.selectedCategory,
-                        onCategoryClick = { viewModel.onCategorySelected(it) },
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(top = 8.dp)
-                    )
-
-                    // MyLocation Button
-                    MapControlButton(
-                        icon = Icons.Default.MyLocation,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(top = 124.dp, end = 16.dp),
-                        containerColor = Color(0xFF051C3F),
-                        contentColor = Color.White,
+                        title = marker.title,
+                        snippet = marker.description ?: "",
                         onClick = {
-                            if (locationPermissionGranted) {
-                                try {
-                                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                                        location?.let {
-                                            scope.launch {
-                                                cameraPositionState.animate(
-                                                    CameraUpdateFactory.newLatLngZoom(
-                                                        LatLng(it.latitude, it.longitude),
-                                                        15f
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                } catch (_: SecurityException) {
-                                    // Handle exception if needed
-                                }
-                            }
+                            viewModel.onReportClicked(marker.id)
+                            true
                         }
                     )
+                }
+            }
+    }
 
-                    // Zoom Controls
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(bottom = 180.dp, end = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        MapControlButton(
-                            icon = Icons.Default.Add,
-                            onClick = {
-                                scope.launch {
-                                    cameraPositionState.animate(CameraUpdateFactory.zoomIn())
-                                }
-                            }
-                        )
-                        MapControlButton(
-                            icon = Icons.Default.Remove,
-                            onClick = {
-                                scope.launch {
-                                    cameraPositionState.animate(CameraUpdateFactory.zoomOut())
-                                }
-                            }
-                        )
-                    }
+    CategoryFilter(
+        categories = uiState.categories,
+        selectedCategory = uiState.selectedCategory,
+        onCategoryClick = { viewModel.onCategorySelected(it) },
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = 8.dp)
+    )
 
-                    if (uiState.selectedReport != null) {
-                        ReportDetailCard(
-                            report = uiState.selectedReport,
-                            onDetailClick = {},
-                            onCloseClick = { viewModel.onDismissReport() },
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = 32.dp)
+    MapControlButton(
+        icon = Icons.Default.MyLocation,
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .padding(top = 124.dp, end = 16.dp),
+        containerColor = Color(0xFF051C3F),
+        contentColor = Color.White,
+        onClick = {
+            centerMapOnUserLocation(
+                locationPermissionGranted = locationPermissionGranted,
+                fusedLocationClient = fusedLocationClient,
+                scope = scope,
+                cameraPositionState = cameraPositionState
+            )
+        }
+    )
+
+    Column(
+        modifier = Modifier
+            .align(Alignment.BottomEnd)
+            .padding(bottom = 180.dp, end = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        MapControlButton(
+            icon = Icons.Default.Add,
+            onClick = {
+                scope.launch {
+                    cameraPositionState.animate(CameraUpdateFactory.zoomIn())
+                }
+            }
+        )
+        MapControlButton(
+            icon = Icons.Default.Remove,
+            onClick = {
+                scope.launch {
+                    cameraPositionState.animate(CameraUpdateFactory.zoomOut())
+                }
+            }
+        )
+    }
+
+    if (uiState.selectedReport != null) {
+        ReportDetailCard(
+            report = uiState.selectedReport,
+            onDetailClick = {},
+            onCloseClick = { viewModel.onDismissReport() },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
+        )
+    }
+}
+
+private fun centerMapOnUserLocation(
+    locationPermissionGranted: Boolean,
+    fusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient,
+    scope: CoroutineScope,
+    cameraPositionState: CameraPositionState
+) {
+    if (!locationPermissionGranted) return
+
+    try {
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            location?.let {
+                scope.launch {
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(it.latitude, it.longitude),
+                            15f
                         )
-                    }
+                    )
                 }
             }
         }
+    } catch (_: SecurityException) {
+        // Sin permiso de ubicacion
     }
 }
 
@@ -316,6 +381,7 @@ fun MapControlButton(
         }
     }
 }
+
 private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
     if (points.isEmpty()) return null
 
@@ -337,25 +403,25 @@ private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
     )
 }
 
-    private fun loadCityBboxFromAssets(context: Context, ciudadId: String): LatLngBounds? {
-        return try {
-            val input = context.assets.open("cities.json")
-            val json = input.bufferedReader().use { it.readText() }
-            val arr = JSONArray(json)
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                val id = obj.optString("id", obj.optString("name", "")).lowercase()
-                if (id == ciudadId.lowercase()) {
-                    val bbox = obj.getJSONObject("bbox")
-                    val minLat = bbox.getDouble("minLat")
-                    val maxLat = bbox.getDouble("maxLat")
-                    val minLng = bbox.getDouble("minLng")
-                    val maxLng = bbox.getDouble("maxLng")
-                    return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng))
-                }
+private fun loadCityBboxFromAssets(context: Context, ciudadId: String): LatLngBounds? {
+    return try {
+        val input = context.assets.open("cities.json")
+        val json = input.bufferedReader().use { it.readText() }
+        val arr = JSONArray(json)
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val id = obj.optString("id", obj.optString("name", "")).lowercase()
+            if (id == ciudadId.lowercase()) {
+                val bbox = obj.getJSONObject("bbox")
+                val minLat = bbox.getDouble("minLat")
+                val maxLat = bbox.getDouble("maxLat")
+                val minLng = bbox.getDouble("minLng")
+                val maxLng = bbox.getDouble("maxLng")
+                return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng))
             }
-            null
-        } catch (e: Exception) {
-            null
         }
+        null
+    } catch (_: Exception) {
+        null
     }
+}
