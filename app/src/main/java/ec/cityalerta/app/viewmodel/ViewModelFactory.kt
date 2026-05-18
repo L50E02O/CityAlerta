@@ -122,6 +122,17 @@ class AppViewModelFactory(
                     authRepository
                 ) as T
             }
+            modelClass.isAssignableFrom(SearchReportViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                SearchReportViewModel(
+                    reporteRepository,
+                    imagenReporte,
+                    ubicacionReporte,
+                    storageReporte,
+                    perfilRepository,
+                    barrioRepository
+                ) as T
+            }
 
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

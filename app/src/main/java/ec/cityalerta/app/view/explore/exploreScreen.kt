@@ -52,7 +52,7 @@ fun ExploreScreen(
             ExploreHeader(
                 city = state.ciudadNombre,
                 profileImageUrl = profileState.profileImageUrl,
-                onSearchClick = { /* No functionality yet */ },
+                onSearchClick = { navController.navigate(Routes.Search.route) },
                 onProfileClick = { navController.navigate(Routes.Profile.route) }
             )
         },

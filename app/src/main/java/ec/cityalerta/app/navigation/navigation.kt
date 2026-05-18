@@ -49,6 +49,8 @@ import ec.cityalerta.app.view.profile.AppearanceScreen
 import ec.cityalerta.app.view.profile.MyReportsScreen
 import ec.cityalerta.app.view.profile.ProfileDashboardScreen
 import ec.cityalerta.app.view.profile.SettingsScreen
+import ec.cityalerta.app.view.search.SearchScreen
+import ec.cityalerta.app.viewmodel.SearchReportViewModel
 
 @Composable
 fun AppNavigation(
@@ -82,6 +84,9 @@ fun AppNavigation(
     val recoveryViewModel: PasswordRecoveryViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
+    val searchReportViewModel: SearchReportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController) }
@@ -109,6 +114,10 @@ fun AppNavigation(
             }
             composable(Routes.Explore.route){
                 ExploreScreen(navController, exploreViewModel, profileViewModel)
+            }
+
+            composable(Routes.Search.route) {
+                SearchScreen(navController, searchReportViewModel, profileViewModel)
             }
 
 
