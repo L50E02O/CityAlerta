@@ -2,8 +2,11 @@ package ec.cityalerta.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ec.cityalerta.app.model.data.barrio.Barrio
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
+import ec.cityalerta.app.model.data.reporteimagen.ReporteImagen
+import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacion
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
@@ -15,7 +18,6 @@ import ec.cityalerta.app.model.remote.SupabaseProvider
 import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -98,23 +100,19 @@ class SearchReportViewModel(
                     return@launch
                 }
 
-                val allReportes = reporteRepository.getReporteByCiudadId(ciudadId).getOrNull().orEmpty()
-
-                // Filtra reportes por categoria y nombre de barrio
-                val filteredReportes = allReportes.filter { reporte ->
-                    val matchesCategory = _state.value.selectedCategory == null || reporte.categoria == _state.value.selectedCategory
-                    val matchesBarrio = if (query.isBlank()) {
-                        true
-                    } else {
-                        val barrioInfo = barrioRepository.getById(reporte.barrio_id).getOrNull()
-                        barrioInfo?.nombre?.contains(query, ignoreCase = true) ?: false
-                    }
-                    matchesCategory && matchesBarrio
+                val barrioIds = if (query.isBlank()) {
+                    null
+                } else {
+                    barrioRepository.findIdsByCiudadAndNombre(ciudadId, query).getOrNull().orEmpty()
                 }
 
-                val reportesUI = filteredReportes.map { reporte ->
-                    async { mapReporteToUi(reporte) }
-                }.awaitAll()
+                val filteredReportes = reporteRepository.searchByCiudad(
+                    ciudadId = ciudadId,
+                    categoria = _state.value.selectedCategory,
+                    barrioIds = barrioIds
+                ).getOrNull().orEmpty()
+
+                val reportesUI = mapReportesToUi(filteredReportes)
 
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -129,19 +127,60 @@ class SearchReportViewModel(
         }
     }
 
-    // Convierte un reporte a su representacion visual con imagenes y datos procesados
-    private suspend fun mapReporteToUi(reporte: Reporte): ReporteUI = coroutineScope {
-        val primerImagen = reporteImagenRepository.getFirstImagenByReporteId(reporte.id).getOrNull()
-        val imageUrl = primerImagen?.storage_uuid?.takeIf { it.isNotBlank() }?.let { objectPath ->
-            reporteStorageRepository.generateSignedImageUrl(objectPath).getOrNull()
+    // Convierte reportes a UI cargando imagenes, barrios y ubicaciones en lote
+    private suspend fun mapReportesToUi(reportes: List<Reporte>): List<ReporteUI> {
+        if (reportes.isEmpty()) return emptyList()
+
+        return coroutineScope {
+            val reporteIds = reportes.map { it.id }
+            val barrioIds = reportes.map { it.barrio_id }.toSet()
+            val ubicacionIds = reportes.map { it.ubicacion_id }.distinct()
+
+            val barriosDeferred = async { barrioRepository.getBarriosMapByIds(barrioIds).getOrNull().orEmpty() }
+            val ubicacionesDeferred = async {
+                reporteUbicacionRepository.getByIds(ubicacionIds).getOrNull().orEmpty()
+            }
+            val imagenesDeferred = async {
+                reporteImagenRepository.getFirstImagenesByReporteIds(reporteIds).getOrNull().orEmpty()
+            }
+
+            val imagenes = imagenesDeferred.await()
+            val storagePaths = imagenes.values
+                .mapNotNull { it.storage_uuid.takeIf(String::isNotBlank) }
+                .distinct()
+            val signedUrlsDeferred = async {
+                reporteStorageRepository.generateSignedImageUrls(storagePaths).getOrNull().orEmpty()
+            }
+
+            val barrios = barriosDeferred.await()
+            val ubicaciones = ubicacionesDeferred.await()
+            val signedUrls = signedUrlsDeferred.await()
+
+            reportes.map { reporte ->
+                mapReporteToUi(
+                    reporte = reporte,
+                    barrios = barrios,
+                    ubicaciones = ubicaciones,
+                    imagenes = imagenes,
+                    signedUrls = signedUrls
+                )
+            }
         }
+    }
 
-        val ubicacionDeferred = async { reporteUbicacionRepository.getById(reporte.ubicacion_id).getOrNull() }
-        val barrioDeferred = async { barrioRepository.getById(reporte.barrio_id).getOrNull() }
-        val ubicacion = ubicacionDeferred.await()
-        val barrio = barrioDeferred.await()
+    private fun mapReporteToUi(
+        reporte: Reporte,
+        barrios: Map<String, Barrio>,
+        ubicaciones: Map<String, ReporteUbicacion>,
+        imagenes: Map<String, ReporteImagen>,
+        signedUrls: Map<String, String>
+    ): ReporteUI {
+        val primerImagen = imagenes[reporte.id]
+        val imageUrl = primerImagen?.storage_uuid?.takeIf { it.isNotBlank() }?.let { signedUrls[it] }
+        val barrio = barrios[reporte.barrio_id]
+        val ubicacion = ubicaciones[reporte.ubicacion_id]
 
-        ReporteUI(
+        return ReporteUI(
             id = reporte.id,
             categoria = mapCategoriaLabel(reporte.categoria),
             imageUrl = imageUrl,

@@ -93,6 +93,31 @@ class ReporteRepository : CrudRepositoryContract<Reporte, ReporteCreateDto, Repo
             .map { it.toReporte() }
     }
 
+    /**
+     * Busca reportes por ciudad aplicando filtros opcionales en la base de datos.
+     * @param barrioIds Si es null, no filtra por barrio. Si es una lista vacia, no hay coincidencias.
+     */
+    suspend fun searchByCiudad(
+        ciudadId: String,
+        categoria: ReportType? = null,
+        barrioIds: List<String>? = null
+    ): Result<List<Reporte>> = safeSupabaseCall {
+        if (barrioIds != null && barrioIds.isEmpty()) {
+            return@safeSupabaseCall emptyList()
+        }
+
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("ciudad_id", ciudadId)
+                    categoria?.let { eq("categoria", it.name) }
+                    barrioIds?.let { isIn("barrio_id", it) }
+                }
+            }
+            .decodeList<JsonObject>()
+            .map { it.toReporte() }
+    }
+
     private fun JsonObject.toReporte(): Reporte {
         return Reporte(
             id = stringOrEmpty("id"),
