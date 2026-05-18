@@ -12,8 +12,11 @@ import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.reporte.ReporteUpdateDto
 import ec.cityalerta.app.model.remote.AuthRedirectUrls
+import ec.cityalerta.app.model.data.reporte.ReporteSearchResult
+import ec.cityalerta.app.testdoubles.SearchReportTestFixtures
 import ec.cityalerta.app.viewmodel.ExploreState
 import ec.cityalerta.app.viewmodel.ReporteUI
+import ec.cityalerta.app.viewmodel.SearchReportState
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -53,6 +56,21 @@ class ModelDataCoverageTest {
         val state = ExploreState()
         assertEquals("Cargando...", state.ciudadNombre)
         assertEquals(false, state.isLoading)
+    }
+
+    @Test
+    fun searchReportStateDefaults() {
+        val state = SearchReportState()
+        assertEquals("", state.searchQuery)
+        assertEquals("", state.ciudadId)
+        assertEquals(false, state.isLoading)
+    }
+
+    @Test
+    fun reporteSearchResultDataClass() {
+        val result = SearchReportTestFixtures.sampleSearchResult()
+        assertEquals("Centro", result.barrioNombre)
+        assertNotNull(result.reporte)
     }
 
     @Test
