@@ -127,10 +127,8 @@ class AppViewModelFactory(
                 SearchReportViewModel(
                     reporteRepository,
                     imagenReporte,
-                    ubicacionReporte,
                     storageReporte,
-                    perfilRepository,
-                    barrioRepository
+                    perfilRepository
                 ) as T
             }
 

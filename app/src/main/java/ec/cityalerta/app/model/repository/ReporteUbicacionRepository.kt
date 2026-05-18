@@ -70,21 +70,6 @@ class ReporteUbicacionRepository : CrudRepositoryContract<ReporteUbicacion, Repo
         Unit
     }
 
-    suspend fun getByIds(ids: List<String>): Result<Map<String, ReporteUbicacion>> = safeSupabaseCall {
-        if (ids.isEmpty()) {
-            return@safeSupabaseCall emptyMap()
-        }
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
-                filter {
-                    isIn("id", ids)
-                }
-            }
-            .decodeList<JsonObject>()
-            .map { it.toReporteUbicacion() }
-            .associateBy { it.id }
-    }
-
     private fun JsonObject.toReporteUbicacion(): ReporteUbicacion {
         return ReporteUbicacion(
             id = stringOrEmpty("id"),

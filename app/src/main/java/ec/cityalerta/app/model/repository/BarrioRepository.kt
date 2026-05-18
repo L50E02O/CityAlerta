@@ -72,30 +72,6 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
         Unit
     }
 
-    suspend fun getByCiudadId(ciudadId: String): Result<List<Barrio>> = safeSupabaseCall {
-        getAll().getOrThrow()
-            .filter { it.ciudadId == ciudadId }
-    }
-
-    suspend fun findIdsByCiudadAndNombre(ciudadId: String, nombreQuery: String): Result<List<String>> =
-        safeSupabaseCall {
-            if (nombreQuery.isBlank()) {
-                return@safeSupabaseCall emptyList()
-            }
-            getByCiudadId(ciudadId).getOrThrow()
-                .filter { it.nombre.contains(nombreQuery, ignoreCase = true) }
-                .map { it.id }
-        }
-
-    suspend fun getBarriosMapByIds(ids: Set<String>): Result<Map<String, Barrio>> = safeSupabaseCall {
-        if (ids.isEmpty()) {
-            return@safeSupabaseCall emptyMap()
-        }
-        getAll().getOrThrow()
-            .filter { it.id in ids }
-            .associateBy { it.id }
-    }
-
     private fun JsonObject.toBarrio(): Barrio {
         return Barrio(
             id = stringOrEmpty("id"),
