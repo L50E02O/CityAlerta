@@ -14,4 +14,5 @@ interface AuthRepositoryContract {
     suspend fun getUserEmail(): Result<String>
     suspend fun getCiudadId(): Result<String>
     suspend fun buscarCiudadPorNombre(nombre: String): Result<String?>
+    fun getCurrentSession(): Any?
 }

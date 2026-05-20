@@ -7,13 +7,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.*
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import android.content.Context
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import org.json.JSONArray
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,7 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import ec.cityalerta.app.view.components.ProfileAvatar
+import ec.cityalerta.app.view.components.AppTopBar
 import ec.cityalerta.app.navigation.Routes
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -92,29 +99,13 @@ fun MapScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                modifier = Modifier.height(56.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                title = {
-                    Box(modifier = Modifier.padding(top = 10.dp)) {
-                        Text(uiState.ciudad?.nombre ?: "Mapa")
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atras"
-                        )
-                    }
-                },
-                actions = {
-                    ProfileAvatar(
-                        imageUrl = profileState.profileImageUrl,
-                        isLoading = profileState.isUploadingImage,
-                        onClick = { navController.navigate(Routes.Profile.route) }
-                    )
-                }
+            AppTopBar(
+                title = uiState.ciudad?.nombre ?: "Mapa",
+                showBack = true,
+                profileImageUrl = profileState.profileImageUrl,
+                isProfileLoading = profileState.isUploadingImage,
+                onBackClick = { navController.popBackStack() },
+                onProfileClick = { navController.navigate(Routes.Profile.route) }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

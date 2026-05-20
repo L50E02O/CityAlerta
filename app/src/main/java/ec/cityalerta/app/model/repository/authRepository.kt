@@ -332,6 +332,10 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
+    override fun getCurrentSession(): Any? {
+        return SupabaseProvider.client.auth.currentSessionOrNull()
+    }
+
     private fun mapAuthException(exception: Exception): Exception {
         val mapped = AuthErrorMapper.map(exception)
         return AuthMappedException(mapped.message, mapped.isEmailUnconfirmed)

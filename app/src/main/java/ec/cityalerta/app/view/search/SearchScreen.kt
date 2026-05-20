@@ -15,11 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -37,8 +33,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ec.cityalerta.app.model.data.reporte.ReportType
-import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.explore.ReporteCard
+import ec.cityalerta.app.view.components.AppTopBar
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 import ec.cityalerta.app.viewmodel.SearchReportViewModel
 
@@ -59,8 +55,11 @@ fun SearchScreen(
 
     Scaffold(
         topBar = {
-            SearchHeader(
+            AppTopBar(
+                title = "Buscar",
+                showBack = true,
                 profileImageUrl = profileState.profileImageUrl,
+                isProfileLoading = profileState.isUploadingImage,
                 onBackClick = { navController.popBackStack() },
                 onProfileClick = { navController.navigate("profile") }
             )
@@ -143,48 +142,6 @@ fun SearchScreen(
                     )
                 }
             }
-        }
-    }
-}
-
-// Header de la pantalla de busqueda con boton de regreso y perfil
-@Composable
-fun SearchHeader(
-    profileImageUrl: String? = null,
-    onBackClick: () -> Unit,
-    onProfileClick: () -> Unit
-) {
-    Surface(
-        color = Color.White,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Atras",
-                    tint = Color(0xFF1B2633)
-                )
-            }
-
-            Text(
-                text = "Buscar",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF1B2633),
-                modifier = Modifier.weight(1f)
-            )
-
-            ProfileAvatar(
-                imageUrl = profileImageUrl,
-                onClick = onProfileClick
-            )
         }
     }
 }

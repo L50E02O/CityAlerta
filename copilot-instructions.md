@@ -10,6 +10,7 @@ applyTo: "**"
 - Arquitectura: MVVM.
 - Persistencia local: Room.
 - Zona objetivo: Manta, Manabi, Ecuador.
+- Documentacion general: README.md.
 
 ## Reglas globales
 - Todo texto visible para el usuario debe estar en espanol, sin acentos ni emojis.
@@ -20,6 +21,7 @@ applyTo: "**"
 - Priorizar bajo acoplamiento, alta cohesion y separacion clara de responsabilidades.
 - No mezclar la logica de red con la UI.
 - Mantener la estructura por capas o por caracteristicas cuando aporte claridad.
+- Rutas de UI y ViewModel suelen vivir en app/src/main/java/ec/cityalerta/app/view y app/src/main/java/ec/cityalerta/app/viewmodel.
 
 ## Calidad minima esperada
 - Escribir tests unitarios para logica de negocio, servicios y validaciones.
@@ -27,12 +29,14 @@ applyTo: "**"
 - Mantener complejidad ciclomatica baja y extraer funciones pequenas cuando sea necesario.
 - Validar todas las entradas del usuario antes de persistir o enviar datos.
 - Usar HTTPS para llamadas de red y proteger credenciales o tokens con almacenamiento seguro.
+- Comandos utiles: ./gradlew testDebugUnitTest, ./gradlew connectedAndroidTest, ./gradlew jacocoTestReport, ./gradlew installDebug.
 
 ## Reglas especificas del dominio
 - Usar BottomNavigationBar con Explorar, Post y Mapa.
 - Centrar el mapa en Manta con las coordenadas definidas por el proyecto.
 - Usar Material3 Cards para el feed de Explorar.
 - Aplicar Lazy Loading en listas y recursos pesados.
+- En el flujo de reporte, el acceso a camara debe abrir la camara del sistema directamente, sin pasos intermedios.
 
 ## SonarQube y calidad
 - Tomar como objetivo una cobertura alta en logica de negocio, servicios y validaciones.

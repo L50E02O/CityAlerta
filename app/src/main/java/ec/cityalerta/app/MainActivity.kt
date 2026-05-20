@@ -30,11 +30,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        installSplashScreen()
-
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         hideSystemNavigationBar()
+
+        var isReady = false
+        splashScreen.setKeepOnScreenCondition { !isReady }
 
         val apiKey = BuildConfig.GOOGLE_MAPS_API_KEY
         if (apiKey.isNotEmpty()) {
@@ -46,11 +48,14 @@ class MainActivity : ComponentActivity() {
         val linkType = AuthDeepLinkParser.parseType(intent)
         val hasSession = SupabaseProvider.client.auth.currentSessionOrNull() != null
 
-        val startDestination = when {
-            !AuthDeepLinkParser.isAppAuthDeepLink(intent) -> Routes.Login.route
-            linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY -> Routes.RecoverPassword.route
-            hasSession -> Routes.Home.route
-            else -> Routes.Login.route
+        val startDestination = if (!AuthDeepLinkParser.isAppAuthDeepLink(intent)) {
+            Routes.Splash.route
+        } else {
+            when {
+                linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY -> Routes.RecoverPassword.route
+                hasSession -> Routes.Home.route
+                else -> Routes.Login.route
+            }
         }
 
         val authInfoMessage = when {
@@ -72,6 +77,7 @@ class MainActivity : ComponentActivity() {
                 accessibilityManager = accessibilityManager,
                 localeManager = localeManager
             ) {
+                isReady = true
                 AppNavigation(
                     startDestination = startDestination,
                     authInfoMessage = authInfoMessage

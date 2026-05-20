@@ -1,15 +1,18 @@
 package ec.cityalerta.app.view.authView
 
-import ec.cityalerta.app.navigation.Routes
-import ec.cityalerta.app.viewmodel.AuthViewModel
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.R
 
 
@@ -28,9 +31,11 @@ fun LoginScreen(
     AuthScreenScaffold(
         viewModel = viewModel,
         config = AuthScreenConfig(
-            title = stringResource(R.string.auth_login_title),
-            primaryButtonText = stringResource(R.string.auth_login_button),
-            secondaryActionText = stringResource(R.string.auth_no_account),
+            title = "Bienvenido de vuelta!",
+            subtitle = "Ingrese sus credenciales para acceder al sistema.",
+            isLogin = true,
+            primaryButtonText = "Login",
+            secondaryActionText = "¿Olvidaste tu contraseña?",
             onPrimaryAction = {
                 viewModel.onLoginClick {
                     navController.navigate(Routes.Home.route) {
@@ -39,16 +44,14 @@ fun LoginScreen(
                 }
             },
             onSecondaryAction = {
-                navController.navigate(Routes.Register.route)
+                navController.navigate(Routes.RecoverPassword.route)
             },
-            bottomContent = {
-                Text(
-                    text = stringResource(R.string.auth_forgot_password),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable {
-                        navController.navigate(Routes.RecoverPassword.route)
-                    }
-                )
+            onTabSwitch = {
+                navController.navigate(Routes.Register.route) {
+                    popUpTo(Routes.Login.route) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             }
         )
     )

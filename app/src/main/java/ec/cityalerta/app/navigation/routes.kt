@@ -1,6 +1,7 @@
 package ec.cityalerta.app.navigation
 
 sealed class Routes(val route: String, val authRequired: Boolean = false) {
+    object Splash : Routes("splash")
     object Login : Routes("login")
     object Register : Routes("register")
     object RecoverPassword : Routes("recover_password")

@@ -41,9 +41,11 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
     AuthScreenScaffold(
         viewModel = viewModel,
         config = AuthScreenConfig(
-            title = stringResource(R.string.auth_register_title),
-            primaryButtonText = stringResource(R.string.auth_register_button),
-            secondaryActionText = stringResource(R.string.auth_has_account),
+            title = "Registro",
+            subtitle = "Ingrese sus credenciales para acceder al sistema.",
+            isLogin = false,
+            primaryButtonText = "Register",
+            secondaryActionText = "¿Ya tienes cuenta? Inicia sesión",
             showCitySection = true,
             ciudades = ciudades,
             fixedCity = mantaCiudad,
@@ -57,6 +59,13 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
             },
             onSecondaryAction = {
                 navController.popBackStack()
+            },
+            onTabSwitch = {
+                if (!navController.popBackStack()) {
+                    navController.navigate(Routes.Login.route) {
+                        popUpTo(Routes.Register.route) { inclusive = true }
+                    }
+                }
             }
         )
     )

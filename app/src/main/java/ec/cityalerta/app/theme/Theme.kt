@@ -26,17 +26,25 @@ val LocalLocaleManager = staticCompositionLocalOf<LocaleManager> {
 }
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF3B5B7A),
+    primary = Color(0xFFE53935), // Rojo de los botones
     onPrimary = Color.White,
-    background = Color(0xFFF6F7F9),
+    secondary = Color(0xFF1B2633), // Azul oscuro
+    onSecondary = Color.White,
+    background = Color(0xFFFFFFFF),
     surface = Color.White,
+    onSurface = Color(0xFF1B2633),
+    outline = Color(0xFFE0E0E0)
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF3B5B7A),
+    primary = Color(0xFFE53935),
     onPrimary = Color.White,
+    secondary = Color(0xFF1B2633),
+    onSecondary = Color.White,
     background = Color(0xFF0F1720),
     surface = Color(0xFF1B2633),
+    onSurface = Color.White,
+    outline = Color(0xFF303E4D)
 )
 
 @Composable

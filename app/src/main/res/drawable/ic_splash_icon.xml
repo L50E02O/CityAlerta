@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fondo blanco para que el icono tenga espacio (padding) y no se corte -->
+    <item android:drawable="@color/splash_background" />
+
+    <!-- El logo centrado y con un tamaño que evite el recorte circular de Android 12+ -->
+    <item
+        android:drawable="@drawable/cityalerta_logo"
+        android:gravity="center"
+        android:width="160dp"
+        android:height="160dp" />
+</layer-list>
