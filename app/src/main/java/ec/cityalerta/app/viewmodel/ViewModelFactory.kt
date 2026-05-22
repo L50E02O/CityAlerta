@@ -3,8 +3,8 @@ package ec.cityalerta.app.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import android.content.Context
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.repository.MapRepository
 import ec.cityalerta.app.model.repository.LocationRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
@@ -64,8 +64,8 @@ class AppViewModelFactory(
         ReporteStorageRepository()
     }
 
-    private val barrioRepository by lazy {
-        BarrioRepository()
+    private val storagePerfil by lazy {
+        PerfilStorageRepository()
     }
 
     private val locationProvider by lazy {

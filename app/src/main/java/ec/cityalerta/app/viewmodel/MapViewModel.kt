@@ -14,8 +14,8 @@ import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,10 +70,9 @@ class MapViewModel(
     private val repository: MapRepositoryContract,
     private val reporteRepository: ReporteRepository,
     private val ubicacionRepository: ReporteUbicacionRepository,
-    private val authRepository: IAuthRepository,
+    private val authRepository: AuthRepositoryContract,
     private val barrioRepository: BarrioRepository,
     private val colorProvider: IRiskColorProvider = DefaultRiskColorProvider()
-    private val authRepository: AuthRepositoryContract
 ) : ViewModel() {
 
     var uiState by mutableStateOf(MapUiState())
@@ -209,7 +208,8 @@ class MapViewModel(
             descripcion = "",
             estado = ReporteEstado.PENDIENTE,
             fecha_reporte = "",
-            categoria = reportType
+            categoria = reportType,
+            barrio_id = ""
         )
         uiState = uiState.copy(
             selectedReport = dummyReport,
