@@ -149,7 +149,13 @@ private fun EmailField(
             unfocusedContainerColor = Color(0xFFF8F9FA),
             focusedContainerColor = Color(0xFFF8F9FA),
             unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633)
+            focusedBorderColor = Color(0xFF1B2633),
+            unfocusedTextColor = Color(0xFF1B2633),
+            focusedTextColor = Color(0xFF1B2633),
+            errorTextColor = Color(0xFF1B2633),
+            errorBorderColor = Color(0xFFE74C3C),
+            cursorColor = Color(0xFFE74C3C),
+            errorCursorColor = Color(0xFFE74C3C)
         )
     )
 }
@@ -197,7 +203,9 @@ private fun PasswordField(
             unfocusedContainerColor = Color(0xFFF8F9FA),
             focusedContainerColor = Color(0xFFF8F9FA),
             unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633)
+            focusedBorderColor = Color(0xFF1B2633),
+            unfocusedTextColor = Color(0xFF1B2633),
+            focusedTextColor = Color(0xFF1B2633)
         )
     )
 }

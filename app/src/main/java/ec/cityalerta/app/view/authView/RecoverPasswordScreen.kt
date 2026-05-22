@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -181,7 +182,11 @@ private fun EmailVerificationCard(
                 singleLine = true,
                 enabled = !state.isLoading,
                 label = { Text("Correo electronico") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedTextColor = Color(0xFF1B2633),
+                    focusedTextColor = Color(0xFF1B2633)
+                )
             )
             Text(
                 text = "La app validara que el correo exista y luego actualizara la contrasena con la edge function.",
@@ -331,6 +336,10 @@ private fun PasswordField(
                     contentDescription = if (isVisible) "Ocultar contrasena" else "Mostrar contrasena"
                 )
             }
-        }
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedTextColor = Color(0xFF1B2633),
+            focusedTextColor = Color(0xFF1B2633)
+        )
     )
 }

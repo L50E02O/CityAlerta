@@ -281,7 +281,10 @@ private fun AuthCitySection(
                 unfocusedContainerColor = Color(0xFFF8F9FA),
                 focusedContainerColor = Color(0xFFF8F9FA),
                 unfocusedBorderColor = Color(0xFFE9ECEF),
-                focusedBorderColor = Color(0xFF1B2633)
+                focusedBorderColor = Color(0xFF1B2633),
+                unfocusedTextColor = Color(0xFF1B2633),
+                focusedTextColor = Color(0xFF1B2633),
+                disabledTextColor = Color(0xFF1B2633)
             )
         )
     }
@@ -311,7 +314,10 @@ fun CountryField(
             unfocusedContainerColor = Color(0xFFF8F9FA),
             focusedContainerColor = Color(0xFFF8F9FA),
             unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633)
+            focusedBorderColor = Color(0xFF1B2633),
+            unfocusedTextColor = Color(0xFF1B2633),
+            focusedTextColor = Color(0xFF1B2633),
+            disabledTextColor = Color(0xFF1B2633)
         )
     )
 }
@@ -331,7 +337,10 @@ fun FixedCityField(
             unfocusedContainerColor = Color(0xFFF8F9FA),
             focusedContainerColor = Color(0xFFF8F9FA),
             unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633)
+            focusedBorderColor = Color(0xFF1B2633),
+            unfocusedTextColor = Color(0xFF1B2633),
+            focusedTextColor = Color(0xFF1B2633),
+            disabledTextColor = Color(0xFF1B2633)
         )
     )
 }
@@ -372,7 +381,9 @@ fun CiudadDropdown(
                 unfocusedContainerColor = Color(0xFFF8F9FA),
                 focusedContainerColor = Color(0xFFF8F9FA),
                 unfocusedBorderColor = Color(0xFFE9ECEF),
-                focusedBorderColor = Color(0xFF1B2633)
+                focusedBorderColor = Color(0xFF1B2633),
+                unfocusedTextColor = Color(0xFF1B2633),
+                focusedTextColor = Color(0xFF1B2633)
             )
         )
         ExposedDropdownMenu(
