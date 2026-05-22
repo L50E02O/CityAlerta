@@ -11,6 +11,7 @@ import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
+import ec.cityalerta.app.model.repository.BarrioRepository
 
 class AppViewModelFactory(
     private val authRepository: IAuthRepository,
@@ -37,6 +38,10 @@ class AppViewModelFactory(
         ReporteStorageRepository()
     }
 
+    private val barrioRepository by lazy {
+        BarrioRepository()
+    }
+
     private val locationProvider by lazy {
         LocationRepository(appContext)
     }
@@ -53,7 +58,8 @@ class AppViewModelFactory(
                     mapRepository,
                     reporteRepository,
                     ubicacionReporte,
-                    authRepository
+                    authRepository,
+                    barrioRepository
                 ) as T
             }
 

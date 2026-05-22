@@ -1,6 +1,7 @@
 package ec.cityalerta.app.view.map
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -9,14 +10,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import android.content.Context
-import org.json.JSONArray
-import org.json.JSONObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,9 +30,13 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import ec.cityalerta.app.view.map.components.CategoryFilter
+import ec.cityalerta.app.view.map.components.ReportClusterMarker
 import ec.cityalerta.app.view.map.components.ReportDetailCard
+import ec.cityalerta.app.view.map.components.ReportMarkerDot
 import ec.cityalerta.app.viewmodel.MapViewModel
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import kotlin.math.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +50,21 @@ fun MapScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
+
+    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val r = 6371e3
+        val phi1 = lat1 * PI / 180
+        val phi2 = lat2 * PI / 180
+        val deltaPhi = (lat2 - lat1) * PI / 180
+        val deltaLambda = (lon2 - lon1) * PI / 180
+
+        val a = sin(deltaPhi / 2) * sin(deltaPhi / 2) +
+                cos(phi1) * cos(phi2) *
+                sin(deltaLambda / 2) * sin(deltaLambda / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return r * c
+    }
 
     // Gestión de permisos de ubicación
     var locationPermissionGranted by remember {
@@ -141,9 +157,6 @@ fun MapScreen(
                 uiState.ciudad != null -> {
                     val ciudad = uiState.ciudad
                     val polygonPoints = remember(ciudad) {
-                        GeoJsonConverter.extractPolygonPoints(
-                            geometry = ciudad.geojson
-                        )
                         GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
                     }
                     val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(context, ciudadId) }
@@ -190,23 +203,85 @@ fun MapScreen(
                             )
                         }
 
-                        uiState.reportMarkers
+                        uiState.barrioRisks.forEach { risk ->
+                            key(risk.barrioId) {
+                                Circle(
+                                    center = risk.center,
+                                    radius = risk.radius,
+                                    fillColor = Color(risk.fillColor),
+                                    strokeColor = Color(risk.strokeColor),
+                                    strokeWidth = 2f
+                                )
+                            }
+                        }
+
+                        // Lógica de clustering optimizada
+                        val zoom = cameraPositionState.position.zoom
+                        
+                        // Escalamos el radio de búsqueda según el zoom para que sea útil en niveles bajos
+                        // Pero mantenemos los 170m como base en zoom alto (15+)
+                        val baseRadius = 170.0
+                        val clusterRadius = if (zoom < 14f) {
+                            baseRadius * (14f - zoom + 1).toDouble().pow(1.5)
+                        } else {
+                            baseRadius
+                        }
+
+                        val processedMarkerIds = mutableSetOf<String>()
+                        
+                        // Agrupamos por categoría para que los clusters sean específicos por tipo de reporte
+                        val reportsByCategory = uiState.reports
                             .filter { it.id in visibleReportIds }
-                            .forEach { marker ->
-                                key(marker.id) {
-                                    Marker(
-                                        state = rememberMarkerState(
-                                            position = LatLng(marker.latitude, marker.longitude)
-                                        ),
-                                        title = marker.title,
-                                        snippet = marker.description ?: "",
-                                        onClick = {
-                                            viewModel.onReportClicked(marker.id)
-                                            true
+                            .groupBy { it.categoria }
+
+                        reportsByCategory.forEach { (category, categoryReports) ->
+                            val categoryMarkerIds = categoryReports.map { it.id }.toSet()
+                            val categoryMarkers = uiState.reportMarkers
+                                .filter { it.id in categoryMarkerIds }
+
+                            categoryMarkers.forEach { marker ->
+                                if (marker.id !in processedMarkerIds) {
+                                    val nearbyMarkers = categoryMarkers
+                                        .filter { it.id !in processedMarkerIds }
+                                        .filter { other ->
+                                            calculateDistance(
+                                                marker.latitude, marker.longitude,
+                                                other.latitude, other.longitude
+                                            ) <= clusterRadius
                                         }
-                                    )
+
+                                    // Si hay 5 o más (incluyendo el actual) y no estamos en zoom máximo, agrupamos
+                                    if (nearbyMarkers.size >= 5 && zoom < 17.5f) {
+                                        val avgLat = nearbyMarkers.map { it.latitude }.average()
+                                        val avgLng = nearbyMarkers.map { it.longitude }.average()
+                                        
+                                        key("cluster_${category.name}_${marker.id}") {
+                                            ReportClusterMarker(
+                                                position = LatLng(avgLat, avgLng),
+                                                count = nearbyMarkers.size,
+                                                reportType = category,
+                                                onClick = {
+                                                    viewModel.onClusterClicked(category, nearbyMarkers.size)
+                                                }
+                                            )
+                                        }
+                                        processedMarkerIds.addAll(nearbyMarkers.map { it.id })
+                                    } else {
+                                        // Renderizamos como punto individual
+                                        key(marker.id) {
+                                            ReportMarkerDot(
+                                                marker = marker,
+                                                reportType = category,
+                                                onClick = {
+                                                    viewModel.onReportClicked(marker.id)
+                                                }
+                                            )
+                                        }
+                                        processedMarkerIds.add(marker.id)
+                                    }
                                 }
                             }
+                        }
                     }
 
                     CategoryFilter(
@@ -218,7 +293,6 @@ fun MapScreen(
                             .padding(top = 8.dp)
                     )
 
-                    // MyLocation Button
                     MapControlButton(
                         icon = Icons.Default.MyLocation,
                         modifier = Modifier
@@ -242,7 +316,6 @@ fun MapScreen(
                                         }
                                     }
                                 } catch (_: SecurityException) {
-                                    // Handle exception if needed
                                 }
                             }
                         }
@@ -276,6 +349,7 @@ fun MapScreen(
                     if (uiState.selectedReport != null) {
                         ReportDetailCard(
                             report = uiState.selectedReport,
+                            isMultiReport = uiState.isMultiReport,
                             onDetailClick = {},
                             onCloseClick = { viewModel.onDismissReport() },
                             modifier = Modifier
@@ -310,6 +384,7 @@ fun MapControlButton(
         }
     }
 }
+
 private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
     if (points.isEmpty()) return null
 
@@ -331,25 +406,25 @@ private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
     )
 }
 
-    private fun loadCityBboxFromAssets(context: Context, ciudadId: String): LatLngBounds? {
-        return try {
-            val input = context.assets.open("cities.json")
-            val json = input.bufferedReader().use { it.readText() }
-            val arr = JSONArray(json)
-            for (i in 0 until arr.length()) {
-                val obj = arr.getJSONObject(i)
-                val id = obj.optString("id", obj.optString("name", "")).lowercase()
-                if (id == ciudadId.lowercase()) {
-                    val bbox = obj.getJSONObject("bbox")
-                    val minLat = bbox.getDouble("minLat")
-                    val maxLat = bbox.getDouble("maxLat")
-                    val minLng = bbox.getDouble("minLng")
-                    val maxLng = bbox.getDouble("maxLng")
-                    return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng))
-                }
+private fun loadCityBboxFromAssets(context: Context, ciudadId: String): LatLngBounds? {
+    return try {
+        val input = context.assets.open("cities.json")
+        val json = input.bufferedReader().use { it.readText() }
+        val arr = JSONArray(json)
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            val id = obj.optString("id", obj.optString("name", "")).lowercase()
+            if (id == ciudadId.lowercase()) {
+                val bbox = obj.getJSONObject("bbox")
+                val minLat = bbox.getDouble("minLat")
+                val maxLat = bbox.getDouble("maxLat")
+                val minLng = bbox.getDouble("minLng")
+                val maxLng = bbox.getDouble("maxLng")
+                return LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng))
             }
-            null
-        } catch (e: Exception) {
-            null
         }
+        null
+    } catch (_: Exception) {
+        null
     }
+}

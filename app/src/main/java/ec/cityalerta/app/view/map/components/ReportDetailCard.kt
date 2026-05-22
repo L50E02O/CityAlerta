@@ -17,15 +17,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 
 @Composable
 fun ReportDetailCard(
     report: Reporte,
+    modifier: Modifier = Modifier,
+    isMultiReport: Boolean = false,
     onDetailClick: (Reporte) -> Unit,
     onCloseClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier
@@ -61,11 +61,17 @@ fun ReportDetailCard(
                 Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
+                    val title = if (isMultiReport) {
+                        "Múltiples hechos de ${report.categoria.toDisplayName().lowercase()} en este sector"
+                    } else {
+                        "Reporte activo"
+                    }
                     Text(
-                        text = "Reporte activo",
-                        fontSize = 18.sp,
+                        text = title,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0D1B2A)
+                        color = Color(0xFF0D1B2A),
+                        lineHeight = 20.sp
                     )
                     Text(
                         text = report.categoria.toDisplayName(),
@@ -73,12 +79,14 @@ fun ReportDetailCard(
                         color = Color.Gray,
                         maxLines = 1
                     )
-                    Text(
-                        text = report.descripcion,
-                        fontSize = 12.sp,
-                        color = Color(0xFF5D6B78),
-                        maxLines = 2
-                    )
+                    if (!isMultiReport) {
+                        Text(
+                            text = report.descripcion,
+                            fontSize = 12.sp,
+                            color = Color(0xFF5D6B78),
+                            maxLines = 2
+                        )
+                    }
                 }
 
                 IconButton(
