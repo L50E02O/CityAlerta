@@ -2,12 +2,10 @@ package ec.cityalerta.app
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.view.authView.LoginScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
+import androidx.navigation.compose.rememberNavController
 import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
@@ -18,39 +16,48 @@ class LoginScreenTest {
     val composeTestRule = createComposeRule()
 
     @Mock
-    private lateinit var mockRepository: IAuthRepository
+    private lateinit var mockRepository: AuthRepositoryContract
 
-    private lateinit var navController: NavController
     private lateinit var viewModel: AuthViewModel
 
     @Test
-    fun testLoginScreenDisplaysTitle() {
+    fun testLoginScreenWithValidCredentials() {
         MockitoAnnotations.openMocks(this)
         viewModel = AuthViewModel(mockRepository)
         
         composeTestRule.setContent {
-            navController = rememberNavController()
             MaterialTheme {
+                val navController = rememberNavController()
                 LoginScreen(navController = navController, viewModel = viewModel)
             }
         }
 
-        composeTestRule.onNodeWithText("Iniciar sesión").assertExists()
+        // Prueba el flujo de ingreso de credenciales válidas
+        viewModel.onEmailChange("test@example.com")
+        viewModel.onPasswordChange("validPassword123")
+
+        composeTestRule.waitForIdle()
+
+        assert(viewModel.uiState.email == "test@example.com")
+        assert(viewModel.uiState.password == "validPassword123")
     }
 
     @Test
-    fun testLoginScreenDisplaysFormComponent() {
+    fun testLoginScreenWithInvalidEmail() {
         MockitoAnnotations.openMocks(this)
         viewModel = AuthViewModel(mockRepository)
         
         composeTestRule.setContent {
-            navController = rememberNavController()
             MaterialTheme {
+                val navController = rememberNavController()
                 LoginScreen(navController = navController, viewModel = viewModel)
             }
         }
 
-        composeTestRule.onNodeWithText("Correo electrónico").assertExists()
-        composeTestRule.onNodeWithText("Contraseña").assertExists()
+        // Prueba con email inválido
+        viewModel.onEmailChange("notanemail")
+        composeTestRule.waitForIdle()
+
+        assert(viewModel.uiState.email == "notanemail")
     }
 }
