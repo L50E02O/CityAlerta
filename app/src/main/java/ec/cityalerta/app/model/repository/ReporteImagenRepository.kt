@@ -4,7 +4,7 @@ import ec.cityalerta.app.model.data.reporteimagen.ReporteImagen
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
 
-class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCreateDto, ReporteImagenUpdateDto> {
+class ReporteImagenRepository : CrudRepositoryContract<ReporteImagen, ReporteImagenCreateDto, ReporteImagenUpdateDto> {
 
     private val tableName = "reporte_imagen"
 
@@ -33,6 +33,7 @@ class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCrea
             filter {
                 eq("id", id)
             }
+            select()
         }
             .decodeList<JsonObject>()
             .firstOrNull()
@@ -66,6 +67,46 @@ class ReporteImagenRepository : ICrudRepository<ReporteImagen, ReporteImagenCrea
         }
         Unit
     }
+
+    suspend fun getFirstImagenByReporteId(reporteId: String): Result<ReporteImagen?> = safeSupabaseCall {
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("reporte_id", reporteId)
+                }
+            }
+            .decodeList<JsonObject>()
+            .firstOrNull()
+            ?.toReporteImagen()
+    }
+
+    suspend fun getAllImagenesByReporteId(reporteId: String): Result<List<ReporteImagen>> = safeSupabaseCall {
+        SupabaseProvider.client.from(tableName)
+            .select(Columns.ALL) {
+                filter {
+                    eq("reporte_id", reporteId)
+                }
+            }
+            .decodeList<JsonObject>()
+            .map { it.toReporteImagen() }
+    }
+
+    suspend fun getFirstImagenesByReporteIds(reporteIds: List<String>): Result<Map<String, ReporteImagen>> =
+        safeSupabaseCall {
+            if (reporteIds.isEmpty()) {
+                return@safeSupabaseCall emptyMap()
+            }
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL) {
+                    filter {
+                        isIn("reporte_id", reporteIds)
+                    }
+                }
+                .decodeList<JsonObject>()
+                .map { it.toReporteImagen() }
+                .groupBy { it.reporte_id }
+                .mapValues { (_, imagenes) -> imagenes.first() }
+        }
 
     private fun JsonObject.toReporteImagen(): ReporteImagen {
         return ReporteImagen(

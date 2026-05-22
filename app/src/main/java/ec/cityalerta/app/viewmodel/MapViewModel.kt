@@ -67,12 +67,13 @@ data class MapUiState(
 )
 
 class MapViewModel(
-    private val repository: IMapRepository,
+    private val repository: MapRepositoryContract,
     private val reporteRepository: ReporteRepository,
     private val ubicacionRepository: ReporteUbicacionRepository,
     private val authRepository: IAuthRepository,
     private val barrioRepository: BarrioRepository,
     private val colorProvider: IRiskColorProvider = DefaultRiskColorProvider()
+    private val authRepository: AuthRepositoryContract
 ) : ViewModel() {
 
     var uiState by mutableStateOf(MapUiState())

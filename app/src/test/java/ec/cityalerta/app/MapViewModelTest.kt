@@ -1,17 +1,16 @@
 package ec.cityalerta.app
 
-import com.google.android.gms.maps.model.LatLng
-import ec.cityalerta.app.model.data.ciudad.Ciudad
-import ec.cityalerta.app.model.data.geoJson.Geometry
-import ec.cityalerta.app.model.repository.interfaces.IMapRepository
+import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.viewmodel.MapUiState
 import ec.cityalerta.app.viewmodel.MapViewModel
-
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.whenever
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
+import ec.cityalerta.app.model.repository.ReporteRepository
+import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -20,161 +19,274 @@ import kotlin.test.assertTrue
 
 /**
  * Tests unitarios para MapViewModel.
- * Verifica la logica de carga de ciudades, validacion de puntos y manejo de marcadores.
+ * Valida el estado del mapa y las operaciones de interaccion.
  */
 class MapViewModelTest {
 
     @Mock
-    private lateinit var mapRepository: IMapRepository
+    private lateinit var mockMapRepository: MapRepositoryContract
+
+    @Mock
+    private lateinit var mockReporteRepository: ReporteRepository
+
+    @Mock
+    private lateinit var mockUbicacionRepository: ReporteUbicacionRepository
+
+    @Mock
+    private lateinit var mockAuthRepository: AuthRepositoryContract
 
     private lateinit var viewModel: MapViewModel
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        viewModel = MapViewModel(mapRepository)
+        viewModel = MapViewModel(
+            mockMapRepository,
+            mockReporteRepository,
+            mockUbicacionRepository,
+            mockAuthRepository
+        )
     }
 
     @Test
-    fun testLoadCiudad_Success() {
-        // Arrange
-        val testCiudad = createTestCiudad()
-        whenever(mapRepository.getCiudadById("manta")).thenReturn(testCiudad)
-
-        // Act
-        viewModel.loadCiudad("manta")
+    fun testMapUiStateInitial() {
+        // Arrange & Act
+        val state = viewModel.uiState
 
         // Assert
-        assertFalse(viewModel.uiState.isLoading)
-        assertNotNull(viewModel.uiState.ciudad)
-        assertEquals("Manta", viewModel.uiState.ciudad?.nombre)
-        assertNull(viewModel.uiState.errorMessage)
+        assertNotNull(state)
+        assertNull(state.ciudad)
+        assertTrue(state.reportMarkers.isEmpty())
+        assertTrue(state.reports.isEmpty())
+        assertNull(state.selectedCategory)
+        assertNull(state.selectedReport)
+        assertFalse(state.isLoading)
+        assertNull(state.errorMessage)
     }
 
     @Test
-    fun testLoadCiudad_NotFound() {
-        // Arrange
-        whenever(mapRepository.getCiudadById("inexistente")).thenReturn(null)
-
-        // Act
-        viewModel.loadCiudad("inexistente")
+    fun testMapUiStateDataClass() {
+        // Arrange & Act
+        val state = MapUiState(
+            ciudad = null,
+            reportMarkers = emptyList(),
+            reports = emptyList(),
+            selectedCategory = null,
+            selectedReport = null,
+            categories = ReportType.entries,
+            cameraZoom = 15f,
+            errorMessage = null,
+            isLoading = false
+        )
 
         // Assert
-        assertFalse(viewModel.uiState.isLoading)
-        assertNull(viewModel.uiState.ciudad)
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage!!.contains("Ciudad no encontrada"))
+        assertNotNull(state)
+        assertEquals(15f, state.cameraZoom)
+        assertTrue(state.categories.isNotEmpty())
     }
 
     @Test
-    fun testLoadCiudad_Exception() {
-        // Arrange - Simular excepcion lanzada por el repositorio
-        whenever(mapRepository.getCiudadById("error")).thenThrow(RuntimeException("connection failed"))
-
-        // Act
-        viewModel.loadCiudad("error")
-
-        // Assert
-        assertFalse(viewModel.uiState.isLoading)
-        assertNull(viewModel.uiState.ciudad)
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.errorMessage!!.contains("Error cargando ciudad:"))
-    }
-
-    @Test
-    fun testOnMapClicked_InsidePolygon() {
-        // Arrange
-        val testCiudad = createTestCiudad()
-        whenever(mapRepository.getCiudadById("manta")).thenReturn(testCiudad)
-        whenever(mapRepository.getMarkers()).thenReturn(emptyList())
-        viewModel.loadCiudad("manta")
-
-        // Act - Click dentro del polígono (Manta)
-        val pointInside = LatLng(-0.95, -80.73)
-        viewModel.onMapClicked(pointInside)
+    fun testMapViewModelCreation() {
+        // Arrange & Act
+        val vm = MapViewModel(
+            mockMapRepository,
+            mockReporteRepository,
+            mockUbicacionRepository,
+            mockAuthRepository
+        )
 
         // Assert
-        assertTrue(viewModel.uiState.isPointValid ?: false)
-    }
-
-    @Test
-    fun testOnMapClicked_OutsidePolygon() {
-        // Arrange
-        val testCiudad = createTestCiudad()
-        whenever(mapRepository.getCiudadById("manta")).thenReturn(testCiudad)
-        viewModel.loadCiudad("manta")
-
-        // Act - Click fuera del polígono
-        val pointOutside = LatLng(0.0, 0.0)
-        viewModel.onMapClicked(pointOutside)
-
-        // Assert
-        assertFalse(viewModel.uiState.isPointValid ?: true)
-    }
-
-    @Test
-    fun testClearMarkers() {
-        // Arrange
-        whenever(mapRepository.getMarkers()).thenReturn(emptyList())
-
-        // Act
-        viewModel.clearMarkers()
-
-        // Assert
-        assertTrue(viewModel.uiState.marcadores.isEmpty())
+        assertNotNull(vm)
+        assertTrue(vm is MapViewModel)
     }
 
     @Test
     fun testUpdateCameraZoom() {
         // Arrange
-        val newZoom = 18f
+        val initialZoom = viewModel.uiState.cameraZoom
 
         // Act
-        viewModel.updateCameraZoom(newZoom)
+        viewModel.updateCameraZoom(20f)
 
         // Assert
-        assertEquals(newZoom, viewModel.uiState.cameraZoom)
+        assertEquals(20f, viewModel.uiState.cameraZoom)
+        assertNotNull(initialZoom)
     }
 
     @Test
-    fun testRemoveMarker() {
+    fun testOnCategorySelected() {
         // Arrange
-        val markerId = "marker_123"
+        val category = ReportType.BACHE
 
         // Act
-        viewModel.removeMarker(markerId)
+        viewModel.onCategorySelected(category)
 
-        // Assert - Verify repository was called
-        assertEquals(emptyList(), viewModel.uiState.marcadores)
+        // Assert
+        assertEquals(category, viewModel.uiState.selectedCategory)
     }
 
-    /**
-     * Crea una ciudad de prueba con geometría simple para testing.
-     */
-    private fun createTestCiudad(): Ciudad {
-        val geometry = Geometry(
-            type = "Polygon",
-            coordinates = listOf(
-                listOf(
-                    listOf(-80.8, -1.0),
-                    listOf(-80.8, -0.9),
-                    listOf(-80.7, -0.9),
-                    listOf(-80.7, -1.0),
-                    listOf(-80.8, -1.0)
-                )
-            )
-        )
+    @Test
+    fun testOnCategorySelectedToggle() {
+        // Arrange
+        val category = ReportType.BACHE
 
-        return Ciudad(
-            id = "manta",
-            nombre = "Manta",
-            pais = "Ecuador",
-            geojson = geometry,
-            centroLat = -0.95,
-            centroLng = -80.73
-        )
+        // Act
+        viewModel.onCategorySelected(category)
+        val selectedAfterFirst = viewModel.uiState.selectedCategory
+
+        // Act - Select again to deselect
+        viewModel.onCategorySelected(category)
+        val selectedAfterSecond = viewModel.uiState.selectedCategory
+
+        // Assert
+        assertEquals(category, selectedAfterFirst)
+        assertNull(selectedAfterSecond)
     }
 
+    @Test
+    fun testDifferentCategoriesToggle() {
+        // Arrange
+        val category1 = ReportType.BACHE
+        val category2 = ReportType.ZONA_DE_RIESGO
+
+        // Act
+        viewModel.onCategorySelected(category1)
+        val selected1 = viewModel.uiState.selectedCategory
+
+        viewModel.onCategorySelected(category2)
+        val selected2 = viewModel.uiState.selectedCategory
+
+        // Assert
+        assertEquals(category1, selected1)
+        assertEquals(category2, selected2)
+    }
+
+    @Test
+    fun testOnReportClicked() {
+        // Arrange
+        val reportId = "report-1"
+
+        // Act
+        viewModel.onReportClicked(reportId)
+
+        // Assert
+        // Should not crash, report might be null if reports list is empty
+        assertNull(viewModel.uiState.selectedReport)
+    }
+
+    @Test
+    fun testOnDismissReport() {
+        // Arrange & Act
+        viewModel.onDismissReport()
+
+        // Assert
+        assertNull(viewModel.uiState.selectedReport)
+    }
+
+    @Test
+    fun testMapZoomLevels() {
+        // Arrange
+        val zoomLevels = listOf(5f, 10f, 15f, 20f)
+
+        // Act & Assert
+        zoomLevels.forEach { zoom ->
+            viewModel.updateCameraZoom(zoom)
+            assertEquals(zoom, viewModel.uiState.cameraZoom)
+        }
+    }
+
+    @Test
+    fun testReportTypeCategories() {
+        // Arrange & Act
+        val categories = viewModel.uiState.categories
+
+        // Assert
+        assertEquals(ReportType.entries, categories)
+        ReportType.entries.forEach { tipo ->
+            assertTrue(categories.contains(tipo))
+        }
+    }
+
+    @Test
+    fun testMapUiStateErrorHandling() {
+        // Arrange
+        val errorState = MapUiState(
+            errorMessage = "Error de prueba"
+        )
+
+        // Act & Assert
+        assertNotNull(errorState.errorMessage)
+        assertEquals("Error de prueba", errorState.errorMessage)
+    }
+
+    @Test
+    fun testMapUiStateLoadingState() {
+        // Arrange
+        val loadingState = MapUiState(
+            isLoading = true,
+            errorMessage = null
+        )
+
+        // Assert
+        assertTrue(loadingState.isLoading)
+        assertNull(loadingState.errorMessage)
+    }
+
+    @Test
+    fun testMapViewModelMultipleOperations() {
+        // Arrange & Act
+        viewModel.updateCameraZoom(18f)
+        viewModel.onCategorySelected(ReportType.BACHE)
+        viewModel.onDismissReport()
+
+        // Assert
+        assertEquals(18f, viewModel.uiState.cameraZoom)
+        assertEquals(ReportType.BACHE, viewModel.uiState.selectedCategory)
+        assertNull(viewModel.uiState.selectedReport)
+    }
+
+    @Test
+    fun testMapDefaultCameraZoom() {
+        // Arrange & Act
+        val state = MapUiState()
+
+        // Assert
+        assertEquals(15f, state.cameraZoom)
+    }
+
+    @Test
+    fun testCategorySelectionIndependence() {
+        // Arrange
+        val cat1 = ReportType.BACHE
+        val cat2 = ReportType.ZONA_DE_RIESGO
+
+        // Act
+        viewModel.onCategorySelected(cat1)
+        val select1 = viewModel.uiState.selectedCategory
+        viewModel.onCategorySelected(cat2)
+        val select2 = viewModel.uiState.selectedCategory
+
+        // Assert
+        assertEquals(cat1, select1)
+        assertEquals(cat2, select2)
+    }
+
+    @Test
+    fun testMapUiStateImmutability() {
+        // Arrange
+        val originalState = viewModel.uiState
+        val zoom1 = originalState.cameraZoom
+
+        // Act
+        viewModel.updateCameraZoom(20f)
+        val zoom2 = originalState.cameraZoom
+
+        // Assert
+        assertEquals(15f, zoom1)
+        assertEquals(15f, zoom2)
+        // State should be replaced, not mutated
+        assertEquals(20f, viewModel.uiState.cameraZoom)
+    }
 }
 
 

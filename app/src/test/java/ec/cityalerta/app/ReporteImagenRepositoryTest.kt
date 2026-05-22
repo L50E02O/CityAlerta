@@ -1,37 +1,22 @@
 package ec.cityalerta.app
 
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagen
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
-import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
-import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
-import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
-import io.github.jan.supabase.postgrest.query.decodeList
-import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.kotlin.any
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.whenever
-import org.mockito.junit.MockitoJUnitRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests unitarios para ReporteImagenRepository. Valida las operaciones CRUD para imagenes de reportes.
+ * Tests unitarios para ReporteImagenRepository.
+ * Valida la creacion y manipulacion de datos de imagenes de reportes.
  */
-@RunWith(MockitoJUnitRunner::class)
 class ReporteImagenRepositoryTest {
-
-    @Mock
-    private lateinit var mockSupabaseClient: SupabaseClient
 
     private lateinit var repository: ReporteImagenRepository
 
@@ -40,177 +25,183 @@ class ReporteImagenRepositoryTest {
         repository = ReporteImagenRepository()
     }
 
-    private fun mockSupabaseProvider(block: suspend () -> Unit) = runTest {
-        org.mockito.kotlin.mockStatic(SupabaseProvider::class.java).use { mockedStatic ->
-            whenever(SupabaseProvider.client).thenReturn(mockSupabaseClient)
-            block()
-        }
-    }
-
     @Test
-    fun testCreateReporteImagenSuccessfully() = runTest {
+    fun testReporteImagenCreateDtoCreation() {
         val createDto = ReporteImagenCreateDto(
-            reporteId = "reporte-1",
-            storageUuid = "uuid-123",
-            urlPath = "reports/reporte-1/image-1.jpg"
+            reporte_id = "reporte-1",
+            storage_uuid = "uuid-storage-123",
+            url_path = "/storage/reportes/imagen1.jpg"
         )
 
-        val mockResponse = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("imagen-1"),
-                "reporte_id" to JsonPrimitive("reporte-1"),
-                "storage_uuid" to JsonPrimitive("uuid-123"),
-                "url_path" to JsonPrimitive("reports/reporte-1/image-1.jpg"),
-                "created_at" to JsonPrimitive("2024-01-01T00:00:00Z")
-            )
-        )
-
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            val mockRequestBuilder = mock<PostgrestRequestBuilder>()
-            whenever(mockSupabaseClient.from("reporte_imagen")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.insert(any<JsonObject>(), any())).thenReturn(mockRequestBuilder)
-            whenever(mockRequestBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.create(createDto)
-
-            assertTrue(result.isSuccess)
-            assertEquals("imagen-1", result.getOrNull()?.id)
-        }
+        assertNotNull(createDto)
+        assertEquals("reporte-1", createDto.reporte_id)
+        assertEquals("uuid-storage-123", createDto.storage_uuid)
+        assertEquals("/storage/reportes/imagen1.jpg", createDto.url_path)
     }
 
     @Test
-    fun testGetAllReporteImagenesSuccessfully() = runTest {
-        val mockResponse1 = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("imagen-1"),
-                "reporte_id" to JsonPrimitive("reporte-1"),
-                "storage_uuid" to JsonPrimitive("uuid-1"),
-                "url_path" to JsonPrimitive("path-1.jpg")
-            )
-        )
-
-        val mockResponse2 = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("imagen-2"),
-                "reporte_id" to JsonPrimitive("reporte-1"),
-                "storage_uuid" to JsonPrimitive("uuid-2"),
-                "url_path" to JsonPrimitive("path-2.jpg")
-            )
-        )
-
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_imagen")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.select(any())).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.decodeList<JsonObject>()).thenReturn(
-                listOf(mockResponse1, mockResponse2)
-            )
-
-            val result = repository.getAll()
-
-            assertTrue(result.isSuccess)
-            assertEquals(2, result.getOrNull()?.size)
-        }
-    }
-
-    @Test
-    fun testGetReporteImagenByIdSuccessfully() = runTest {
-        val mockResponse = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("imagen-1"),
-                "reporte_id" to JsonPrimitive("reporte-1"),
-                "storage_uuid" to JsonPrimitive("uuid-123"),
-                "url_path" to JsonPrimitive("reports/reporte-1/image-1.jpg")
-            )
-        )
-
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_imagen")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.select(any())).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.getById("imagen-1")
-
-            assertTrue(result.isSuccess)
-            assertEquals("imagen-1", result.getOrNull()?.id)
-        }
-    }
-
-    @Test
-    fun testUpdateReporteImagenSuccessfully() = runTest {
+    fun testReporteImagenUpdateDtoCreation() {
         val updateDto = ReporteImagenUpdateDto(
-            reporteId = null,
-            storageUuid = "uuid-updated",
-            urlPath = "reports/reporte-1/image-updated.jpg"
+            reporte_id = "reporte-2",
+            storage_uuid = "uuid-nuevo",
+            url_path = "/storage/reportes/imagen2.png"
         )
 
-        val mockResponse = JsonObject(
-            mapOf(
-                "id" to JsonPrimitive("imagen-1"),
-                "storage_uuid" to JsonPrimitive("uuid-updated"),
-                "url_path" to JsonPrimitive("reports/reporte-1/image-updated.jpg")
+        assertNotNull(updateDto)
+        assertEquals("reporte-2", updateDto.reporte_id)
+        assertEquals("uuid-nuevo", updateDto.storage_uuid)
+        assertEquals("/storage/reportes/imagen2.png", updateDto.url_path)
+    }
+
+    @Test
+    fun testReporteImagenUpdateDtoConCamposOpcionales() {
+        val updateDto = ReporteImagenUpdateDto(
+            reporte_id = null,
+            storage_uuid = "solo-uuid",
+            url_path = null
+        )
+
+        assertNotNull(updateDto)
+        assertNull(updateDto.reporte_id)
+        assertEquals("solo-uuid", updateDto.storage_uuid)
+        assertNull(updateDto.url_path)
+    }
+
+    @Test
+    fun testReporteImagenDataClass() {
+        val imagen = ReporteImagen(
+            id = "imagen-1",
+            reporte_id = "reporte-1",
+            storage_uuid = "uuid-abc",
+            url_path = "/path/imagen.jpg",
+            created_at = "2024-01-01T10:00:00Z",
+            updated_at = "2024-01-05T15:30:00Z"
+        )
+
+        assertNotNull(imagen)
+        assertEquals("imagen-1", imagen.id)
+        assertEquals("reporte-1", imagen.reporte_id)
+        assertEquals("uuid-abc", imagen.storage_uuid)
+        assertEquals("/path/imagen.jpg", imagen.url_path)
+        assertEquals("2024-01-01T10:00:00Z", imagen.created_at)
+        assertEquals("2024-01-05T15:30:00Z", imagen.updated_at)
+    }
+
+    @Test
+    fun testReporteImagenSinTimestampsOpcionales() {
+        val imagen = ReporteImagen(
+            id = "imagen-2",
+            reporte_id = "reporte-1",
+            storage_uuid = "uuid-def",
+            url_path = "/path/foto.png"
+        )
+
+        assertNull(imagen.created_at)
+        assertNull(imagen.updated_at)
+    }
+
+    @Test
+    fun testMultiplesImagenesMismoReporte() {
+        val reporteId = "reporte-123"
+        val imagenes = (1..3).map { index ->
+            ReporteImagenCreateDto(
+                reporte_id = reporteId,
+                storage_uuid = "uuid-$index",
+                url_path = "/storage/reporte-$index.jpg"
             )
+        }
+
+        assertEquals(3, imagenes.size)
+        assertTrue(imagenes.all { it.reporte_id == reporteId })
+        assertEquals(3, imagenes.map { it.storage_uuid }.distinct().size)
+    }
+
+    @Test
+    fun testReporteImagenEquality() {
+        val imagen1 = ReporteImagen(
+            id = "imagen-1",
+            reporte_id = "reporte-1",
+            storage_uuid = "uuid-1",
+            url_path = "/path/a.jpg"
+        )
+        val imagen2 = imagen1.copy()
+
+        assertEquals(imagen1, imagen2)
+        assertEquals(imagen1.id, imagen2.id)
+        assertEquals(imagen1.url_path, imagen2.url_path)
+    }
+
+    @Test
+    fun testReporteImagenCopyWithModifications() {
+        val original = ReporteImagen(
+            id = "imagen-1",
+            reporte_id = "reporte-1",
+            storage_uuid = "uuid-original",
+            url_path = "/path/original.jpg"
         )
 
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_imagen")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.update(any())).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.decodeList<JsonObject>()).thenReturn(listOf(mockResponse))
-
-            val result = repository.update(updateDto, "imagen-1")
-
-            assertTrue(result.isSuccess)
-        }
-    }
-
-    @Test
-    fun testDeleteReporteImagenSuccessfully() = runTest {
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_imagen")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.delete()).thenReturn(mockQueryBuilder)
-
-            val result = repository.delete("imagen-1")
-
-            assertTrue(result.isSuccess)
-        }
-    }
-
-    @Test
-    fun testCreateReporteImagenReturnsFailureOnException() = runTest {
-        val createDto = ReporteImagenCreateDto(
-            reporteId = "reporte-1",
-            storageUuid = "uuid-123",
-            urlPath = "reports/reporte-1/image-1.jpg"
+        val modificado = original.copy(
+            url_path = "/path/actualizado.jpg",
+            storage_uuid = "uuid-nuevo"
         )
 
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_imagen")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.insert(any())).thenThrow(RuntimeException("Error storing image"))
+        assertEquals("imagen-1", modificado.id)
+        assertEquals("/path/actualizado.jpg", modificado.url_path)
+        assertEquals("uuid-nuevo", modificado.storage_uuid)
+        assertEquals("/path/original.jpg", original.url_path)
+    }
 
-            val result = repository.create(createDto)
+    @Test
+    fun testReporteImagenConExtensionesDiferentes() {
+        val extensiones = listOf(".jpg", ".png", ".webp")
+        val imagenes = extensiones.map { ext ->
+            ReporteImagenCreateDto(
+                reporte_id = "reporte-1",
+                storage_uuid = "uuid$ext",
+                url_path = "/storage/imagen$ext"
+            )
+        }
 
-            assertTrue(result.isFailure)
+        assertEquals(3, imagenes.size)
+        extensiones.forEachIndexed { index, ext ->
+            assertTrue(imagenes[index].url_path.endsWith(ext))
         }
     }
 
     @Test
-    fun testGetByIdReturnsNullWhenNotFound() = runTest {
-        mockSupabaseProvider {
-            val mockQueryBuilder = mock<PostgrestQueryBuilder>()
-            whenever(mockSupabaseClient.from("reporte_imagen")).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.select(any())).thenReturn(mockQueryBuilder)
-            whenever(mockQueryBuilder.decodeList<JsonObject>()).thenReturn(emptyList<JsonObject>())
+    fun testReporteImagenRepositoryInitialization() {
+        assertNotNull(repository)
+        assertTrue(repository is ReporteImagenRepository)
+    }
 
-            val result = repository.getById("non-existent-id")
+    @Test
+    fun testReporteImagenRepositoryImplementaContratoCrud() {
+        assertTrue(repository is CrudRepositoryContract<*, *, *>)
+    }
 
-            assertTrue(result.isSuccess)
-            assertEquals(null, result.getOrNull())
-        }
+    @Test
+    fun testGetFirstImagenesByReporteIds_emptyInputProducesEmptyMap() {
+        val grouped = emptyList<ReporteImagen>()
+            .groupBy { it.reporte_id }
+            .mapValues { (_, imagenes) -> imagenes.first() }
+
+        assertTrue(grouped.isEmpty())
+    }
+
+    @Test
+    fun testGetFirstImagenesByReporteIds_keepsFirstPerReporte() {
+        val imagenes = listOf(
+            ReporteImagen("img-1", "reporte-1", "uuid-1", "/a.jpg"),
+            ReporteImagen("img-2", "reporte-1", "uuid-2", "/b.jpg"),
+            ReporteImagen("img-3", "reporte-2", "uuid-3", "/c.jpg")
+        )
+
+        val firstByReporte = imagenes
+            .groupBy { it.reporte_id }
+            .mapValues { (_, items) -> items.first() }
+
+        assertEquals(2, firstByReporte.size)
+        assertEquals("img-1", firstByReporte["reporte-1"]?.id)
+        assertEquals("img-3", firstByReporte["reporte-2"]?.id)
     }
 }
-

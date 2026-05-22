@@ -7,23 +7,45 @@ import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
 import ec.cityalerta.app.model.repository.interfaces.IMapRepository
 import ec.cityalerta.app.model.repository.MapRepository
 import ec.cityalerta.app.model.repository.LocationRepository
+import ec.cityalerta.app.model.repository.BarrioRepository
+import ec.cityalerta.app.model.repository.CiudadRepository
+import ec.cityalerta.app.model.repository.PerfilImagenRepository
+import ec.cityalerta.app.model.repository.PerfilRepository
+import ec.cityalerta.app.model.repository.PerfilResumenRepository
+import ec.cityalerta.app.model.repository.PerfilStorageRepository
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.model.repository.BarrioRepository
+import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
 
 class AppViewModelFactory(
-    private val authRepository: IAuthRepository,
+    private val authRepository: AuthRepositoryContract,
     private val appContext: Context
 ) : ViewModelProvider.Factory {
 
-    private val mapRepository: IMapRepository by lazy {
+    private val mapRepository: MapRepositoryContract by lazy {
         MapRepository()
     }
 
     private val reporteRepository by lazy {
         ReporteRepository()
+    }
+
+    private val ciudadRepository by lazy {
+        CiudadRepository()
+    }
+
+    private val barrioRepository by lazy {
+        BarrioRepository()
+    }
+
+    private val perfilRepository by lazy {
+        PerfilRepository()
+    }
+
+    private val perfilResumenRepository by lazy {
+        PerfilResumenRepository()
     }
 
     private val ubicacionReporte by lazy {
@@ -32,6 +54,10 @@ class AppViewModelFactory(
 
     private val imagenReporte by lazy {
         ReporteImagenRepository()
+    }
+
+    private val imagenPerfil by lazy {
+        PerfilImagenRepository()
     }
 
     private val storageReporte by lazy {
@@ -52,6 +78,10 @@ class AppViewModelFactory(
                 @Suppress("UNCHECKED_CAST")
                 AuthViewModel(authRepository) as T
             }
+            modelClass.isAssignableFrom(PasswordRecoveryViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                PasswordRecoveryViewModel(authRepository) as T
+            }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
                 MapViewModel(
@@ -62,7 +92,26 @@ class AppViewModelFactory(
                     barrioRepository
                 ) as T
             }
-
+            modelClass.isAssignableFrom(ExploreViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                ExploreViewModel() as T
+            }
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                ProfileViewModel(
+                    authRepository,
+                    perfilRepository,
+                    perfilResumenRepository,
+                    ciudadRepository,
+                    reporteRepository,
+                    imagenReporte,
+                    imagenPerfil,
+                    ubicacionReporte,
+                    storageReporte,
+                    storagePerfil,
+                    barrioRepository
+                ) as T
+            }
             modelClass.isAssignableFrom(ReporteViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
                 ReporteViewModel(
@@ -72,6 +121,15 @@ class AppViewModelFactory(
                     storageReporte,
                     locationProvider,
                     authRepository
+                ) as T
+            }
+            modelClass.isAssignableFrom(SearchReportViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                SearchReportViewModel(
+                    reporteRepository,
+                    imagenReporte,
+                    storageReporte,
+                    perfilRepository
                 ) as T
             }
 

@@ -1,4 +1,104 @@
 <resources>
     <string name="app_name">CityAlerta</string>
     <string name="home_welcome">Bienvenido</string>
+
+    <!-- Navegacion -->
+    <string name="nav_explore">EXPLORAR</string>
+    <string name="nav_report">REPORTAR</string>
+    <string name="nav_map">MAPA</string>
+
+    <!-- Auth -->
+    <string name="auth_login_title">Iniciar sesion</string>
+    <string name="auth_register_title">Registrarse</string>
+    <string name="auth_login_button">Entrar</string>
+    <string name="auth_register_button">Registrarse</string>
+    <string name="auth_no_account">¿No tienes cuenta? Registrate</string>
+    <string name="auth_has_account">¿Ya tienes cuenta? Inicia sesion</string>
+    <string name="auth_forgot_password">¿Olvidaste tu contrasena?</string>
+    <string name="auth_email_label">Correo electronico</string>
+    <string name="auth_password_label">Contrasena</string>
+    <string name="auth_email_invalid">Correo electronico invalido</string>
+    <string name="auth_password_min_length">La contrasena debe tener al menos 8 caracteres</string>
+    <string name="auth_resend_activation">Reenviar correo de activacion</string>
+    <string name="auth_city_manta_missing">No se encontro la ciudad de Manta</string>
+    <string name="auth_city_load_error">Error al cargar ciudades</string>
+
+    <!-- Perfil -->
+    <string name="profile_title">Perfil</string>
+    <string name="profile_tap_photo">Toca la foto para cambiarla</string>
+    <string name="profile_user_fallback">Usuario</string>
+    <string name="profile_city_unavailable">Ciudad no disponible</string>
+    <string name="profile_reports">REPORTES</string>
+    <string name="profile_resolved">RESUELTOS</string>
+    <string name="profile_view_reports">Ver mis reportes</string>
+    <string name="profile_logout">Cerrar sesion</string>
+    <string name="profile_active_member">MIEMBRO ACTIVO</string>
+    <string name="profile_settings_config">Configuracion</string>
+    <string name="profile_settings_config_sub">Perfil, idioma y cuenta</string>
+    <string name="profile_settings_appearance">Apariencia</string>
+    <string name="profile_settings_appearance_sub">Tema claro u oscuro</string>
+    <string name="profile_settings_accessibility">Accesibilidad</string>
+    <string name="profile_settings_accessibility_sub">Texto y contraste</string>
+
+    <!-- Configuracion -->
+    <string name="settings_title">Configuracion</string>
+    <string name="settings_subtitle">Gestiona tu perfil y las preferencias de seguridad de tu cuenta.</string>
+    <string name="settings_full_name_label">Nombre completo</string>
+    <string name="settings_email_label">Correo actual</string>
+    <string name="settings_location_label">Ubicacion</string>
+    <string name="settings_language_title">Cambiar idioma</string>
+    <string name="settings_language_spanish">Espanol</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_system">Idioma del telefono</string>
+    <string name="settings_delete_title">Eliminar datos</string>
+    <string name="settings_delete_desc">Esta accion es permanente y eliminara todo tu historial de reportes y configuracion.</string>
+    <string name="settings_delete_button">Borrar la cuenta</string>
+    <string name="settings_not_available">No disponible</string>
+    <string name="settings_edit_name_title">Editar nombre</string>
+    <string name="settings_edit_name_hint">Nombre completo</string>
+    <string name="settings_edit_email_title">Cambiar correo</string>
+    <string name="settings_edit_email_hint">Nuevo correo electronico</string>
+    <string name="settings_edit_email_info">El correo se actualiza al instante, sin verificacion por email.</string>
+    <string name="settings_language_dialog_title">Idioma</string>
+    <string name="settings_delete_dialog_title">Borrar cuenta</string>
+    <string name="settings_delete_dialog_message">Se eliminaran permanentemente tu perfil, reportes, fotos y tu cuenta de acceso. Esta accion no se puede deshacer.</string>
+    <string name="settings_save">Guardar</string>
+    <string name="settings_cancel">Cancelar</string>
+    <string name="settings_confirm">Confirmar</string>
+    <string name="settings_close">Cerrar</string>
+    <string name="settings_name_empty">El nombre no puede estar vacio</string>
+    <string name="settings_name_updated">Nombre actualizado correctamente</string>
+    <string name="settings_email_updated">Correo actualizado correctamente</string>
+    <string name="settings_delete_error">No se pudo eliminar la cuenta</string>
+    <string name="settings_deleting_account">Eliminando cuenta...</string>
+    <string name="settings_email_same">El nuevo correo debe ser diferente al actual</string>
+    <string name="settings_email_update_error">No se pudo actualizar el correo</string>
+    <string name="settings_name_update_error">No se pudo actualizar el nombre</string>
+    <string name="settings_language_changed">Idioma actualizado</string>
+
+    <!-- Apariencia -->
+    <string name="appearance_title">Apariencia</string>
+    <string name="appearance_subtitle">Elige el tema de la aplicacion.</string>
+    <string name="appearance_light">Light Mode</string>
+    <string name="appearance_dark">Dark Mode</string>
+    <string name="appearance_system">System Default</string>
+    <string name="appearance_system_desc">Ajustar automaticamente al tema del sistema de tu dispositivo.</string>
+
+    <!-- Accesibilidad -->
+    <string name="accessibility_title">Accesibilidad</string>
+    <string name="accessibility_section_visual">Visualizacion</string>
+    <string name="accessibility_text_size">Tamano de texto</string>
+    <string name="accessibility_text_size_hint">Arrastra para ajustar el tamano de lectura</string>
+    <string name="accessibility_section_assist">Asistencia</string>
+    <string name="accessibility_high_contrast">Alto contraste</string>
+    <string name="accessibility_high_contrast_desc">Mejora la legibilidad con colores mas definidos.</string>
+
+    <!-- Explorar -->
+    <string name="explore_location_label">UBICACION</string>
+    <string name="explore_title">Explorar</string>
+    <string name="explore_subtitle">Mantente informado sobre lo que sucede en tiempo real en tu comunidad.</string>
+    <string name="explore_loading_city">Cargando...</string>
+
+    <!-- Comun -->
+    <string name="back">Atras</string>
 </resources>

@@ -1,21 +1,18 @@
-package ec.cityalerta.app.model.utils
+package ec.cityalerta.app
 
 import com.google.android.gms.maps.model.LatLng
 import ec.cityalerta.app.model.data.geoJson.Geometry
+import ec.cityalerta.app.model.utils.GeoJsonConverter
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-/**
- * Tests unitarios para GeoJsonConverter.
- * Verifica la conversion de polígonos GeoJSON y la validacion de puntos dentro de polígonos.
- */
 class GeoJsonConverterTest {
 
     @Test
-    fun testExtractPolygonPoints_ValidGeometry() {
-        // Arrange
+    fun extractPolygonPoints_validGeometry() {
         val geometry = Geometry(
             type = "Polygon",
             coordinates = listOf(
@@ -29,29 +26,23 @@ class GeoJsonConverterTest {
             )
         )
 
-        // Act
         val points = GeoJsonConverter.extractPolygonPoints(geometry)
 
-        // Assert
         assertEquals(5, points.size)
         assertEquals(LatLng(-1.0, -80.0), points[0])
     }
 
     @Test
-    fun testExtractPolygonPoints_EmptyGeometry() {
-        // Arrange
+    fun extractPolygonPoints_emptyGeometry() {
         val geometry = Geometry(type = "Polygon", coordinates = emptyList())
 
-        // Act
         val points = GeoJsonConverter.extractPolygonPoints(geometry)
 
-        // Assert
         assertTrue(points.isEmpty())
     }
 
     @Test
-    fun testPointInPolygon_InsideSquare() {
-        // Arrange
+    fun pointInPolygon_insideSquare() {
         val polygon = listOf(
             LatLng(-1.0, -80.0),
             LatLng(-1.0, -79.0),
@@ -61,16 +52,11 @@ class GeoJsonConverterTest {
         )
         val point = LatLng(-0.5, -79.5)
 
-        // Act
-        val result = GeoJsonConverter.pointInPolygon(point, polygon)
-
-        // Assert
-        assertTrue(result)
+        assertTrue(GeoJsonConverter.pointInPolygon(point, polygon))
     }
 
     @Test
-    fun testPointInPolygon_OutsideSquare() {
-        // Arrange
+    fun pointInPolygon_outsideSquare() {
         val polygon = listOf(
             LatLng(-1.0, -80.0),
             LatLng(-1.0, -79.0),
@@ -80,16 +66,11 @@ class GeoJsonConverterTest {
         )
         val point = LatLng(1.0, -80.0)
 
-        // Act
-        val result = GeoJsonConverter.pointInPolygon(point, polygon)
-
-        // Assert
-        assertFalse(result)
+        assertFalse(GeoJsonConverter.pointInPolygon(point, polygon))
     }
 
     @Test
-    fun testPointInPolygon_OnBoundary() {
-        // Arrange
+    fun pointInPolygon_onBoundary() {
         val polygon = listOf(
             LatLng(-1.0, -80.0),
             LatLng(-1.0, -79.0),
@@ -99,32 +80,22 @@ class GeoJsonConverterTest {
         )
         val pointOnEdge = LatLng(-1.0, -79.5)
 
-        // Act
-        val result = GeoJsonConverter.pointInPolygon(pointOnEdge, polygon)
-
-        // Assert - El algoritmo ray casting trata puntos en el borde como fuera del poligono
-        assertFalse(result)
+        assertFalse(GeoJsonConverter.pointInPolygon(pointOnEdge, polygon))
     }
 
     @Test
-    fun testPointInPolygon_TriangleTooSmall() {
-        // Arrange - Polígono muy pequeño (menos de 3 puntos)
+    fun pointInPolygon_triangleTooSmall() {
         val polygon = listOf(
             LatLng(-1.0, -80.0),
             LatLng(-1.0, -79.0)
         )
         val point = LatLng(-0.5, -79.5)
 
-        // Act
-        val result = GeoJsonConverter.pointInPolygon(point, polygon)
-
-        // Assert
-        assertFalse(result)
+        assertFalse(GeoJsonConverter.pointInPolygon(point, polygon))
     }
 
     @Test
-    fun testPointInPolygon_ComplexPolygon() {
-        // Arrange - Polígono más complejo
+    fun pointInPolygon_complexPolygon() {
         val polygon = listOf(
             LatLng(0.0, 0.0),
             LatLng(0.0, 2.0),
@@ -133,21 +104,31 @@ class GeoJsonConverterTest {
             LatLng(2.0, 0.0),
             LatLng(0.0, 0.0)
         )
-        val pointInside = LatLng(1.0, 1.0)
-        val pointOutside = LatLng(3.0, 1.0)
 
-        // Act
-        val resultInside = GeoJsonConverter.pointInPolygon(pointInside, polygon)
-        val resultOutside = GeoJsonConverter.pointInPolygon(pointOutside, polygon)
-
-        // Assert
-        assertTrue(resultInside)
-        assertFalse(resultOutside)
+        assertTrue(GeoJsonConverter.pointInPolygon(LatLng(1.0, 1.0), polygon))
+        assertFalse(GeoJsonConverter.pointInPolygon(LatLng(3.0, 1.0), polygon))
     }
 
     @Test
-    fun testGeoJsonPolygonToGoogleMapsPolygon_ValidGeometry() {
-        // Arrange
+    fun extractPolygonPoints_skipsInvalidCoordinates() {
+        val geometry = Geometry(
+            type = "Polygon",
+            coordinates = listOf(
+                listOf(
+                    listOf(-80.0),
+                    listOf(-80.0, -1.0),
+                    listOf(-79.0, -1.0)
+                )
+            )
+        )
+
+        val points = GeoJsonConverter.extractPolygonPoints(geometry)
+
+        assertEquals(2, points.size)
+    }
+
+    @Test
+    fun geoJsonPolygonToGoogleMapsPolygon_validGeometry() {
         val geometry = Geometry(
             type = "Polygon",
             coordinates = listOf(
@@ -161,17 +142,10 @@ class GeoJsonConverterTest {
             )
         )
 
-        // Act
         val polygonOptions = GeoJsonConverter.geoJsonPolygonToGoogleMapsPolygon(geometry)
 
-        // Assert
         assertNotNull(polygonOptions)
         assertEquals(0x4287F5CC, polygonOptions.fillColor)
         assertEquals(0xFF287FCC.toInt(), polygonOptions.strokeColor)
     }
-
-    private fun assertNotNull(value: Any?) {
-        assertTrue(value != null)
-    }
 }
-

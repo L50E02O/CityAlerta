@@ -1,7 +1,5 @@
 package ec.cityalerta.app.model.data.reporte
 
-import ec.cityalerta.app.model.data.reporte.ReporteEstado
-
 data class Reporte(
     val id: String,
     val usuario_id: String,
@@ -12,5 +10,6 @@ data class Reporte(
     val fecha_reporte: String,
     val categoria: ReportType,
     val created_at: String? = null,
-    val updated_at: String? = null
+    val updated_at: String? = null,
+    val barrio_id: String
 )

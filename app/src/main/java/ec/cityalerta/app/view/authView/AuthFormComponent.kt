@@ -6,25 +6,34 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.R
 import ec.cityalerta.app.viewmodel.AuthViewModel
 
 @Composable
@@ -39,6 +48,13 @@ fun AuthFormComponent(
     val isPasswordValid = password.isNotEmpty() && password.length >= 8
 
     Column(modifier = modifier) {
+        Text(
+            text = "CORREO ELECTRÓNICO",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF6C757D),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
         EmailField(
             email = email,
             isEmailValid = isEmailValid,
@@ -47,15 +63,22 @@ fun AuthFormComponent(
 
         if (email.isNotEmpty() && !isEmailValid) {
             Text(
-                text = "Correo electronico invalido",
+                text = stringResource(R.string.auth_email_invalid),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 4.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
+        Text(
+            text = "CONTRASEÑA",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color(0xFF6C757D),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
         PasswordField(
             password = password,
             passwordVisible = passwordVisible,
@@ -65,7 +88,7 @@ fun AuthFormComponent(
 
         if (password.isNotEmpty() && !isPasswordValid) {
             Text(
-                text = "La contrasena debe tener al menos 8 caracteres",
+                text = stringResource(R.string.auth_password_min_length),
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 4.dp)
@@ -74,6 +97,15 @@ fun AuthFormComponent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        if (viewModel.uiState.infoMessage != null) {
+            Text(
+                text = viewModel.uiState.infoMessage!!,
+                color = Color(0xFF1B5E20),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+
         if (viewModel.uiState.errorMessage != null) {
             Text(
                 text = viewModel.uiState.errorMessage!!,
@@ -81,6 +113,16 @@ fun AuthFormComponent(
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
+        }
+
+        if (viewModel.uiState.isEmailUnconfirmed) {
+            TextButton(
+                onClick = viewModel::resendActivationEmail,
+                enabled = !viewModel.uiState.isLoading,
+                modifier = Modifier.padding(top = 4.dp)
+            ) {
+                Text(stringResource(R.string.auth_resend_activation))
+            }
         }
     }
 }
@@ -94,14 +136,27 @@ private fun EmailField(
     OutlinedTextField(
         value = email,
         onValueChange = onEmailChange,
-        label = { Text(text = "Correo electronico") },
+        placeholder = { Text(text = "ejemplo@gmail.com", color = Color(0xFFADB5BD)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
             autoCorrectEnabled = false
         ),
         isError = email.isNotEmpty() && !isEmailValid,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = Color(0xFFF8F9FA),
+            focusedContainerColor = Color(0xFFF8F9FA),
+            unfocusedBorderColor = Color(0xFFE9ECEF),
+            focusedBorderColor = Color(0xFF1B2633),
+            unfocusedTextColor = Color(0xFF1B2633),
+            focusedTextColor = Color(0xFF1B2633),
+            errorTextColor = Color(0xFF1B2633),
+            errorBorderColor = Color(0xFFE74C3C),
+            cursorColor = Color(0xFFE74C3C),
+            errorCursorColor = Color(0xFFE74C3C)
+        )
     )
 }
 
@@ -113,12 +168,20 @@ private fun PasswordField(
     onToggleVisibility: () -> Unit
 ) {
     val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-    val description = if (passwordVisible) "Ocultar contrasena" else "Mostrar contrasena"
+    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
 
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChange,
-        label = { Text(text = "Contrasena") },
+        placeholder = { Text(text = "•••••", color = Color(0xFFADB5BD)) },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Filled.Lock,
+                contentDescription = null,
+                tint = Color(0xFF1B2633),
+                modifier = Modifier.size(20.dp)
+            )
+        },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
@@ -129,10 +192,20 @@ private fun PasswordField(
             IconButton(onClick = onToggleVisibility) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = description
+                    contentDescription = description,
+                    tint = Color(0xFF1B2633)
                 )
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = Color(0xFFF8F9FA),
+            focusedContainerColor = Color(0xFFF8F9FA),
+            unfocusedBorderColor = Color(0xFFE9ECEF),
+            focusedBorderColor = Color(0xFF1B2633),
+            unfocusedTextColor = Color(0xFF1B2633),
+            focusedTextColor = Color(0xFF1B2633)
+        )
     )
 }

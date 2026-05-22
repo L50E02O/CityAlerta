@@ -4,7 +4,7 @@ import ec.cityalerta.app.model.data.perfil.Perfil
 import ec.cityalerta.app.model.data.perfil.PerfilCreateDto
 import ec.cityalerta.app.model.data.perfil.PerfilUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
-import ec.cityalerta.app.model.repository.interfaces.ICrudRepository
+import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
 import ec.cityalerta.app.model.utils.booleanOrFalse
 import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
@@ -15,7 +15,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
 
-class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDto> {
+class PerfilRepository : CrudRepositoryContract<Perfil, PerfilCreateDto, PerfilUpdateDto> {
 
     private val tableName = "perfil"
 
@@ -31,6 +31,7 @@ class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDt
             filter {
                 eq("id", id)
             }
+            select()
         }
             .decodeList<JsonObject>()
             .firstOrNull()
@@ -72,7 +73,8 @@ class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDt
             rolSlug = nullableString("rol_slug") ?: stringOrEmpty("rolSlug"),
             activo = booleanOrFalse("activo"),
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
-            updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
+            updatedAt = nullableString("updated_at") ?: nullableString("updatedAt"),
+            ciudadId = nullableString("ciudad_id") ?: stringOrEmpty("ciudadId")
         )
     }
 
@@ -81,7 +83,8 @@ class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDt
             mapOf(
                 "nombre_completo" to JsonPrimitive(nombreCompleto),
                 "rol_slug" to JsonPrimitive(rolSlug),
-                "activo" to JsonPrimitive(activo)
+                "activo" to JsonPrimitive(activo),
+                "ciudad_id" to JsonPrimitive(ciudadId)
             )
         )
     }
@@ -91,6 +94,7 @@ class PerfilRepository : ICrudRepository<Perfil, PerfilCreateDto, PerfilUpdateDt
         nombreCompleto?.let { map["nombre_completo"] = JsonPrimitive(it) }
         rolSlug?.let { map["rol_slug"] = JsonPrimitive(it) }
         activo?.let { map["activo"] = JsonPrimitive(it) }
+        ciudadId?.let { map["ciudad_id"] = JsonPrimitive(it) }
         return JsonObject(map)
     }
 }

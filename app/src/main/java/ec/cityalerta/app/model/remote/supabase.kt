@@ -19,7 +19,10 @@ object SupabaseProvider{
             supabaseUrl = BuildConfig.SUPABASE_URL,
             supabaseKey = BuildConfig.SUPABASE_ANON_KEY
         ) {
-            install(Auth)
+            install(Auth) {
+                scheme = "cityalerta"
+                host = "auth"
+            }
             install(Postgrest)
             install(Storage)
         }

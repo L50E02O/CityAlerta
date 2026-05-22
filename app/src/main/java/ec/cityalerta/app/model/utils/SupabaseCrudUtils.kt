@@ -44,6 +44,11 @@ internal fun JsonObject.toReporteEstadoOrDefault(key: String): ReporteEstado {
     return ReporteEstado.entries.firstOrNull { it.name == estado } ?: ReporteEstado.PENDIENTE
 }
 
+internal fun JsonObject.toReportTypeOrDefault(key: String): ec.cityalerta.app.model.data.reporte.ReportType {
+    val type = stringOrEmpty(key)
+    return ec.cityalerta.app.model.data.reporte.ReportType.entries.firstOrNull { it.name == type } ?: ec.cityalerta.app.model.data.reporte.ReportType.ZONA_DE_RIESGO
+}
+
 private fun JsonElement?.asStringOrNull(): String? {
     return when (this) {
         null, JsonNull -> null
