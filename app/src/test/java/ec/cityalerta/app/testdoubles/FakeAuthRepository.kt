@@ -17,10 +17,10 @@ class FakeAuthRepository(
     var updateEmailResult: Result<Unit> = Result.success(Unit),
     var deleteAccountResult: Result<Unit> = Result.success(Unit),
     var getUserIdResult: Result<String> = Result.success("user-1"),
-    var getUserEmailResult: Result<String> = Result.success("test@example.com"),
-    var getCiudadIdResult: Result<String> = Result.success("ciudad-1"),
-    var currentSession: Any? = null
+    var getUserEmailResult: Result<String> = Result.success("test@example.covar getCiudadIdResult: Result<String> = Result.success("ciudad-1")
 ) : AuthRepositoryContract {
+
+    private var _currentSession: Any? = null
 
     var verifyRecoveryEmailCalls: Int = 0
     var lastVerifyEmail: String? = null
@@ -73,5 +73,5 @@ class FakeAuthRepository(
         return buscarCiudadPorNombreResult
     }
 
-    override fun getCurrentSession(): Any? = currentSession
+    override fun getCurrentSession(): Any? = _currentSession
 }
