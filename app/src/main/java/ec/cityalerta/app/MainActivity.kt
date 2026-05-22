@@ -1,26 +1,24 @@
 package ec.cityalerta.app
 
 import ec.cityalerta.app.navigation.AppNavigation
-import ec.cityalerta.app.navigation.Routes
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.gms.maps.MapsInitializer
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
-import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.handleDeeplinks
 import ec.cityalerta.app.theme.AccessibilityManager
 import ec.cityalerta.app.theme.CityAlertaTheme
 import ec.cityalerta.app.theme.LocaleManager
 import ec.cityalerta.app.theme.ThemeManager
+import androidx.compose.runtime.LaunchedEffect
 
 class MainActivity : ComponentActivity() {
 
@@ -29,44 +27,11 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         hideSystemNavigationBar()
 
-        var isReady = false
-        splashScreen.setKeepOnScreenCondition { !isReady }
-
-        val apiKey = BuildConfig.GOOGLE_MAPS_API_KEY
-        if (apiKey.isNotEmpty()) {
-            MapsInitializer.initialize(this, MapsInitializer.Renderer.LATEST) { }
-        }
-
         handleAuthIntent(intent)
-
-        val linkType = AuthDeepLinkParser.parseType(intent)
-        val hasSession = SupabaseProvider.client.auth.currentSessionOrNull() != null
-
-        val startDestination = if (!AuthDeepLinkParser.isAppAuthDeepLink(intent)) {
-            Routes.Splash.route
-        } else {
-            when {
-                linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY -> Routes.RecoverPassword.route
-                hasSession -> Routes.Home.route
-                else -> Routes.Login.route
-            }
-        }
-
-        val authInfoMessage = when {
-            AuthDeepLinkParser.isAppAuthDeepLink(intent) &&
-                linkType != AuthDeepLinkParser.AuthLinkType.RECOVERY &&
-                hasSession -> "Cuenta activada correctamente. Bienvenido a CityAlerta."
-            AuthDeepLinkParser.isAppAuthDeepLink(intent) &&
-                linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY &&
-                hasSession -> null
-            else -> null
-        }
 
         setContent {
             val themeManager = androidx.compose.runtime.remember { ThemeManager(this@MainActivity) }
@@ -77,10 +42,14 @@ class MainActivity : ComponentActivity() {
                 accessibilityManager = accessibilityManager,
                 localeManager = localeManager
             ) {
-                isReady = true
+                LaunchedEffect(Unit) {
+                    val apiKey = BuildConfig.GOOGLE_MAPS_API_KEY
+                    if (apiKey.isNotEmpty()) {
+                        MapsInitializer.initialize(this@MainActivity, MapsInitializer.Renderer.LATEST) { }
+                    }
+                }
                 AppNavigation(
-                    startDestination = startDestination,
-                    authInfoMessage = authInfoMessage
+                    authInfoMessage = null
                 )
             }
         }

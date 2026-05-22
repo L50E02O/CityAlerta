@@ -34,6 +34,9 @@ import ec.cityalerta.app.view.profile.ProfileDashboardScreen
 import ec.cityalerta.app.view.profile.SettingsScreen
 import ec.cityalerta.app.view.search.SearchScreen
 import ec.cityalerta.app.viewmodel.SearchReportViewModel
+import androidx.compose.runtime.LaunchedEffect
+import android.app.Activity
+import ec.cityalerta.app.model.utils.AuthDeepLinkParser
 
 @Composable
 fun AppNavigation(
@@ -44,6 +47,8 @@ fun AppNavigation(
     val navController = rememberNavController()
     val authRepository = remember { AuthRepository() }
     val context = LocalContext.current
+    val activity = context as? Activity
+    val currentIntent = activity?.intent
     val factory = remember { AppViewModelFactory(authRepository, context) }
 
     val authViewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
@@ -83,7 +88,17 @@ fun AppNavigation(
                 SplashScreen(
                     onTimeout = {
                         val hasSession = authRepository.getCurrentSession() != null
-                        val nextRoute = if (hasSession) Routes.Home.route else Routes.Login.route
+                        val linkType = AuthDeepLinkParser.parseType(currentIntent)
+                        val isDeepLink = AuthDeepLinkParser.isAppAuthDeepLink(currentIntent)
+                        val nextRoute = if (!isDeepLink) {
+                            if (hasSession) Routes.Home.route else Routes.Login.route
+                        } else {
+                            when {
+                                linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY -> Routes.RecoverPassword.route
+                                hasSession -> Routes.Home.route
+                                else -> Routes.Login.route
+                            }
+                        }
                         navController.navigate(nextRoute) {
                             popUpTo(Routes.Splash.route) { inclusive = true }
                         }
@@ -104,41 +119,51 @@ fun AppNavigation(
                 RecoverPasswordScreen(navController, recoveryViewModel)
             }
             composable(Routes.Home.route) {
-                ExploreScreen(navController, exploreViewModel, profileViewModel)
+                RequireAuth(navController, authRepository) {
+                    ExploreScreen(navController, exploreViewModel, profileViewModel)
+                }
             }
             composable(Routes.Explore.route){
-                ExploreScreen(navController, exploreViewModel, profileViewModel)
+                RequireAuth(navController, authRepository) {
+                    ExploreScreen(navController, exploreViewModel, profileViewModel)
+                }
             }
 
             composable(Routes.Search.route) {
-                SearchScreen(navController, searchReportViewModel, profileViewModel)
+                RequireAuth(navController, authRepository) {
+                    SearchScreen(navController, searchReportViewModel, profileViewModel)
+                }
             }
 
 
             composable(Routes.Post.route) {
-                PhotoScreen(
-                    navController = navController,
-                    viewModel = reporteViewModel,
-                    profileViewModel = profileViewModel,
-                    onPhotoCaptured = {
-                        navController.navigate(Routes.ReporteForm.route)
-                    }
-                )
+                RequireAuth(navController, authRepository) {
+                    PhotoScreen(
+                        navController = navController,
+                        viewModel = reporteViewModel,
+                        profileViewModel = profileViewModel,
+                        onPhotoCaptured = {
+                            navController.navigate(Routes.ReporteForm.route)
+                        }
+                    )
+                }
             }
 
             composable(Routes.ReporteForm.route) {
-                ReporteScreen(
-                    navController = navController,
-                    viewModel = reporteViewModel,
-                    profileViewModel = profileViewModel,
-                    onReportSent = {
-                        // Limpiar el back stack hasta Post y navegar a Explore
-                        navController.navigate(Routes.Explore.route) {
-                            popUpTo(Routes.Post.route) { inclusive = true }
-                            launchSingleTop = true
+                RequireAuth(navController, authRepository) {
+                    ReporteScreen(
+                        navController = navController,
+                        viewModel = reporteViewModel,
+                        profileViewModel = profileViewModel,
+                        onReportSent = {
+                            // Limpiar el back stack hasta Post y navegar a Explore
+                            navController.navigate(Routes.Explore.route) {
+                                popUpTo(Routes.Post.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
 
             composable(Routes.Map.route) { backStackEntry ->
@@ -146,19 +171,48 @@ fun AppNavigation(
                 MapScreen(navController, ciudadId, mapViewModel, profileViewModel)
             }
             composable(Routes.Profile.route) {
-                ProfileDashboardScreen(navController, profileViewModel)
+                RequireAuth(navController, authRepository) {
+                    ProfileDashboardScreen(navController, profileViewModel)
+                }
             }
             composable(Routes.MyReports.route) {
-                MyReportsScreen(navController, profileViewModel)
+                RequireAuth(navController, authRepository) {
+                    MyReportsScreen(navController, profileViewModel)
+                }
             }
             composable(Routes.Settings.route) {
-                SettingsScreen(navController, profileViewModel)
+                RequireAuth(navController, authRepository) {
+                    SettingsScreen(navController, profileViewModel)
+                }
             }
             composable(Routes.Appearance.route) {
-                AppearanceScreen(navController)
+                RequireAuth(navController, authRepository) {
+                    AppearanceScreen(navController)
+                }
             }
             composable(Routes.Accessibility.route) {
-                AccessibilityScreen(navController)
+                RequireAuth(navController, authRepository) {
+                    AccessibilityScreen(navController)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RequireAuth(
+    navController: NavController,
+    authRepository: AuthRepository,
+    content: @Composable () -> Unit
+) {
+    val hasSession = authRepository.getCurrentSession() != null
+    if (hasSession) {
+        content()
+    } else {
+        LaunchedEffect(Unit) {
+            navController.navigate(Routes.Login.route) {
+                popUpTo(Routes.Login.route) { inclusive = true }
+                launchSingleTop = true
             }
         }
     }

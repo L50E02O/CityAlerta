@@ -1,20 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.CityAlerta" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#FFFFFF</item>
-        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
-        <item name="windowSplashScreenAnimationDuration">0</item>
-        <item name="postSplashScreenTheme">@style/Theme.CityAlerta.Main</item>
-    </style>
+    <style name="Theme.CityAlerta" parent="Theme.CityAlerta.Main" />
 
-    <style name="Theme.CityAlerta.Main" parent="android:Theme.Material.Light.NoActionBar" />
-
-    <style name="Theme.App.init" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimationDuration">300</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
-        <item name="postSplashScreenTheme">@style/Theme.CityAlerta.Main</item>
+    <style name="Theme.CityAlerta.Main" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
     </style>
 
 </resources>

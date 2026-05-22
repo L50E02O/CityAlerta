@@ -156,7 +156,9 @@ fun ReporteScreen(
                         viewModel.requestCurrentLocation()
                     }
                 },
-                modifier = Modifier.align(androidx.compose.ui.Alignment.Center),
+                modifier = Modifier
+                    .align(androidx.compose.ui.Alignment.BottomCenter)
+                    .padding(bottom = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)
             ) {
                 Text("Usar mi ubicacion actual", color = Color(0xFF1B1B1B))
