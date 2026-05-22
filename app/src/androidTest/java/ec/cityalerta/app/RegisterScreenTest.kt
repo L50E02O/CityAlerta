@@ -5,7 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.view.authView.RegisterScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Rule
@@ -18,7 +18,7 @@ class RegisterScreenTest {
     val composeTestRule = createComposeRule()
 
     @Mock
-    private lateinit var mockRepository: IAuthRepository
+    private lateinit var mockRepository: AuthRepositoryContract
 
     private lateinit var navController: NavController
     private lateinit var viewModel: AuthViewModel
@@ -35,7 +35,7 @@ class RegisterScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Registrarse").assertExists()
+        composeTestRule.onNodeWithText("Registro").assertExists()
     }
 
     @Test
@@ -50,7 +50,7 @@ class RegisterScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Correo electrónico").assertExists()
-        composeTestRule.onNodeWithText("Contraseña").assertExists()
+        composeTestRule.onNodeWithText("CORREO ELECTRÓNICO").assertExists()
+        composeTestRule.onNodeWithText("CONTRASEÑA").assertExists()
     }
 }
