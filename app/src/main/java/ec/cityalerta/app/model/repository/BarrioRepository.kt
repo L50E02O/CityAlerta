@@ -73,20 +73,24 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
     }
 
     private fun JsonObject.toBarrio(): Barrio {
+        val perimetroElement = this["perimetro"]
+        val geometry = if (perimetroElement != null && perimetroElement is JsonObject) {
+            perimetroElement.toGeometry()
+        } else {
+            Geometry("Polygon", emptyList())
+        }
+
         return Barrio(
             id = stringOrEmpty("id"),
             ciudadId = nullableString("ciudad_id") ?: stringOrEmpty("ciudadId"),
             nombre = stringOrEmpty("nombre"),
             nivelPeligrosidad = nullableString("nivel_peligrosidad") ?: stringOrEmpty("nivelPeligrosidad"),
-            perimetro = this["perimetro"]?.let { jsonElement ->
-                (jsonElement as JsonObject).toGeometry()
-            } ?: Geometry("Polygon", emptyList()),
+            perimetro = geometry,
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
             updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
         )
     }
 
-    // Convierte GeoJSON JSON (retornado por el backend) a Geometry
     private fun JsonObject.toGeometry(): Geometry {
         val type = this["type"]?.jsonPrimitive?.content ?: "Polygon"
         val coordinates = this["coordinates"]?.jsonArray?.map { ringElement ->
@@ -100,8 +104,9 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
         return Geometry(type = type, coordinates = coordinates)
     }
 
-    // Convierte Geometry a GeoJSON JsonObject para enviar al backend
     private fun Geometry.toGeoJsonObject(): JsonObject {
+        val effectiveType = if (type == "FeatureCollection" && coordinates.isNotEmpty()) "Polygon" else type
+
         val coordinatesJson = JsonArray(
             this.coordinates.map { ring ->
                 JsonArray(
@@ -114,7 +119,7 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
 
         return JsonObject(
             mapOf(
-                "type" to JsonPrimitive(this.type),
+                "type" to JsonPrimitive(effectiveType),
                 "coordinates" to coordinatesJson
             )
         )

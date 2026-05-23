@@ -37,6 +37,7 @@ import ec.cityalerta.app.viewmodel.SearchReportViewModel
 import androidx.compose.runtime.LaunchedEffect
 import android.app.Activity
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun AppNavigation(
@@ -76,8 +77,14 @@ fun AppNavigation(
         factory = factory
     )
 
+    LaunchedEffect(Unit) {
+        profileViewModel.loadSummaryIfNeeded()
+    }
+
+    val profileState = profileViewModel.state.collectAsState().value
+
     Scaffold(
-        bottomBar = { AppBottomBar(navController) }
+        bottomBar = { AppBottomBar(navController, ciudadId = if (profileState.ciudadId.isBlank()) "Sin ciudad" else profileState.ciudadId) }
     ) { innerPadding ->
         NavHost(
             navController = navController,

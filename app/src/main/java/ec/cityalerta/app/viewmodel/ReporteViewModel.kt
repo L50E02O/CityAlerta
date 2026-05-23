@@ -93,9 +93,6 @@ class ReporteViewModel(
 
             val usuarioID = authRepository.getUserId().getOrNull().orEmpty()
             val ciudadID = authRepository.getCiudadId().getOrNull().orEmpty()
-            val desc = _descripcion.value
-            val cat = _categoria.value!!
-            val imgBytes = _imagenBytes.value!!
             val lat = _lat.value!!
             val lng = _lng.value!!
 
@@ -105,11 +102,10 @@ class ReporteViewModel(
                     return@launch
                 }
 
-                submitReport(usuarioID, ciudadID, desc, cat, imgBytes, lat, lng)
+                submitReport(usuarioID, ciudadID, _descripcion.value, _categoria.value!!, _imagenBytes.value!!, lat, lng)
                 resetForm()
                 onSuccess()
             } catch (e: Exception) {
-                e.printStackTrace()
                 _errorMessage.value = e.message ?: "Error al enviar reporte"
             }
         }
@@ -117,12 +113,10 @@ class ReporteViewModel(
 
     private suspend fun isLocationInsideCity(lat: Double, lng: Double, ciudadId: String): Boolean {
         val ciudad = mapRepository.getCiudadById(ciudadId)
-        return if (ciudad != null) {
-            val polygonPoints = GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
-            GeoJsonConverter.pointInPolygon(LatLng(lat, lng), polygonPoints)
-        } else {
-            false
-        }
+        if (ciudad == null) return false
+
+        val polygonPoints = GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
+        return GeoJsonConverter.pointInPolygon(LatLng(lat, lng), polygonPoints)
     }
 
     private suspend fun validateReportForm(): String? {

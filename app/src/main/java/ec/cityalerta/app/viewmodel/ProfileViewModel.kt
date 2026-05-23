@@ -66,6 +66,7 @@ data class ProfileState(
     val profileImageId: String? = null,
     val profileStorageUuid: String? = null,
     val cityName: String = "",
+    val ciudadId: String = "",
     val userEmail: String = "",
     val totalReports: Int = 0,
     val resolvedReports: Int = 0,
@@ -114,6 +115,7 @@ class ProfileViewModel(
                     profileImageId = profileImage?.second,
                     profileStorageUuid = profileImage?.third,
                     cityName = cityName,
+                    ciudadId = resumen.ciudadId,
                     userEmail = userEmail,
                     totalReports = resumen.totalReportes,
                     resolvedReports = resumen.reportesResueltos,
@@ -148,6 +150,7 @@ class ProfileViewModel(
                 profileImageId = profileImage?.second,
                 profileStorageUuid = profileImage?.third,
                 cityName = cityName,
+                ciudadId = resumen.ciudadId,
                 totalReports = resumen.totalReportes,
                 resolvedReports = resumen.reportesResueltos,
                 myReports = reportes

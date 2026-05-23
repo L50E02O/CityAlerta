@@ -30,7 +30,7 @@ class AuthViewModel(private val repository: AuthRepositoryContract) : ViewModel(
 
     fun onEmailChange(email: String){
         uiState = uiState.copy(
-            email = email,
+            email = email.trim(),
             isEmailUnconfirmed = false,
             errorMessage = null
         )

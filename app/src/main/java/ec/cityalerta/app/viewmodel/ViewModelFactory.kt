@@ -89,7 +89,16 @@ class AppViewModelFactory(
             }
             modelClass.isAssignableFrom(ExploreViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                ExploreViewModel() as T
+                ExploreViewModel(
+                    authRepository,
+                    reporteRepository,
+                    imagenReporte,
+                    ubicacionReporte,
+                    storageReporte,
+                    perfilRepository,
+                    ciudadRepository,
+                    barrioRepository
+                ) as T
             }
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")

@@ -18,20 +18,16 @@ import ec.cityalerta.app.R
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
     var ciudades by remember { mutableStateOf<List<Ciudad>>(emptyList()) }
     var ciudadError by remember { mutableStateOf<String?>(null) }
-    var mantaCiudad by remember { mutableStateOf<Ciudad?>(null) }
-    val mantaMissingMessage = stringResource(R.string.auth_city_manta_missing)
     val cityLoadErrorMessage = stringResource(R.string.auth_city_load_error)
 
     LaunchedEffect(Unit) {
         val repo = CiudadRepository()
+        // Limpiamos selección previa si existe para forzar elección manual
+        viewModel.onCiudadSelected("", "")
+        
         repo.getAllByCountry("Ecuador").fold(
             onSuccess = { result ->
                 ciudades = result
-                mantaCiudad = result.firstOrNull { it.nombre.equals("Manta", ignoreCase = true) }
-                ciudadError = if (mantaCiudad == null) mantaMissingMessage else null
-                mantaCiudad?.let { ciudad ->
-                    viewModel.onCiudadSelected(ciudad.nombre, ciudad.id)
-                }
             },
             onFailure = { error ->
                 ciudadError = error.message ?: cityLoadErrorMessage
@@ -48,7 +44,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
             secondaryActionText = "¿Ya tienes cuenta? Inicia sesión",
             showCitySection = true,
             ciudades = ciudades,
-            fixedCity = mantaCiudad,
+            fixedCity = null, // Cambiado de mantaCiudad a null para habilitar el dropdown
             cityLoadError = ciudadError,
             onPrimaryAction = {
                 viewModel.onRegisterClick {

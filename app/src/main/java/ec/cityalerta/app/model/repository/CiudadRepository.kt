@@ -90,17 +90,19 @@ class CiudadRepository : CrudRepositoryContract<Ciudad, CiudadCreateDto, CiudadU
     }
 
     private fun JsonObject.toCiudad(): Ciudad {
+        val geojsonElement = this["geojson"]
+        val geometry = if (geojsonElement != null && geojsonElement is JsonObject) {
+            geojsonElement.toGeometry()
+        } else {
+            // Default a un Polígono vacío si es NULL o no es un objeto
+            Geometry("Polygon", emptyList())
+        }
+
         return Ciudad(
             id = stringOrEmpty("id"),
             nombre = stringOrEmpty("nombre"),
             pais = stringOrEmpty("pais"),
-            geojson = this["geojson"]?.let { jsonElement ->
-                if (jsonElement is JsonObject) {
-                    jsonElement.toGeometry()
-                } else {
-                    null
-                }
-            } ?: Geometry("FeatureCollection", emptyList()),
+            geojson = geometry,
             centroLat = this["centro_lat"]?.jsonPrimitive?.content?.toDoubleOrNull()
                 ?: this["centroLat"]?.jsonPrimitive?.content?.toDoubleOrNull()
                 ?: 0.0,
@@ -113,6 +115,9 @@ class CiudadRepository : CrudRepositoryContract<Ciudad, CiudadCreateDto, CiudadU
     }
 
     private fun Geometry.toGeoJsonObject(): JsonObject {
+        // Asegurar que si tenemos coordenadas, el tipo sea Polygon o similar, no FeatureCollection
+        val effectiveType = if (type == "FeatureCollection" && coordinates.isNotEmpty()) "Polygon" else type
+        
         val coordinatesJson = JsonArray(
             coordinates.map { ring ->
                 JsonArray(
@@ -125,23 +130,35 @@ class CiudadRepository : CrudRepositoryContract<Ciudad, CiudadCreateDto, CiudadU
 
         return JsonObject(
             mapOf(
-                "type" to JsonPrimitive(type),
+                "type" to JsonPrimitive(effectiveType),
                 "coordinates" to coordinatesJson
             )
         )
     }
 
     private fun JsonObject.toGeometry(): Geometry {
-        val type = this["type"]?.jsonPrimitive?.content ?: "FeatureCollection"
-        val coordinates = this["coordinates"]?.jsonArray?.map { ringElement ->
-            ringElement.jsonArray.map { coordElement ->
-                coordElement.jsonArray.map { valueElement ->
-                    valueElement.jsonPrimitive.content.toDouble()
-                }
-            }
-        } ?: emptyList()
+        val type = this["type"]?.jsonPrimitive?.content ?: "Polygon"
+        val coordinatesElement = this["coordinates"]?.jsonArray
 
-        return Geometry(type = type, coordinates = coordinates)
+        val coordinates = if (type == "MultiPolygon") {
+            coordinatesElement?.get(0)?.jsonArray?.map { ringElement ->
+                ringElement.jsonArray.map { coordElement ->
+                    coordElement.jsonArray.map { valueElement ->
+                        valueElement.jsonPrimitive.content.toDouble()
+                    }
+                }
+            } ?: emptyList()
+        } else {
+            coordinatesElement?.map { ringElement ->
+                ringElement.jsonArray.map { coordElement ->
+                    coordElement.jsonArray.map { valueElement ->
+                        valueElement.jsonPrimitive.content.toDouble()
+                    }
+                }
+            } ?: emptyList()
+        }
+
+        return Geometry(type = "Polygon", coordinates = coordinates)
     }
 }
 

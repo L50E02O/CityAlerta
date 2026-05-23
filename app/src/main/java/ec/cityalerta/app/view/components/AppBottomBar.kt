@@ -31,7 +31,7 @@ import ec.cityalerta.app.R
 import ec.cityalerta.app.navigation.Routes
 
 @Composable
-fun AppBottomBar(navController: NavController) {
+fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -42,7 +42,7 @@ fun AppBottomBar(navController: NavController) {
         Routes.Map.route
     )
 
-    if (currentRoute in bottomBarRoutes) {
+    if (currentRoute?.startsWith("map") == true || currentRoute in bottomBarRoutes) {
         Surface(
             color = Color(0xFF1B2633),
             modifier = Modifier.fillMaxWidth()
@@ -113,9 +113,10 @@ fun AppBottomBar(navController: NavController) {
                     )
                 )
                 NavigationBarItem(
-                    selected = currentRoute == Routes.Map.route,
+                    selected = currentRoute?.startsWith("map") == true,
                     onClick = {
-                        navController.navigate("map/manta") {
+                        val finalCiudadId = if (ciudadId == "Sin ciudad") "manta" else ciudadId
+                        navController.navigate("map/$finalCiudadId") {
                             popUpTo(Routes.Home.route) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
