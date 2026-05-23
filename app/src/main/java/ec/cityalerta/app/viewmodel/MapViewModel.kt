@@ -110,7 +110,6 @@ class MapViewModel(
 
                             if (reportLocs.isEmpty()) return@withContext emptyList<BarrioRiskState>()
 
-                            // Agrupar reportes en celdas de la rejilla
                             val grid = mutableMapOf<Pair<Int, Int>, MutableList<LatLng>>()
                             reportLocs.forEach { loc ->
                                 val cellX = floor(loc.lat / cellSize).toInt()
@@ -119,7 +118,6 @@ class MapViewModel(
                                 grid.getOrPut(key) { mutableListOf() }.add(LatLng(loc.lat, loc.lng))
                             }
 
-                            // Crear zonas de riesgo centradas en el promedio de los reportes
                             grid.mapNotNull { (key, points) ->
                                 val count = points.size
                                 val color = colorProvider.getColorForReportCount(count)
@@ -199,7 +197,6 @@ class MapViewModel(
     }
 
     fun onClusterClicked(reportType: ReportType, count: Int) {
-        // Creamos un reporte "dummy" solo para que la UI tenga la categoría
         val dummyReport = Reporte(
             id = "cluster",
             usuario_id = "",

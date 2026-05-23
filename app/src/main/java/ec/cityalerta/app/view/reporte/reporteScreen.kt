@@ -21,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.MenuAnchorType
@@ -178,7 +179,14 @@ fun ReporteScreen(
             value = descripcion,
             onValueChange = { viewModel.onDescriptionChange(it) },
             placeholder = { Text("Describa brevemente la situacion...") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1B),
+                unfocusedTextColor = Color(0xFF1B1B1B),
+                focusedPlaceholderColor = Color(0xFF8A8D99),
+                unfocusedPlaceholderColor = Color(0xFF8A8D99),
+                cursorColor = Color(0xFF1B1B1B)
+            )
         )
 
         Button(
@@ -238,7 +246,13 @@ fun CategoryDropDown(
             onValueChange = {},
             readOnly = true,
             placeholder = { Text("Ubique la categoria del reporte") },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1B),
+                unfocusedTextColor = Color(0xFF1B1B1B),
+                focusedPlaceholderColor = Color(0xFF8A8D99),
+                unfocusedPlaceholderColor = Color(0xFF8A8D99)
+            )
         )
 
         ExposedDropdownMenu(

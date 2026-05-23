@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -301,7 +302,12 @@ private fun EditReportDialog(
                     readOnly = true,
                     enabled = false,
                     label = { Text("Estado") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = Color(0xFF1B1B1B),
+                        disabledBorderColor = Color.Gray.copy(alpha = 0.5f),
+                        disabledLabelColor = Color.Gray
+                    )
                 )
 
                 ExposedDropdownMenuBox(
@@ -313,7 +319,11 @@ private fun EditReportDialog(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Categoria") },
-                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth()
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color(0xFF1B1B1B),
+                            unfocusedTextColor = Color(0xFF1B1B1B)
+                        )
                     )
                     ExposedDropdownMenu(expanded = categoryExpanded, onDismissRequest = { categoryExpanded = false }) {
                         ReportType.entries.forEach { item ->
@@ -332,7 +342,11 @@ private fun EditReportDialog(
                     value = description,
                     onValueChange = { description = it },
                     label = { Text("Descripcion") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF1B1B1B),
+                        unfocusedTextColor = Color(0xFF1B1B1B)
+                    )
                 )
             }
         },

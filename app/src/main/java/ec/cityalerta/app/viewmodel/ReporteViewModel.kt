@@ -2,8 +2,8 @@ package ec.cityalerta.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.maps.model.LatLng
 import ec.cityalerta.app.model.data.reporte.ReportType
-import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
@@ -15,6 +15,8 @@ import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.data.contracts.location.LocationProviderContract
+import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
+import ec.cityalerta.app.model.utils.GeoJsonConverter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -27,7 +29,8 @@ class ReporteViewModel(
     private val reporteUbicacionRepository: ReporteUbicacionRepository,
     private val reporteStorageRepository: ReporteStorageRepository,
     private val locationProvider: LocationProviderContract,
-    private val authRepository: AuthRepositoryContract
+    private val authRepository: AuthRepositoryContract,
+    private val mapRepository: MapRepositoryContract
 ): ViewModel(){
 
     private val _descripcion = MutableStateFlow("")
@@ -97,6 +100,11 @@ class ReporteViewModel(
             val lng = _lng.value!!
 
             try {
+                if (!isLocationInsideCity(lat, lng, ciudadID)) {
+                    _errorMessage.value = "Ubicación fuera de los límites permitidos de la ciudad"
+                    return@launch
+                }
+
                 submitReport(usuarioID, ciudadID, desc, cat, imgBytes, lat, lng)
                 resetForm()
                 onSuccess()
@@ -104,6 +112,16 @@ class ReporteViewModel(
                 e.printStackTrace()
                 _errorMessage.value = e.message ?: "Error al enviar reporte"
             }
+        }
+    }
+
+    private suspend fun isLocationInsideCity(lat: Double, lng: Double, ciudadId: String): Boolean {
+        val ciudad = mapRepository.getCiudadById(ciudadId)
+        return if (ciudad != null) {
+            val polygonPoints = GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
+            GeoJsonConverter.pointInPolygon(LatLng(lat, lng), polygonPoints)
+        } else {
+            false
         }
     }
 

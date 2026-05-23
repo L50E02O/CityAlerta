@@ -26,6 +26,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -250,7 +251,11 @@ internal fun SettingsNameDialog(
                 label = { Text(stringResource(R.string.settings_edit_name_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isSaving
+                enabled = !isSaving,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF1B1B1B),
+                    unfocusedTextColor = Color(0xFF1B1B1B)
+                )
             )
         },
         confirmButton = {
@@ -296,7 +301,11 @@ internal fun SettingsEmailDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     isError = editEmail.isNotEmpty() && !isEmailValid,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isSaving
+                    enabled = !isSaving,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color(0xFF1B1B1B),
+                        unfocusedTextColor = Color(0xFF1B1B1B)
+                    )
                 )
                 if (editEmail.isNotEmpty() && !isEmailValid) {
                     Text(

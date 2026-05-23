@@ -156,7 +156,6 @@ fun AppNavigation(
                         viewModel = reporteViewModel,
                         profileViewModel = profileViewModel,
                         onReportSent = {
-                            // Limpiar el back stack hasta Post y navegar a Explore
                             navController.navigate(Routes.Explore.route) {
                                 popUpTo(Routes.Post.route) { inclusive = true }
                                 launchSingleTop = true

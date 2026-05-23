@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -83,7 +84,14 @@ fun SearchScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(8.dp),
-                singleLine = true
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF1B1B1B),
+                    unfocusedTextColor = Color(0xFF1B1B1B),
+                    focusedPlaceholderColor = Color(0xFF6C757D),
+                    unfocusedPlaceholderColor = Color(0xFF6C757D),
+                    cursorColor = Color(0xFF1B1B1B)
+                )
             )
 
             Spacer(modifier = Modifier.height(20.dp))
