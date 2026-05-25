@@ -8,12 +8,15 @@ import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionCreateDto
+import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionUpdateDto
 import ec.cityalerta.app.model.data.location.UserLocation
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
+import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.geocoding.GeocodingRepositoryContract
 import ec.cityalerta.app.model.data.contracts.location.LocationProviderContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.utils.GeoJsonConverter
@@ -30,7 +33,9 @@ class ReporteViewModel(
     private val reporteStorageRepository: ReporteStorageRepository,
     private val locationProvider: LocationProviderContract,
     private val authRepository: AuthRepositoryContract,
-    private val mapRepository: MapRepositoryContract
+    private val mapRepository: MapRepositoryContract,
+    private val barrioRepository: BarrioRepository,
+    private val geocodingRepository: GeocodingRepositoryContract
 ): ViewModel(){
 
     private val _descripcion = MutableStateFlow("")
@@ -48,6 +53,8 @@ class ReporteViewModel(
     val currentLocation: StateFlow<UserLocation?> = _currentLocation
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
+    private val _isSubmitting = MutableStateFlow(false)
+    val isSubmitting: StateFlow<Boolean> = _isSubmitting
 
 
     fun onDescriptionChange(value: String){
@@ -85,18 +92,20 @@ class ReporteViewModel(
 
     fun sendReport(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
+            if (_isSubmitting.value) return@launch
+            _isSubmitting.value = true
             val validationError = validateReportForm()
-            if (validationError != null) {
-                _errorMessage.value = validationError
-                return@launch
-            }
-
-            val usuarioID = authRepository.getUserId().getOrNull().orEmpty()
-            val ciudadID = authRepository.getCiudadId().getOrNull().orEmpty()
-            val lat = _lat.value!!
-            val lng = _lng.value!!
-
             try {
+                if (validationError != null) {
+                    _errorMessage.value = validationError
+                    return@launch
+                }
+
+                val usuarioID = authRepository.getUserId().getOrNull().orEmpty()
+                val ciudadID = authRepository.getCiudadId().getOrNull().orEmpty()
+                val lat = _lat.value!!
+                val lng = _lng.value!!
+
                 if (!isLocationInsideCity(lat, lng, ciudadID)) {
                     _errorMessage.value = "Ubicación fuera de los límites permitidos de la ciudad"
                     return@launch
@@ -107,6 +116,8 @@ class ReporteViewModel(
                 onSuccess()
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Error al enviar reporte"
+            } finally {
+                _isSubmitting.value = false
             }
         }
     }
@@ -149,19 +160,27 @@ class ReporteViewModel(
         lng: Double
     ) {
         _errorMessage.value = null
+        val barrioResult = barrioRepository.getByPoint(ciudadID, lat, lng)
+        val barrio = barrioResult.getOrNull()
+        if (barrio == null) {
+            _errorMessage.value = "Ubicacion fuera de los limites de las parroquias"
+            return
+        }
+
+        val ubicacion = reporteUbicacionRepository.create(
+            ReporteUbicacionCreateDto(
+                lat = lat,
+                lng = lng,
+                direccion_aproximada = "Procesando direccion"
+            )
+        ).getOrThrow()
+
         val storageUuid = UUID.randomUUID().toString()
         val storagePath = reporteStorageRepository.uploadReportImage(
             bytes = imgBytes,
             objectName = storageUuid
         ).getOrThrow()
 
-        val ubicacion = reporteUbicacionRepository.create(
-            ReporteUbicacionCreateDto(
-                lat = lat,
-                lng = lng,
-                direccion_aproximada = " $lat, $lng"
-            )
-        ).getOrThrow()
 
         val reporte = reporteRepository.create(
             ReporteCreateDto(
@@ -172,9 +191,10 @@ class ReporteViewModel(
                 estado = ReporteEstado.PENDIENTE,
                 fecha_reporte = Instant.now().toString(),
                 categoria = categoria,
-                barrio_id = "aff5277d-95a7-452f-a456-8bc2bc57cb2f"
+                barrio_id = barrio.id
             )
         ).getOrThrow()
+
 
         reporteImagenRepository.create(
             ReporteImagenCreateDto(
@@ -183,6 +203,8 @@ class ReporteViewModel(
                 url_path = storagePath
             )
         )
+
+        resolveDireccionAsync(ubicacion.id, lat, lng)
     }
 
     private fun resetForm(){
@@ -194,5 +216,22 @@ class ReporteViewModel(
         _lng.value = null
         _currentLocation.value = null
         _errorMessage.value = null
+    }
+
+    private suspend fun resolveDireccion(lat: Double, lng: Double): String {
+        return geocodingRepository.reverseGeocode(lat, lng)
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?: "Direccion no disponible"
+    }
+
+    private fun resolveDireccionAsync(ubicacionId: String, lat: Double, lng: Double) {
+        viewModelScope.launch {
+            val direccion = resolveDireccion(lat, lng)
+            val updateResult = reporteUbicacionRepository.update(
+                ReporteUbicacionUpdateDto(direccion_aproximada = direccion),
+                ubicacionId
+            )
+        }
     }
 }

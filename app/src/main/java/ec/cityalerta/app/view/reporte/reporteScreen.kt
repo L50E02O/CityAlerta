@@ -69,6 +69,7 @@ fun ReporteScreen(
     val descripcion by viewModel.descripcion.collectAsState()
     val categoria by viewModel.categoria.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val isSubmitting by viewModel.isSubmitting.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
     var locationPermissionGranted by remember {
         mutableStateOf(
@@ -115,7 +116,8 @@ fun ReporteScreen(
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 text = "Seleccione su ubicacion",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = Color(0xFF1B1B1B)
             )
             Text(
                 text = "Confirme el punto exacto para el despliegue de seguridad.",
@@ -193,10 +195,14 @@ fun ReporteScreen(
             },
             modifier = Modifier.fillMaxWidth(),
             shape = ReportUiShapes.Button,
-            colors = ButtonDefaults.buttonColors(containerColor = ReportUiColors.AccentRed)
+            enabled = !isSubmitting,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ReportUiColors.AccentRed,
+                disabledContainerColor = Color(0xFFB24A4A)
+            )
         ) {
             Text(
-                text = "Enviar reporte",
+                text = if (isSubmitting) "Enviando..." else "Enviar reporte",
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White
             )

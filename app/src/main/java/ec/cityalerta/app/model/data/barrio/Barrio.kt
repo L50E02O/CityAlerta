@@ -6,7 +6,6 @@ data class Barrio(
     val id: String,
     val ciudadId: String,
     val nombre: String,
-    val nivelPeligrosidad: String,
     val perimetro: Geometry,
     val createdAt: String? = null,
     val updatedAt: String? = null

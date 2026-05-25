@@ -17,6 +17,7 @@ import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
+import ec.cityalerta.app.model.repository.NominatimGeocodingRepository
 
 class AppViewModelFactory(
     private val authRepository: AuthRepositoryContract,
@@ -65,6 +66,10 @@ class AppViewModelFactory(
 
     private val storagePerfil by lazy {
         PerfilStorageRepository()
+    }
+
+    private val geocodingRepository by lazy {
+        NominatimGeocodingRepository()
     }
 
     private val locationProvider by lazy {
@@ -125,7 +130,9 @@ class AppViewModelFactory(
                     storageReporte,
                     locationProvider,
                     authRepository,
-                    mapRepository
+                    mapRepository,
+                    barrioRepository,
+                    geocodingRepository
                 ) as T
             }
             modelClass.isAssignableFrom(SearchReportViewModel::class.java) -> {

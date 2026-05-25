@@ -41,7 +41,6 @@ class BarrioRepositoryTest {
         val createDto = BarrioCreateDto(
             ciudadId = "ciudad-123",
             nombre = "Barrio Centro",
-            nivelPeligrosidad = "MEDIO",
             perimetro = geometry
         )
 
@@ -49,7 +48,6 @@ class BarrioRepositoryTest {
         assertNotNull(createDto)
         assertEquals("ciudad-123", createDto.ciudadId)
         assertEquals("Barrio Centro", createDto.nombre)
-        assertEquals("MEDIO", createDto.nivelPeligrosidad)
         assertEquals(geometry, createDto.perimetro)
     }
 
@@ -69,14 +67,12 @@ class BarrioRepositoryTest {
         )
         val updateDto = BarrioUpdateDto(
             nombre = "Nuevo nombre",
-            nivelPeligrosidad = "ALTO",
             perimetro = geometry
         )
 
         // Assert
         assertNotNull(updateDto)
         assertEquals("Nuevo nombre", updateDto.nombre)
-        assertEquals("ALTO", updateDto.nivelPeligrosidad)
         assertEquals(geometry, updateDto.perimetro)
     }
 
@@ -85,14 +81,12 @@ class BarrioRepositoryTest {
         // Arrange
         val updateDto = BarrioUpdateDto(
             nombre = "Barrio Sin Perimetro",
-            nivelPeligrosidad = "BAJO",
             perimetro = null
         )
 
         // Assert
         assertNotNull(updateDto)
         assertEquals("Barrio Sin Perimetro", updateDto.nombre)
-        assertEquals("BAJO", updateDto.nivelPeligrosidad)
         assertEquals(null, updateDto.perimetro)
     }
 
@@ -114,7 +108,6 @@ class BarrioRepositoryTest {
             id = "barrio-1",
             ciudadId = "ciudad-1",
             nombre = "Sector Historico",
-            nivelPeligrosidad = "MEDIO",
             perimetro = geometry,
             createdAt = "2024-01-01T10:00:00Z",
             updatedAt = "2024-01-05T15:30:00Z"
@@ -125,7 +118,6 @@ class BarrioRepositoryTest {
         assertEquals("barrio-1", barrio.id)
         assertEquals("ciudad-1", barrio.ciudadId)
         assertEquals("Sector Historico", barrio.nombre)
-        assertEquals("MEDIO", barrio.nivelPeligrosidad)
         assertEquals(geometry, barrio.perimetro)
         assertEquals("2024-01-01T10:00:00Z", barrio.createdAt)
         assertEquals("2024-01-05T15:30:00Z", barrio.updatedAt)
@@ -187,14 +179,14 @@ class BarrioRepositoryTest {
         val geometryMed = Geometry("Polygon", listOf(listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04))))
         val geometryHigh = Geometry("Polygon", listOf(listOf(listOf(-80.73, -1.04), listOf(-80.72, -1.04))))
 
-        val barrioBajo = BarrioCreateDto("ciudad-1", "Barrio Seguro", "BAJO", geometryLow)
-        val barrioMedio = BarrioCreateDto("ciudad-1", "Barrio Normal", "MEDIO", geometryMed)
-        val barrioAlto = BarrioCreateDto("ciudad-1", "Barrio Peligroso", "ALTO", geometryHigh)
+        val barrioA = BarrioCreateDto("ciudad-1", "Barrio Seguro", geometryLow)
+        val barrioB = BarrioCreateDto("ciudad-1", "Barrio Normal", geometryMed)
+        val barrioC = BarrioCreateDto("ciudad-1", "Barrio Peligroso", geometryHigh)
 
         // Assert
-        assertEquals("BAJO", barrioBajo.nivelPeligrosidad)
-        assertEquals("MEDIO", barrioMedio.nivelPeligrosidad)
-        assertEquals("ALTO", barrioAlto.nivelPeligrosidad)
+        assertEquals("Barrio Seguro", barrioA.nombre)
+        assertEquals("Barrio Normal", barrioB.nombre)
+        assertEquals("Barrio Peligroso", barrioC.nombre)
     }
 
     @Test
@@ -205,7 +197,6 @@ class BarrioRepositoryTest {
             id = "barrio-1",
             ciudadId = "ciudad-1",
             nombre = "Barrio Centro",
-            nivelPeligrosidad = "MEDIO",
             perimetro = geometry
         )
         val barrio2 = barrio1.copy()
@@ -224,22 +215,18 @@ class BarrioRepositoryTest {
             id = "barrio-1",
             ciudadId = "ciudad-1",
             nombre = "Original",
-            nivelPeligrosidad = "BAJO",
             perimetro = geometry
         )
 
         // Act
         val modifiedBarrio = originalBarrio.copy(
-            nombre = "Modificado",
-            nivelPeligrosidad = "ALTO"
+            nombre = "Modificado"
         )
 
         // Assert
         assertEquals("barrio-1", modifiedBarrio.id)
         assertEquals("Modificado", modifiedBarrio.nombre)
-        assertEquals("ALTO", modifiedBarrio.nivelPeligrosidad)
         assertEquals("Original", originalBarrio.nombre)
-        assertEquals("BAJO", originalBarrio.nivelPeligrosidad)
     }
 
     @Test
@@ -271,9 +258,9 @@ class BarrioRepositoryTest {
     fun testBarrioNombres() {
         // Arrange & Act
         val barrios = listOf(
-            BarrioCreateDto("c1", "Barrio Centro", "MEDIO", Geometry("Polygon", emptyList())),
-            BarrioCreateDto("c1", "Sector Historico", "BAJO", Geometry("Polygon", emptyList())),
-            BarrioCreateDto("c1", "Zona Residencial", "ALTO", Geometry("Polygon", emptyList()))
+            BarrioCreateDto("c1", "Barrio Centro", Geometry("Polygon", emptyList())),
+            BarrioCreateDto("c1", "Sector Historico", Geometry("Polygon", emptyList())),
+            BarrioCreateDto("c1", "Zona Residencial", Geometry("Polygon", emptyList()))
         )
 
         // Assert

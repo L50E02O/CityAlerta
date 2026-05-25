@@ -107,7 +107,6 @@ erDiagram
         uuid id PK ""
         uuid ciudad_id FK ""
         varchar nombre ""
-        varchar nivel_peligrosidad ""
         geometry perimetro ""
         timestamp created_at ""
         timestamp updated_at ""

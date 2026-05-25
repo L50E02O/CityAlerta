@@ -22,6 +22,7 @@ applyTo: "**"
 - No mezclar la logica de red con la UI.
 - Mantener la estructura por capas o por caracteristicas cuando aporte claridad.
 - Rutas de UI y ViewModel suelen vivir en app/src/main/java/ec/cityalerta/app/view y app/src/main/java/ec/cityalerta/app/viewmodel.
+- No hardcodear datos de barrios o poligonos en la UI; usar el repositorio y la fuente de datos definida en el proyecto.
 
 ## Calidad minima esperada
 - Escribir tests unitarios para logica de negocio, servicios y validaciones.
@@ -37,6 +38,10 @@ applyTo: "**"
 - Usar Material3 Cards para el feed de Explorar.
 - Aplicar Lazy Loading en listas y recursos pesados.
 - En el flujo de reporte, el acceso a camara debe abrir la camara del sistema directamente, sin pasos intermedios.
+
+## Cambios de datos
+- Si se modifica el esquema (por ejemplo, barrio), revisar impactos en repositorios, DTOs y pantallas que consumen esos campos.
+- Referencia de modelo de datos: README.md.
 
 ## SonarQube y calidad
 - Tomar como objetivo una cobertura alta en logica de negocio, servicios y validaciones.

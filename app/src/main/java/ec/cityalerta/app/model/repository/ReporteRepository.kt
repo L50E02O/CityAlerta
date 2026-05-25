@@ -15,6 +15,7 @@ import ec.cityalerta.app.model.utils.toReporteEstadoOrDefault
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -91,6 +92,7 @@ class ReporteRepository : CrudRepositoryContract<Reporte, ReporteCreateDto, Repo
                 filter {
                     eq("ciudad_id", ciudadId)
                 }
+                order("created_at", Order.DESCENDING)
             }
             .decodeList<JsonObject>()
             .map { it.toReporte() }

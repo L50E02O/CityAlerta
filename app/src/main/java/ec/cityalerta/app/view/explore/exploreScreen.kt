@@ -42,7 +42,7 @@ fun ExploreScreen(
     val profileState by profileViewModel.state.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadData()
+        viewModel.loadData(force = true)
         profileViewModel.loadSummaryIfNeeded()
     }
 
