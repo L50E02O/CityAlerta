@@ -78,7 +78,7 @@ fun AuthScreenScaffold(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -95,14 +95,14 @@ fun AuthScreenScaffold(
         Text(
             text = "CityAlerta",
             style = MaterialTheme.typography.headlineSmall,
-            color = Color(0xFF1B2633),
+            color = MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold
         )
 
         Text(
             text = "REPORTE CIUDADANO",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF6C757D),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 2.sp
         )
 
@@ -136,7 +136,7 @@ fun AuthScreenScaffold(
                 text = config.title,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1B2633)
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             config.subtitle?.let {
@@ -144,7 +144,7 @@ fun AuthScreenScaffold(
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6C757D)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -172,8 +172,8 @@ fun AuthScreenScaffold(
                 enabled = isFormValid && !viewModel.uiState.isLoading,
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFE53935),
-                    disabledContainerColor = Color(0xFFE53935).copy(alpha = 0.6f)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 )
             ) {
                 Text(
@@ -188,7 +188,7 @@ fun AuthScreenScaffold(
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text(
                     text = config.secondaryActionText,
-                    color = Color(0xFF6C757D),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.clickable(onClick = config.onSecondaryAction)
                 )
@@ -220,7 +220,7 @@ fun AuthTab(
     ) {
         Text(
             text = text,
-            color = if (selected) Color(0xFF1B2633) else Color(0xFFADB5BD),
+            color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             fontSize = 16.sp
         )
@@ -229,7 +229,7 @@ fun AuthTab(
             HorizontalDivider(
                 modifier = Modifier.fillMaxWidth(0.4f),
                 thickness = 2.dp,
-                color = Color(0xFFE53935)
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -244,7 +244,7 @@ private fun AuthCitySection(
     Text(
         text = "PAÍS",
         style = MaterialTheme.typography.labelSmall,
-        color = Color(0xFF6C757D),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(bottom = 8.dp)
     )
@@ -254,7 +254,7 @@ private fun AuthCitySection(
     Text(
         text = "CIUDAD",
         style = MaterialTheme.typography.labelSmall,
-        color = Color(0xFF6C757D),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(bottom = 8.dp)
     )
@@ -278,13 +278,13 @@ private fun AuthCitySection(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFFF8F9FA),
-                focusedContainerColor = Color(0xFFF8F9FA),
-                unfocusedBorderColor = Color(0xFFE9ECEF),
-                focusedBorderColor = Color(0xFF1B2633),
-                unfocusedTextColor = Color(0xFF1B2633),
-                focusedTextColor = Color(0xFF1B2633),
-                disabledTextColor = Color(0xFF1B2633)
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledTextColor = MaterialTheme.colorScheme.onSurface
             )
         )
     }
@@ -311,13 +311,13 @@ fun CountryField(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = Color(0xFFF8F9FA),
-            focusedContainerColor = Color(0xFFF8F9FA),
-            unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633),
-            unfocusedTextColor = Color(0xFF1B2633),
-            focusedTextColor = Color(0xFF1B2633),
-            disabledTextColor = Color(0xFF1B2633)
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -334,13 +334,13 @@ fun FixedCityField(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = Color(0xFFF8F9FA),
-            focusedContainerColor = Color(0xFFF8F9FA),
-            unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633),
-            unfocusedTextColor = Color(0xFF1B2633),
-            focusedTextColor = Color(0xFF1B2633),
-            disabledTextColor = Color(0xFF1B2633)
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            focusedBorderColor = MaterialTheme.colorScheme.secondary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            disabledTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }
@@ -374,16 +374,16 @@ fun CiudadDropdown(
                 onQueryChange(it)
                 if (!expanded) expanded = true
             },
-            placeholder = { Text("Escribe o selecciona tu ciudad", color = Color(0xFFADB5BD)) },
+            placeholder = { Text("Escribe o selecciona tu ciudad", color = MaterialTheme.colorScheme.onSurfaceVariant) },
             modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true).fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color(0xFFF8F9FA),
-                focusedContainerColor = Color(0xFFF8F9FA),
-                unfocusedBorderColor = Color(0xFFE9ECEF),
-                focusedBorderColor = Color(0xFF1B2633),
-                unfocusedTextColor = Color(0xFF1B2633),
-                focusedTextColor = Color(0xFF1B2633)
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedTextColor = MaterialTheme.colorScheme.onSurface
             )
         )
         ExposedDropdownMenu(

@@ -34,7 +34,7 @@ fun ProfileAvatar(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(Color(0xFFE9ECEF))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable(enabled = !isLoading) { onClick() },
         contentAlignment = Alignment.Center
     ) {

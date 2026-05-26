@@ -31,20 +31,32 @@ private val LightColors = lightColorScheme(
     secondary = Color(0xFF1B2633), // Azul oscuro
     onSecondary = Color.White,
     background = Color(0xFFFFFFFF),
+    onBackground = Color(0xFF1B2633),
     surface = Color.White,
     onSurface = Color(0xFF1B2633),
-    outline = Color(0xFFE0E0E0)
+    surfaceVariant = Color(0xFFF8F9FA),
+    onSurfaceVariant = Color(0xFF6C757D),
+    outline = Color(0xFFE0E0E0),
+    outlineVariant = Color(0xFFE9ECEF)
 )
 
 private val DarkColors = darkColorScheme(
     primary = Color(0xFFE53935),
     onPrimary = Color.White,
-    secondary = Color(0xFF1B2633),
+    secondary = Color(0xFF3B5B7A), // Lighter blue for secondary in dark mode
     onSecondary = Color.White,
     background = Color(0xFF0F1720),
+    onBackground = Color.White,
     surface = Color(0xFF1B2633),
     onSurface = Color.White,
-    outline = Color(0xFF303E4D)
+    surfaceVariant = Color(0xFF141D26),
+    onSurfaceVariant = Color(0xFFADB5BD),
+    outline = Color(0xFF303E4D),
+    outlineVariant = Color(0xFF3E4E5E),
+    error = Color(0xFFCF6679),
+    onError = Color.Black,
+    errorContainer = Color(0xFFB00020).copy(alpha = 0.2f),
+    onErrorContainer = Color.White
 )
 
 @Composable

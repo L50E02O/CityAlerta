@@ -205,6 +205,8 @@ private fun MapCityContent(
     ciudadId: String,
     dependencies: MapScreenDependencies
 ) {
+    var showMyLocation by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         val polygonPoints = remember(ciudad) {
             GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
@@ -235,7 +237,7 @@ private fun MapCityContent(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = dependencies.cameraPositionState,
             properties = MapProperties(
-                isMyLocationEnabled = dependencies.locationPermissionGranted,
+                isMyLocationEnabled = dependencies.locationPermissionGranted && showMyLocation,
                 latLngBoundsForCameraTarget = cityBounds,
                 minZoomPreference = 12f,
                 maxZoomPreference = 18f
@@ -287,6 +289,7 @@ private fun MapCityContent(
                 val categoryMarkerIds = categoryReports.map { it.id }.toSet()
                 val categoryMarkers = uiState.reportMarkers
                     .filter { it.id in categoryMarkerIds }
+                    .distinctBy { it.id }
 
                 categoryMarkers.forEach { marker ->
                     if (marker.id !in processedMarkerIds) {
@@ -345,24 +348,29 @@ private fun MapCityContent(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 124.dp, end = 16.dp),
-            containerColor = Color(0xFF051C3F),
-            contentColor = Color.White,
+            containerColor = if (showMyLocation) MaterialTheme.colorScheme.primary else Color(0xFF051C3F),
+            contentColor = if (showMyLocation) MaterialTheme.colorScheme.onPrimary else Color.White,
             onClick = {
                 if (dependencies.locationPermissionGranted) {
-                    try {
-                        dependencies.fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                            location?.let {
-                                dependencies.scope.launch {
-                                    dependencies.cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngZoom(
-                                            LatLng(it.latitude, it.longitude),
-                                            15f
+                    if (!showMyLocation) {
+                        showMyLocation = true
+                        try {
+                            dependencies.fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                location?.let {
+                                    dependencies.scope.launch {
+                                        dependencies.cameraPositionState.animate(
+                                            CameraUpdateFactory.newLatLngZoom(
+                                                LatLng(it.latitude, it.longitude),
+                                                15f
+                                            )
                                         )
-                                    )
+                                    }
                                 }
                             }
-                        }
-                    } catch (_: SecurityException) { }
+                        } catch (_: SecurityException) { }
+                    } else {
+                        showMyLocation = false
+                    }
                 }
             }
         )

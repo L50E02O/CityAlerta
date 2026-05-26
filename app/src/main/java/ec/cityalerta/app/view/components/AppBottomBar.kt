@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -35,8 +36,6 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Log para depuración si es necesario: android.util.Log.d("BottomBar", "Ciudad actual: $ciudadId")
-
     val bottomBarRoutes = listOf(
         Routes.Home.route,
         Routes.Explore.route,
@@ -46,13 +45,13 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
 
     if (currentRoute?.startsWith("map") == true || currentRoute in bottomBarRoutes) {
         Surface(
-            color = Color(0xFF1B2633),
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.fillMaxWidth()
         ) {
             NavigationBar(
                 modifier = Modifier.height(84.dp),
                 containerColor = Color.Transparent,
-                contentColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.onSecondary,
                 tonalElevation = 0.dp
             ) {
                 NavigationBarItem(
@@ -73,10 +72,10 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     },
                     label = { Text(stringResource(R.string.nav_explore), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        selectedTextColor = Color.White,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondary,
+                        selectedTextColor = MaterialTheme.colorScheme.onSecondary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        unselectedTextColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
                         indicatorColor = Color.Transparent
                     )
                 )
@@ -94,23 +93,23 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF3B5B7A)),
+                                .background(MaterialTheme.colorScheme.primary),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Default.Add,
                                 contentDescription = "REPORT",
-                                tint = Color.White,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     },
                     label = { Text(stringResource(R.string.nav_report), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        selectedTextColor = Color.White,
-                        unselectedIconColor = Color.White,
-                        unselectedTextColor = Color.Gray,
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondary,
+                        selectedTextColor = MaterialTheme.colorScheme.onSecondary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSecondary,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
                         indicatorColor = Color.Transparent
                     )
                 )
@@ -132,10 +131,10 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     },
                     label = { Text(stringResource(R.string.nav_map), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = Color.White,
-                        selectedTextColor = Color.White,
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray,
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondary,
+                        selectedTextColor = MaterialTheme.colorScheme.onSecondary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        unselectedTextColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
                         indicatorColor = Color.Transparent
                     )
                 )

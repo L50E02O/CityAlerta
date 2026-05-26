@@ -164,7 +164,7 @@ private fun SettingsProfileCard(state: ProfileState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -181,14 +181,14 @@ private fun SettingsProfileCard(state: ProfileState) {
                     state.fullName.ifBlank { stringResource(R.string.profile_user_fallback) },
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
-                    color = Color(0xFF1B2633)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     stringResource(R.string.profile_active_member),
                     modifier = Modifier.padding(top = 4.dp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF3B5B7A),
+                    color = MaterialTheme.colorScheme.secondary,
                     letterSpacing = 0.8.sp
                 )
             }
@@ -201,29 +201,31 @@ private fun SettingsDeleteCard(onOpenDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8E8E8))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 stringResource(R.string.settings_delete_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = Color(0xFF1B2633)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 stringResource(R.string.settings_delete_desc),
                 modifier = Modifier.padding(vertical = 8.dp),
                 fontSize = 13.sp,
-                color = Color(0xFF6C757D),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp
             )
             Button(
                 onClick = onOpenDelete,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE74C3C))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(stringResource(R.string.settings_delete_button), color = Color.White)
+                Text(stringResource(R.string.settings_delete_button), color = MaterialTheme.colorScheme.onError)
             }
         }
     }
@@ -252,8 +254,8 @@ internal fun SettingsNameDialog(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isSaving,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF1B1B1B),
-                    unfocusedTextColor = Color(0xFF1B1B1B)
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
@@ -302,8 +304,8 @@ internal fun SettingsEmailDialog(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isSaving,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF1B1B1B),
-                        unfocusedTextColor = Color(0xFF1B1B1B)
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
                 if (editEmail.isNotEmpty() && !isEmailValid) {
@@ -316,7 +318,7 @@ internal fun SettingsEmailDialog(
                 Text(
                     stringResource(R.string.settings_edit_email_info),
                     fontSize = 12.sp,
-                    color = Color(0xFF6C757D)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 emailFieldError?.let {
                     Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -426,7 +428,7 @@ internal fun SettingsDeleteDialog(
                 },
                 enabled = !isDeleting
             ) {
-                Text(stringResource(R.string.settings_confirm), color = Color(0xFFE74C3C))
+                Text(stringResource(R.string.settings_confirm), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {

@@ -11,6 +11,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -161,12 +162,13 @@ fun PhotoScreen(
                 onBackClick = { navController.popBackStack() },
                 onProfileClick = { navController.navigate(Routes.Profile.route) }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(ReportUiColors.ScreenBackground)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(ReportUiDimens.ScreenPadding)
                 .padding(padding)
                 .padding(bottom = 96.dp),
@@ -211,7 +213,7 @@ private fun CameraPreviewFrame(
         modifier = Modifier
             .fillMaxWidth()
             .height(ReportUiDimens.FrameHeight)
-            .background(ReportUiColors.FrameBackground, ReportUiShapes.Frame)
+            .background(Color.Black, ReportUiShapes.Frame)
             .clip(ReportUiShapes.Frame)
     ) {
         if (photoUri != null) {
@@ -220,7 +222,7 @@ private fun CameraPreviewFrame(
                 contentDescription = "Foto seleccionada",
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(ReportUiColors.FrameBackground, ReportUiShapes.Frame)
+                    .background(Color.Black, ReportUiShapes.Frame)
             )
         } else {
             AndroidView(
@@ -235,16 +237,17 @@ private fun CameraPreviewFrame(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(20.dp)
-                .border(2.dp, ReportUiColors.FrameBorder, ReportUiShapes.FrameInner)
+                .border(2.dp, Color.White.copy(alpha = 0.8f), ReportUiShapes.FrameInner)
         )
 
         Text(
             text = "Alinee el objeto con las guias",
-            color = ReportUiColors.FrameBorder,
+            color = Color.White,
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .background(Color(0x99000000), RoundedCornerShape(12.dp))
+                .padding(bottom = 8.dp)
+                .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
                 .padding(horizontal = 12.dp, vertical = 6.dp)
         )
 
@@ -296,9 +299,17 @@ private fun CameraControls(
         OutlinedButton(
             onClick = onOpenGallery,
             modifier = Modifier.size(ReportUiDimens.SideButtonSize),
-            shape = ReportUiShapes.SideButton
+            shape = ReportUiShapes.SideButton,
+            contentPadding = PaddingValues(0.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
         ) {
-            Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.PhotoLibrary,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
         }
 
         ElevatedButton(
@@ -311,12 +322,16 @@ private fun CameraControls(
             },
             modifier = Modifier.size(ReportUiDimens.CaptureButtonSize),
             shape = ReportUiShapes.Circle,
-            colors = ButtonDefaults.buttonColors(containerColor = ReportUiColors.AccentRed)
+            contentPadding = PaddingValues(0.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
         ) {
             Icon(
-                Icons.Default.CameraAlt,
+                imageVector = Icons.Default.CameraAlt,
                 contentDescription = null,
-                tint = Color.White
+                modifier = Modifier.size(32.dp)
             )
         }
 
@@ -329,9 +344,17 @@ private fun CameraControls(
                 }
             },
             modifier = Modifier.size(ReportUiDimens.SideButtonSize),
-            shape = ReportUiShapes.SideButton
+            shape = ReportUiShapes.SideButton,
+            contentPadding = PaddingValues(0.dp),
+            colors = ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.onSurface
+            )
         ) {
-            Icon(Icons.Default.Cached, contentDescription = null)
+            Icon(
+                imageVector = Icons.Default.Cached,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }

@@ -90,18 +90,21 @@ fun MyReportsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFF6F7F9))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             when {
                 state.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 state.myReports.isEmpty() -> {
                     Text(
                         text = "No hay reportes para mostrar",
                         modifier = Modifier.align(Alignment.Center),
-                        color = Color(0xFF6C757D)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -165,7 +168,7 @@ private fun MyReportCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
@@ -185,9 +188,9 @@ private fun MyReportCard(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFFE9ECEF)),
+                            .background(MaterialTheme.colorScheme.outlineVariant),
                         contentAlignment = Alignment.Center
-                    ) { Text("Imagen no disponible", color = Color(0xFFADB5BD)) }
+                    ) { Text("Imagen no disponible", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
 
                 Row(
@@ -196,7 +199,7 @@ private fun MyReportCard(
                         .align(Alignment.TopStart),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    ReportTag(report.categoria.toDisplayName(), Color(0xFFE64B4B))
+                    ReportTag(report.categoria.toDisplayName(), MaterialTheme.colorScheme.primary)
                     ReportTag(report.estado.name.replace("_", " "), Color.Black.copy(alpha = 0.45f))
                 }
             }
@@ -206,28 +209,39 @@ private fun MyReportCard(
                     text = report.barrio,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF1B2633)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color(0xFF3B5B7A), modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Default.LocationOn,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.size(16.dp)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(report.direccion, color = Color(0xFF3B5B7A), fontSize = 12.sp)
+                    Text(report.direccion, color = MaterialTheme.colorScheme.secondary, fontSize = 12.sp)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(report.descripcion, color = Color(0xFF495057))
+                Text(report.descripcion, color = MaterialTheme.colorScheme.onSurface)
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onEdit) {
+                    Button(
+                        onClick = onEdit,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
                         Icon(Icons.Default.Edit, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text("Editar")
                     }
                     Button(
                         onClick = onDelete,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE64B4B))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
@@ -274,7 +288,7 @@ private fun EditReportDialog(
                         .fillMaxWidth()
                         .height(160.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE9ECEF)),
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     if (imageModel != null) {
@@ -285,7 +299,7 @@ private fun EditReportDialog(
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        Text("Sin imagen", color = Color(0xFFADB5BD))
+                        Text("Sin imagen", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -304,9 +318,9 @@ private fun EditReportDialog(
                     label = { Text("Estado") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        disabledTextColor = Color(0xFF1B1B1B),
-                        disabledBorderColor = Color.Gray.copy(alpha = 0.5f),
-                        disabledLabelColor = Color.Gray
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
 
@@ -321,8 +335,8 @@ private fun EditReportDialog(
                         label = { Text("Categoria") },
                         modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color(0xFF1B1B1B),
-                            unfocusedTextColor = Color(0xFF1B1B1B)
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
                     ExposedDropdownMenu(expanded = categoryExpanded, onDismissRequest = { categoryExpanded = false }) {
@@ -344,8 +358,8 @@ private fun EditReportDialog(
                     label = { Text("Descripcion") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color(0xFF1B1B1B),
-                        unfocusedTextColor = Color(0xFF1B1B1B)
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
             }
@@ -367,6 +381,6 @@ private fun ReportTag(text: String, backgroundColor: Color) {
             .background(backgroundColor)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
-        Text(text = text.uppercase(), color = Color.White, style = MaterialTheme.typography.labelSmall)
+        Text(text = text.uppercase(), color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelSmall)
     }
 }

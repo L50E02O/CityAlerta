@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +36,7 @@ fun ReporteCard(reporte: ReporteUI) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
@@ -56,10 +57,10 @@ fun ReporteCard(reporte: ReporteUI) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFFE9ECEF)),
+                            .background(MaterialTheme.colorScheme.outlineVariant),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Imagen no disponible", color = Color(0xFFADB5BD))
+                        Text("Imagen no disponible", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -69,7 +70,7 @@ fun ReporteCard(reporte: ReporteUI) {
                         .align(Alignment.TopStart),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Tag(text = reporte.categoria, backgroundColor = Color(0xFFE53935))
+                    Tag(text = reporte.categoria, backgroundColor = MaterialTheme.colorScheme.primary)
                     Tag(text = reporte.timeAgo.uppercase(), backgroundColor = Color.Black.copy(alpha = 0.4f))
                 }
             }
@@ -90,14 +91,14 @@ fun ReporteCard(reporte: ReporteUI) {
                             text = reporte.barrio,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFF1B2633)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
 
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
-                                tint = Color(0xFF3B5B7A),
+                                tint = MaterialTheme.colorScheme.secondary,
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -105,7 +106,7 @@ fun ReporteCard(reporte: ReporteUI) {
                                 text = reporte.direccion.uppercase(),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF3B5B7A)
+                                color = MaterialTheme.colorScheme.secondary
                             )
                         }
                     }
@@ -115,13 +116,13 @@ fun ReporteCard(reporte: ReporteUI) {
                             text = reporte.estado,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color(0xFFE53935)
+                            color = MaterialTheme.colorScheme.primary
                         )
                         Text(
                             text = "ESTADO",
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6C757D)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -131,7 +132,7 @@ fun ReporteCard(reporte: ReporteUI) {
                 Text(
                     text = reporte.descripcion,
                     fontSize = 14.sp,
-                    color = Color(0xFF495057),
+                    color = MaterialTheme.colorScheme.onSurface,
                     lineHeight = 20.sp
                 )
             }

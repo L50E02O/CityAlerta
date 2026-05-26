@@ -1,5 +1,6 @@
 package ec.cityalerta.app.view.search
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -65,11 +67,12 @@ fun SearchScreen(
                 onProfileClick = { navController.navigate("profile") }
             )
         },
-        containerColor = Color(0xFFF8F9FA)
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(padding)
                 .padding(horizontal = 20.dp)
         ) {
@@ -86,11 +89,13 @@ fun SearchScreen(
                 shape = RoundedCornerShape(8.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF1B1B1B),
-                    unfocusedTextColor = Color(0xFF1B1B1B),
-                    focusedPlaceholderColor = Color(0xFF6C757D),
-                    unfocusedPlaceholderColor = Color(0xFF6C757D),
-                    cursorColor = Color(0xFF1B1B1B)
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface
                 )
             )
 
@@ -101,7 +106,7 @@ fun SearchScreen(
                 text = "Categoria",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1B2633)
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -117,14 +122,14 @@ fun SearchScreen(
             // Resultados de busqueda
             if (state.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF1B2633))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (state.reportes.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = "No se encontraron reportes",
                         fontSize = 14.sp,
-                        color = Color(0xFF6C757D)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
@@ -146,7 +151,7 @@ fun SearchScreen(
                     Text(
                         text = it,
                         fontSize = 14.sp,
-                        color = Color(0xFFE74C3C)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
             }
@@ -185,7 +190,7 @@ fun CategoryFilterRow(
                     .height(40.dp)
                     .padding(end = 4.dp),
                 shape = RoundedCornerShape(8.dp),
-                color = if (isSelected) Color(0xFF1B2633) else Color.White,
+                color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.surface,
                 onClick = { onCategorySelected(category) }
             ) {
                 Box(
@@ -197,7 +202,7 @@ fun CategoryFilterRow(
                         text = label,
                         fontSize = 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) Color.White else Color(0xFF1B2633)
+                        color = if (isSelected) MaterialTheme.colorScheme.onSecondary else MaterialTheme.colorScheme.onSurface
                     )
                 }
              }

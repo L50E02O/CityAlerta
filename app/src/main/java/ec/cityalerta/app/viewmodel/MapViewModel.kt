@@ -112,9 +112,11 @@ class MapViewModel(
                     val ubicacionesResult = ubicacionRepository.getAll()
 
                     if (reportesResult.isSuccess && ubicacionesResult.isSuccess) {
-                        val allReportes = reportesResult.getOrThrow()
                         val allUbicaciones = ubicacionesResult.getOrThrow().associateBy { it.id }
-                        val filteredReports = allReportes.filter { it.ciudad_id == realCiudadId }
+                        val allReportes = reportesResult.getOrThrow()
+                        val filteredReports = allReportes
+                            .filter { it.ciudad_id == realCiudadId }
+                            .distinctBy { it.id }
 
                         val riskZones = withContext(Dispatchers.Default) {
                             val cellSize = 0.0015
@@ -159,7 +161,7 @@ class MapViewModel(
                                     description = report.descripcion
                                 )
                             }
-                        }
+                        }.distinctBy { it.id }
 
                         uiState = uiState.copy(
                             ciudad = ciudad,

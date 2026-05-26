@@ -78,10 +78,16 @@ fun ReporteScreen(
         )
     }
 
+    var showMyLocation by remember { mutableStateOf(false) }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         locationPermissionGranted = isGranted
+        if (isGranted) {
+            showMyLocation = true
+            viewModel.requestCurrentLocation()
+        }
     }
 
     val defaultLocation = LatLng(-0.95, -80.73)
@@ -102,8 +108,8 @@ fun ReporteScreen(
         }
     }
 
-    LaunchedEffect(locationPermissionGranted) {
-        if (locationPermissionGranted) {
+    LaunchedEffect(locationPermissionGranted, showMyLocation) {
+        if (locationPermissionGranted && showMyLocation) {
             viewModel.requestCurrentLocation()
         }
     }
@@ -129,11 +135,11 @@ fun ReporteScreen(
                 onProfileClick = { navController.navigate(Routes.Profile.route) }
             )
         },
-        containerColor = ReportUiColors.ScreenBackground
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { padding ->
         Column(
             modifier = Modifier
-                .background(ReportUiColors.ScreenBackground)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(padding)
                 .padding(ReportUiDimens.ScreenPadding),
             verticalArrangement = Arrangement.spacedBy(ReportUiDimens.SectionSpacing)
@@ -142,12 +148,12 @@ fun ReporteScreen(
                 Text(
                     text = "Seleccione su ubicacion",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color(0xFF1B1B1B)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "Confirme el punto exacto para el despliegue de seguridad.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF7D818C)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -155,13 +161,13 @@ fun ReporteScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(ReportUiDimens.MapHeight)
-                    .background(ReportUiColors.MapPlaceholder, ReportUiShapes.Card)
+                    .background(MaterialTheme.colorScheme.outlineVariant, ReportUiShapes.Card)
             ) {
                 GoogleMap(
                     modifier = Modifier.fillMaxSize(),
                     cameraPositionState = cameraPositionState,
                     properties = MapProperties(
-                        isMyLocationEnabled = locationPermissionGranted
+                        isMyLocationEnabled = locationPermissionGranted && showMyLocation
                     ),
                     uiSettings = MapUiSettings(
                         zoomControlsEnabled = false,
@@ -178,26 +184,30 @@ fun ReporteScreen(
                         if (!locationPermissionGranted) {
                             permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
                         } else {
-                            viewModel.requestCurrentLocation()
+                            showMyLocation = !showMyLocation
                         }
                     },
                     modifier = Modifier
                         .align(androidx.compose.ui.Alignment.BottomCenter)
                         .padding(bottom = 16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (showMyLocation) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                        contentColor = if (showMyLocation) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Text("Usar mi ubicación actual", color = Color(0xFF1B1B1B))
+                    Text(if (showMyLocation) "Desactivar mi ubicación" else "Usar mi ubicación actual")
                 }
             }
 
-            Text("CATEGORIA", style = MaterialTheme.typography.labelSmall, color = ReportUiColors.HintText)
+            Text("CATEGORIA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             CategoryDropDown(
                 selected = categoria,
                 onSelected = { viewModel.onCategoriaChange(it) }
             )
 
-            Text("DESCRIPCION", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A8D99))
+            Text("DESCRIPCION", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             OutlinedTextField(
                 value = descripcion,
@@ -205,11 +215,13 @@ fun ReporteScreen(
                 placeholder = { Text("Describa brevemente la situacion...") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color(0xFF1B1B1B),
-                    unfocusedTextColor = Color(0xFF1B1B1B),
-                    focusedPlaceholderColor = Color(0xFF8A8D99),
-                    unfocusedPlaceholderColor = Color(0xFF8A8D99),
-                    cursorColor = Color(0xFF1B1B1B)
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface
                 )
             )
 
@@ -221,21 +233,21 @@ fun ReporteScreen(
                 shape = ReportUiShapes.Button,
                 enabled = !isSubmitting,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ReportUiColors.AccentRed,
-                    disabledContainerColor = Color(0xFFB24A4A)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                 )
             ) {
                 Text(
                     text = if (isSubmitting) "Enviando..." else "Enviar reporte",
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onPrimary
                 )
             }
 
             Text(
                 text = "Al enviar este reporte, su ubicacion y datos de perfil seran compartidos con las autoridades locales de forma segura.",
                 style = MaterialTheme.typography.bodySmall,
-                color = ReportUiColors.HintText
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             if (!errorMessage.isNullOrBlank()) {
@@ -276,10 +288,12 @@ fun CategoryDropDown(
             placeholder = { Text("Ubique la categoria del reporte") },
             modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true).fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color(0xFF1B1B1B),
-                unfocusedTextColor = Color(0xFF1B1B1B),
-                focusedPlaceholderColor = Color(0xFF8A8D99),
-                unfocusedPlaceholderColor = Color(0xFF8A8D99)
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface
             )
         )
 

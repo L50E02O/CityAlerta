@@ -42,9 +42,9 @@ fun ReportMarkerDot(
 private fun getCategoryColor(type: ReportType): Color {
     return when (type) {
         ReportType.ZONA_DE_RIESGO -> Color(0xFFFF5252) // Rojo
-        ReportType.LUZ -> Color(0xFFFFC107)           // Verde
+        ReportType.BACHE -> Color(0xFFFFC107)         // Ambar
         ReportType.AGUA -> Color(0xFF2196F3)          // Azul
-        ReportType.BACHE -> Color(0xFF4CAF50)         // Ambar
+        ReportType.LUZ -> Color(0xFF4CAF50)           // Verde
     }
 }
 

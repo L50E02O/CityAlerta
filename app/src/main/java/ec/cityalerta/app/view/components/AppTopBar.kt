@@ -13,12 +13,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +36,7 @@ fun AppTopBar(
     onSearchClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    Surface(color = Color.White, modifier = Modifier.fillMaxWidth()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -50,7 +50,7 @@ fun AppTopBar(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Atras",
-                            tint = Color(0xFF1B2633)
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
@@ -62,7 +62,7 @@ fun AppTopBar(
                             text = label,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF3B5B7A),
+                            color = MaterialTheme.colorScheme.secondary,
                             letterSpacing = 1.sp
                         )
                     }
@@ -70,7 +70,7 @@ fun AppTopBar(
                         text = title,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1B2633)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -81,7 +81,7 @@ fun AppTopBar(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Buscar",
-                            tint = Color(0xFF1B2633),
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(24.dp)
                         )
                     }
