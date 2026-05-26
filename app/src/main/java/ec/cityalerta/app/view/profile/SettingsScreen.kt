@@ -25,6 +25,7 @@ fun SettingsScreen(
 
     var showNameDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
+    var showLocationDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var editName by remember { mutableStateOf("") }
@@ -32,6 +33,7 @@ fun SettingsScreen(
     var emailFieldError by remember { mutableStateOf<String?>(null) }
     var pendingNameSave by remember { mutableStateOf(false) }
     var pendingEmailSave by remember { mutableStateOf(false) }
+    var pendingLocationSave by remember { mutableStateOf(false) }
 
     val nameEmptyMessage = stringResource(R.string.settings_name_empty)
     val nameUpdatedMessage = stringResource(R.string.settings_name_updated)
@@ -40,6 +42,8 @@ fun SettingsScreen(
     val emailSameMessage = stringResource(R.string.settings_email_same)
     val emailUpdatedMessage = stringResource(R.string.settings_email_updated)
     val emailUpdateErrorMessage = stringResource(R.string.settings_email_update_error)
+    val cityUpdatedMessage = stringResource(R.string.settings_language_changed) // Podriamos crear uno mas especifico pero reusamos este por ahora
+    val cityUpdateErrorMessage = stringResource(R.string.auth_city_load_error)
     val deleteErrorMessage = stringResource(R.string.settings_delete_error)
 
     val currentLanguage = localeManager.languageState.value
@@ -72,6 +76,11 @@ fun SettingsScreen(
                 emailFieldError = null
                 viewModel.clearSettingsMessages()
                 showEmailDialog = true
+            },
+            onEditLocation = {
+                viewModel.clearSettingsMessages()
+                viewModel.loadCities()
+                showLocationDialog = true
             },
             onOpenLanguage = {
                 viewModel.clearSettingsMessages()
@@ -150,6 +159,33 @@ fun SettingsScreen(
         onClose = {
             showEmailDialog = false
             pendingEmailSave = false
+        }
+    )
+
+    SettingsLocationDialog(
+        visible = showLocationDialog,
+        cities = state.cities,
+        query = state.ciudadQuery,
+        isSaving = state.isSavingSettings,
+        onQueryChange = { viewModel.onCiudadChange(it) },
+        onDismiss = { showLocationDialog = false },
+        onSave = { selectedId ->
+            pendingLocationSave = true
+            viewModel.updateCity(
+                ciudadId = selectedId,
+                successMessage = cityUpdatedMessage,
+                errorMessage = cityUpdateErrorMessage
+            )
+        }
+    )
+
+    SettingsNameDialogCloser(
+        isSaving = state.isSavingSettings,
+        settingsInfoMessage = state.settingsInfoMessage,
+        pendingSave = pendingLocationSave,
+        onClose = {
+            showLocationDialog = false
+            pendingLocationSave = false
         }
     )
 

@@ -71,6 +71,7 @@
     <string name="settings_email_update_error">Could not update email</string>
     <string name="settings_name_update_error">Could not update name</string>
     <string name="settings_language_changed">Language updated</string>
+    <string name="settings_edit_location_title">Change location</string>
 
     <string name="appearance_title">Appearance</string>
     <string name="appearance_subtitle">Choose the app theme.</string>

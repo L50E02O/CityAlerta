@@ -12,7 +12,7 @@ import ec.cityalerta.app.model.data.perfilimagen.PerfilImagenUpdateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenUpdateDto
 import ec.cityalerta.app.model.data.perfil.PerfilUpdateDto
-import ec.cityalerta.app.model.repository.AuthRepository
+import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.repository.PerfilRepository
@@ -67,6 +67,8 @@ data class ProfileState(
     val profileStorageUuid: String? = null,
     val cityName: String = "",
     val ciudadId: String = "",
+    val cities: List<Ciudad> = emptyList(),
+    val ciudadQuery: String = "",
     val userEmail: String = "",
     val totalReports: Int = 0,
     val resolvedReports: Int = 0,
@@ -387,6 +389,54 @@ class ProfileViewModel(
 
     fun clearSettingsMessages() {
         _state.value = _state.value.copy(settingsInfoMessage = null, errorMessage = null)
+    }
+
+    fun loadCities() {
+        viewModelScope.launch {
+            ciudadRepository.getAllByCountry("Ecuador").fold(
+                onSuccess = { result ->
+                    _state.value = _state.value.copy(cities = result)
+                },
+                onFailure = { error ->
+                    _state.value = _state.value.copy(errorMessage = error.message ?: "Error al cargar ciudades")
+                }
+            )
+        }
+    }
+
+    fun onCiudadChange(query: String) {
+        _state.value = _state.value.copy(ciudadQuery = query)
+    }
+
+    fun updateCity(ciudadId: String, successMessage: String, errorMessage: String) {
+        viewModelScope.launch {
+            val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
+                ?: authRepository.getUserId().getOrNull()
+                ?: run {
+                    _state.value = _state.value.copy(errorMessage = errorMessage)
+                    return@launch
+                }
+
+            _state.value = _state.value.copy(isSavingSettings = true, errorMessage = null, settingsInfoMessage = null)
+
+            perfilRepository.update(PerfilUpdateDto(ciudadId = ciudadId), userId)
+                .onSuccess {
+                    summaryLoaded = false
+                    loadSummaryIfNeeded(force = true)
+                    _state.value = _state.value.copy(
+                        isSavingSettings = false,
+                        settingsInfoMessage = successMessage,
+                        errorMessage = null,
+                        ciudadQuery = ""
+                    )
+                }
+                .onFailure { error ->
+                    _state.value = _state.value.copy(
+                        isSavingSettings = false,
+                        errorMessage = error.message?.ifBlank { null } ?: errorMessage
+                    )
+                }
+        }
     }
 
     fun updateFullName(newName: String, emptyNameMessage: String, successMessage: String, errorMessage: String) {

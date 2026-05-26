@@ -48,7 +48,7 @@ import kotlin.math.*
 @Composable
 fun MapScreen(
     navController: NavController,
-    ciudadId: String = "manta",
+    ciudadId: String = "Sin ciudad",
     viewModel: MapViewModel,
     profileViewModel: ProfileViewModel
 ) {
@@ -66,8 +66,11 @@ fun MapScreen(
         position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
     }
 
-    LaunchedEffect(ciudadId) {
-        viewModel.loadCiudad(ciudadId)
+    LaunchedEffect(ciudadId, profileState.ciudadId) {
+        val targetId = if (ciudadId == "Sin ciudad") profileState.ciudadId else ciudadId
+        if (targetId.isNotBlank() && targetId != "Sin ciudad") {
+            viewModel.loadCiudad(targetId)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -206,7 +209,10 @@ private fun MapCityContent(
         val polygonPoints = remember(ciudad) {
             GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
         }
-        val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(dependencies.context, ciudadId) }
+        val assetBounds = remember(ciudadId, ciudad) {
+            val searchKey = if (ciudadId == "Sin ciudad") ciudad.nombre else ciudadId
+            loadCityBboxFromAssets(dependencies.context, searchKey)
+        }
 
         val cityBounds = remember(polygonPoints, assetBounds) {
             assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(

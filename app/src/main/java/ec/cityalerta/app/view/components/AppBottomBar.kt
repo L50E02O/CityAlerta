@@ -35,6 +35,8 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Log para depuración si es necesario: android.util.Log.d("BottomBar", "Ciudad actual: $ciudadId")
+
     val bottomBarRoutes = listOf(
         Routes.Home.route,
         Routes.Explore.route,
@@ -115,8 +117,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                 NavigationBarItem(
                     selected = currentRoute?.startsWith("map") == true,
                     onClick = {
-                        val finalCiudadId = if (ciudadId == "Sin ciudad") "manta" else ciudadId
-                        navController.navigate("map/$finalCiudadId") {
+                        navController.navigate("map/Sin ciudad") {
                             popUpTo(Routes.Home.route) { saveState = true }
                             launchSingleTop = true
                             restoreState = true

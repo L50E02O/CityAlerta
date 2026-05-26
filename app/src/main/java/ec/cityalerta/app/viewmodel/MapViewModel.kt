@@ -85,12 +85,24 @@ class MapViewModel(
 
         viewModelScope.launch {
             try {
-                val realCiudadId = if (ciudadId.length != 36) {
-                    authRepository.buscarCiudadPorNombre(ciudadId).getOrNull() ?: ciudadId
-                } else {
-                    ciudadId
+                val realCiudadId = when {
+                    ciudadId == "current" || ciudadId == "Sin ciudad" || ciudadId.isBlank() -> {
+                        authRepository.getCiudadId().getOrNull() ?: ""
+                    }
+                    ciudadId.length != 36 -> {
+                        authRepository.buscarCiudadPorNombre(ciudadId).getOrNull() ?: ciudadId
+                    }
+                    else -> ciudadId
                 }
                 
+                if (realCiudadId.isEmpty()) {
+                    uiState = uiState.copy(
+                        isLoading = false,
+                        errorMessage = "No se pudo determinar la ciudad actual"
+                    )
+                    return@launch
+                }
+
                 val ciudad = repository.getCiudadById(realCiudadId)
                 if (ciudad != null) {
                     val geometry = ciudad.geojson

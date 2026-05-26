@@ -76,6 +76,7 @@ class ReporteViewModel(
     fun setUbicacion(lat: Double, lng: Double) {
         _lat.value = lat
         _lng.value = lng
+        _currentLocation.value = UserLocation(lat, lng)
     }
 
     fun requestCurrentLocation() {
@@ -112,8 +113,13 @@ class ReporteViewModel(
                 }
 
                 submitReport(usuarioID, ciudadID, _descripcion.value, _categoria.value!!, _imagenBytes.value!!, lat, lng)
-                resetForm()
-                onSuccess()
+                    .onSuccess {
+                        resetForm()
+                        onSuccess()
+                    }
+                    .onFailure { error ->
+                        _errorMessage.value = error.message ?: "Error al guardar el reporte"
+                    }
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Error al enviar reporte"
             } finally {
@@ -158,20 +164,41 @@ class ReporteViewModel(
         imgBytes: ByteArray,
         lat: Double,
         lng: Double
-    ) {
+    ): Result<Unit> = runCatching {
         _errorMessage.value = null
+
         val barrioResult = barrioRepository.getByPoint(ciudadID, lat, lng)
-        val barrio = barrioResult.getOrNull()
+        var barrio = barrioResult.getOrNull()
+
         if (barrio == null) {
-            _errorMessage.value = "Ubicacion fuera de los limites de las parroquias"
-            return
+            // Si no hay coincidencia exacta, buscamos el barrio más cercano
+            // dentro de la ciudad actual para mantener la integridad del reporte.
+            val allBarriosResult = barrioRepository.getAll()
+            val cityBarrios = allBarriosResult.getOrNull()?.filter { it.ciudadId == ciudadID } ?: emptyList()
+            
+            barrio = cityBarrios.minByOrNull { b ->
+                val firstPoint = b.perimetro.coordinates.firstOrNull()?.firstOrNull()
+                if (firstPoint != null && firstPoint.size >= 2) {
+                    // Cálculo de distancia euclidiana aproximada para encontrar la cercanía
+                    val dLat = lat - firstPoint[1]
+                    val dLng = lng - firstPoint[0]
+                    dLat * dLat + dLng * dLng
+                } else {
+                    Double.MAX_VALUE
+                }
+            }
         }
 
+        if (barrio == null) {
+            throw Exception("Esta ciudad aún no cuenta con zonas de cobertura registradas para procesar reportes.")
+        }
+
+        val direccion = resolveDireccion(lat, lng)
         val ubicacion = reporteUbicacionRepository.create(
             ReporteUbicacionCreateDto(
                 lat = lat,
                 lng = lng,
-                direccion_aproximada = "Procesando direccion"
+                direccion_aproximada = direccion
             )
         ).getOrThrow()
 
@@ -203,8 +230,6 @@ class ReporteViewModel(
                 url_path = storagePath
             )
         )
-
-        resolveDireccionAsync(ubicacion.id, lat, lng)
     }
 
     private fun resetForm(){
@@ -225,13 +250,8 @@ class ReporteViewModel(
             ?: "Direccion no disponible"
     }
 
-    private fun resolveDireccionAsync(ubicacionId: String, lat: Double, lng: Double) {
-        viewModelScope.launch {
-            val direccion = resolveDireccion(lat, lng)
-            val updateResult = reporteUbicacionRepository.update(
-                ReporteUbicacionUpdateDto(direccion_aproximada = direccion),
-                ubicacionId
-            )
-        }
+    suspend fun getCityCenter(ciudadId: String): LatLng? {
+        val ciudad = mapRepository.getCiudadById(ciudadId)
+        return ciudad?.let { LatLng(it.centroLat, it.centroLng) }
     }
 }

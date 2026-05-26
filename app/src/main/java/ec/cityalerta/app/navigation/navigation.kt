@@ -173,7 +173,7 @@ fun AppNavigation(
             }
 
             composable(Routes.Map.route) { backStackEntry ->
-                val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "manta"
+                val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "Sin ciudad"
                 MapScreen(navController, ciudadId, mapViewModel, profileViewModel)
             }
             composable(Routes.Profile.route) {

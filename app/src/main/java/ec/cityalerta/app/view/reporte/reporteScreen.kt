@@ -62,15 +62,13 @@ fun ReporteScreen(
     onReportSent: () -> Unit
 ) {
     val profileState by profileViewModel.state.collectAsState()
-
-    LaunchedEffect(Unit) {
-        profileViewModel.loadSummaryIfNeeded()
-    }
     val descripcion by viewModel.descripcion.collectAsState()
     val categoria by viewModel.categoria.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val isSubmitting by viewModel.isSubmitting.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val currentLocation by viewModel.currentLocation.collectAsState()
+
     var locationPermissionGranted by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -79,8 +77,6 @@ fun ReporteScreen(
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    val currentLocation by viewModel.currentLocation.collectAsState()
-    val userLocation = currentLocation?.let { LatLng(it.latitude, it.longitude) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -91,6 +87,35 @@ fun ReporteScreen(
     val defaultLocation = LatLng(-0.95, -80.73)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
+    }
+
+    LaunchedEffect(Unit) {
+        profileViewModel.loadSummaryIfNeeded()
+    }
+
+    LaunchedEffect(profileState.ciudadId) {
+        if (profileState.ciudadId.isNotBlank()) {
+            viewModel.getCityCenter(profileState.ciudadId)?.let { center ->
+                cameraPositionState.position = CameraPosition.fromLatLngZoom(center, 15f)
+                viewModel.setUbicacion(center.latitude, center.longitude)
+            }
+        }
+    }
+
+    LaunchedEffect(locationPermissionGranted) {
+        if (locationPermissionGranted) {
+            viewModel.requestCurrentLocation()
+        }
+    }
+
+    // Actualizar la ubicacion en el ViewModel cuando el usuario mueve el mapa
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            viewModel.setUbicacion(
+                cameraPositionState.position.target.latitude,
+                cameraPositionState.position.target.longitude
+            )
+        }
     }
 
     Scaffold(
@@ -106,127 +131,126 @@ fun ReporteScreen(
         },
         containerColor = ReportUiColors.ScreenBackground
     ) { padding ->
-    Column(
-        modifier = Modifier
-            .background(ReportUiColors.ScreenBackground)
-            .padding(padding)
-            .padding(ReportUiDimens.ScreenPadding),
-        verticalArrangement = Arrangement.spacedBy(ReportUiDimens.SectionSpacing)
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                text = "Seleccione su ubicacion",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF1B1B1B)
-            )
-            Text(
-                text = "Confirme el punto exacto para el despliegue de seguridad.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF7D818C)
-            )
-        }
-
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(ReportUiDimens.MapHeight)
-                .background(ReportUiColors.MapPlaceholder, ReportUiShapes.Card)
+                .background(ReportUiColors.ScreenBackground)
+                .padding(padding)
+                .padding(ReportUiDimens.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(ReportUiDimens.SectionSpacing)
         ) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(
-                    isMyLocationEnabled = locationPermissionGranted
-                ),
-                uiSettings = MapUiSettings(
-                    zoomControlsEnabled = false,
-                    myLocationButtonEnabled = false,
-                    mapToolbarEnabled = false
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "Seleccione su ubicacion",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color(0xFF1B1B1B)
                 )
+                Text(
+                    text = "Confirme el punto exacto para el despliegue de seguridad.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF7D818C)
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ReportUiDimens.MapHeight)
+                    .background(ReportUiColors.MapPlaceholder, ReportUiShapes.Card)
             ) {
-                userLocation?.let { location ->
-                    Marker(state = MarkerState(location))
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = MapProperties(
+                        isMyLocationEnabled = locationPermissionGranted
+                    ),
+                    uiSettings = MapUiSettings(
+                        zoomControlsEnabled = false,
+                        myLocationButtonEnabled = false,
+                        mapToolbarEnabled = false
+                    )
+                ) {
+                    // Marcador que sigue el centro del mapa
+                    Marker(state = MarkerState(cameraPositionState.position.target))
+                }
+
+                Button(
+                    onClick = {
+                        if (!locationPermissionGranted) {
+                            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        } else {
+                            viewModel.requestCurrentLocation()
+                        }
+                    },
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.BottomCenter)
+                        .padding(bottom = 16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                ) {
+                    Text("Usar mi ubicación actual", color = Color(0xFF1B1B1B))
                 }
             }
 
+            Text("CATEGORIA", style = MaterialTheme.typography.labelSmall, color = ReportUiColors.HintText)
+
+            CategoryDropDown(
+                selected = categoria,
+                onSelected = { viewModel.onCategoriaChange(it) }
+            )
+
+            Text("DESCRIPCION", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A8D99))
+
+            OutlinedTextField(
+                value = descripcion,
+                onValueChange = { viewModel.onDescriptionChange(it) },
+                placeholder = { Text("Describa brevemente la situacion...") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color(0xFF1B1B1B),
+                    unfocusedTextColor = Color(0xFF1B1B1B),
+                    focusedPlaceholderColor = Color(0xFF8A8D99),
+                    unfocusedPlaceholderColor = Color(0xFF8A8D99),
+                    cursorColor = Color(0xFF1B1B1B)
+                )
+            )
+
             Button(
                 onClick = {
-                    if (!locationPermissionGranted) {
-                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    } else {
-                        viewModel.requestCurrentLocation()
-                    }
+                    viewModel.sendReport(onSuccess = onReportSent)
                 },
-                modifier = Modifier
-                    .align(androidx.compose.ui.Alignment.BottomCenter)
-                    .padding(bottom = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                modifier = Modifier.fillMaxWidth(),
+                shape = ReportUiShapes.Button,
+                enabled = !isSubmitting,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ReportUiColors.AccentRed,
+                    disabledContainerColor = Color(0xFFB24A4A)
+                )
             ) {
-                Text("Usar mi ubicacion actual", color = Color(0xFF1B1B1B))
+                Text(
+                    text = if (isSubmitting) "Enviando..." else "Enviar reporte",
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
+
+            Text(
+                text = "Al enviar este reporte, su ubicacion y datos de perfil seran compartidos con las autoridades locales de forma segura.",
+                style = MaterialTheme.typography.bodySmall,
+                color = ReportUiColors.HintText
+            )
+
+            if (!errorMessage.isNullOrBlank()) {
+                Text(
+                    text = errorMessage ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
-
-        Text("CATEGORIA", style = MaterialTheme.typography.labelSmall, color = ReportUiColors.HintText)
-
-        CategoryDropDown(
-            selected = categoria,
-            onSelected = { viewModel.onCategoriaChange(it) }
-        )
-
-        Text("DESCRIPCION", style = MaterialTheme.typography.labelSmall, color = Color(0xFF8A8D99))
-
-        OutlinedTextField(
-            value = descripcion,
-            onValueChange = { viewModel.onDescriptionChange(it) },
-            placeholder = { Text("Describa brevemente la situacion...") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = Color(0xFF1B1B1B),
-                unfocusedTextColor = Color(0xFF1B1B1B),
-                focusedPlaceholderColor = Color(0xFF8A8D99),
-                unfocusedPlaceholderColor = Color(0xFF8A8D99),
-                cursorColor = Color(0xFF1B1B1B)
-            )
-        )
-
-        Button(
-            onClick = {
-                viewModel.sendReport(onSuccess = onReportSent)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = ReportUiShapes.Button,
-            enabled = !isSubmitting,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ReportUiColors.AccentRed,
-                disabledContainerColor = Color(0xFFB24A4A)
-            )
-        ) {
-            Text(
-                text = if (isSubmitting) "Enviando..." else "Enviar reporte",
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White
-            )
-        }
-
-        Text(
-            text = "Al enviar este reporte, su ubicacion y datos de perfil seran compartidos con las autoridades locales de forma segura.",
-            style = MaterialTheme.typography.bodySmall,
-            color = ReportUiColors.HintText
-        )
-
-        if (!errorMessage.isNullOrBlank()) {
-            Text(
-                text = errorMessage ?: "",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-    }
     }
 
-    LaunchedEffect(userLocation) {
-        userLocation?.let { location ->
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(location, 16f)
+    LaunchedEffect(currentLocation) {
+        currentLocation?.let { location ->
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(location.latitude, location.longitude), 16f)
         }
     }
 }

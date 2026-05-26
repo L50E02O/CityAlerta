@@ -75,6 +75,7 @@
     <string name="settings_email_update_error">No se pudo actualizar el correo</string>
     <string name="settings_name_update_error">No se pudo actualizar el nombre</string>
     <string name="settings_language_changed">Idioma actualizado</string>
+    <string name="settings_edit_location_title">Cambiar ubicacion</string>
 
     <!-- Apariencia -->
     <string name="appearance_title">Apariencia</string>
