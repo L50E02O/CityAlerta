@@ -14,5 +14,7 @@ interface CameraController {
         onError: (String) -> Unit
     )
 
+    fun switchCamera()
+
     fun release()
 }

@@ -59,7 +59,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -78,14 +78,14 @@ fun SplashScreen(
             Text(
                 text = "CityAlerta",
                 style = MaterialTheme.typography.displaySmall,
-                color = Color(0xFF1B2633),
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = "LA APP DONDE TUS REPORTES\nSON ESCUCHADOS",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF6C757D),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp,
                 lineHeight = 16.sp,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -98,8 +98,8 @@ fun SplashScreen(
                 modifier = Modifier
                     .fillMaxWidth(0.6f)
                     .height(4.dp),
-                color = Color(0xFF1B2633),
-                trackColor = Color(0xFFE9ECEF),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.outlineVariant,
                 strokeCap = StrokeCap.Round
             )
         }
@@ -113,14 +113,14 @@ fun SplashScreen(
             Text(
                 text = "SEGURIDAD",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFFADB5BD),
+                color = MaterialTheme.colorScheme.outline,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
             )
             Text(
                 text = "Version 2.0.4",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFFADB5BD)
+                color = MaterialTheme.colorScheme.outline
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -131,13 +131,13 @@ fun SplashScreen(
                 Icon(
                     imageVector = Icons.Filled.Shield,
                     contentDescription = null,
-                    tint = Color(0xFFE9ECEF),
+                    tint = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.size(20.dp)
                 )
                 Icon(
                     imageVector = Icons.Filled.VerifiedUser,
                     contentDescription = null,
-                    tint = Color(0xFFE9ECEF),
+                    tint = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }

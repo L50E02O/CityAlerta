@@ -188,6 +188,7 @@ fun PhotoScreen(
                 hasCameraPermission = hasCameraPermission,
                 onOpenGallery = { galleryLauncher.launch("image/*") },
                 onCapture = ::capturePhoto,
+                onSwitchCamera = { cameraController.switchCamera() },
                 onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) }
             )
 
@@ -275,9 +276,9 @@ private fun CameraPermissionOverlay(onRequestPermission: () -> Unit) {
         Spacer(modifier = Modifier.height(12.dp))
         ElevatedButton(
             onClick = onRequestPermission,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Text("Permitir camara", color = Color(0xFF1B1B1B))
+            Text("Permitir camara", color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -287,6 +288,7 @@ private fun CameraControls(
     hasCameraPermission: Boolean,
     onOpenGallery: () -> Unit,
     onCapture: () -> Unit,
+    onSwitchCamera: () -> Unit,
     onRequestPermission: () -> Unit
 ) {
     Row(
@@ -338,7 +340,7 @@ private fun CameraControls(
         OutlinedButton(
             onClick = {
                 if (hasCameraPermission) {
-                    onCapture()
+                    onSwitchCamera()
                 } else {
                     onRequestPermission()
                 }

@@ -2,7 +2,9 @@ package ec.cityalerta.app.model.utils
 
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.PolygonOptions
+import androidx.compose.ui.graphics.toArgb
 import ec.cityalerta.app.model.data.geoJson.Geometry
+import ec.cityalerta.app.theme.MapStrokeBlue
 
 object GeoJsonConverter {
 
@@ -19,8 +21,8 @@ object GeoJsonConverter {
             polygonOptions.addAll(points)
         }
 
-        polygonOptions.fillColor(0x4287F5CC)
-        polygonOptions.strokeColor(0xFF287FCC.toInt())
+        polygonOptions.fillColor(0x4287F5CC.toInt())
+        polygonOptions.strokeColor(MapStrokeBlue.toArgb())
         polygonOptions.strokeWidth(2f)
 
         return polygonOptions

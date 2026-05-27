@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.theme.SuccessGreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -81,7 +82,7 @@ fun RecoverPasswordScreen(
         state.newPassword == state.confirmPassword &&
         !state.isLoading
 
-    Surface(color = ReportUiColors.ScreenBackground) {
+    Surface(color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -210,7 +211,7 @@ private fun EmailVerificationCard(
             if (state.isEmailVerified) {
                 Text(
                     text = "Correo verificado. Paso 02 habilitado.",
-                    color = Color(0xFF4CAF50),
+                    color = SuccessGreen,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -294,7 +295,7 @@ private fun RecoverPasswordStatusMessages(
     successMessage?.let { message ->
         Text(
             text = message,
-            color = Color(0xFF1B5E20),
+            color = SuccessGreen,
             style = MaterialTheme.typography.bodySmall
         )
     }

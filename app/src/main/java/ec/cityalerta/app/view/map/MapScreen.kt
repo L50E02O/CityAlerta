@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.theme.MapStrokeBlue
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -253,7 +254,7 @@ private fun MapCityContent(
                 Polygon(
                     points = polygonPoints,
                     fillColor = Color(0x4287F5CC),
-                    strokeColor = Color(0xFF287FCC),
+                    strokeColor = MapStrokeBlue,
                     strokeWidth = 2f
                 )
             }
@@ -348,8 +349,8 @@ private fun MapCityContent(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 124.dp, end = 16.dp),
-            containerColor = if (showMyLocation) MaterialTheme.colorScheme.primary else Color(0xFF051C3F),
-            contentColor = if (showMyLocation) MaterialTheme.colorScheme.onPrimary else Color.White,
+            containerColor = if (showMyLocation) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            contentColor = if (showMyLocation) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
             onClick = {
                 if (dependencies.locationPermissionGranted) {
                     if (!showMyLocation) {
@@ -418,8 +419,8 @@ fun MapControlButton(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = Color(0xFFE3E9F0),
-    contentColor: Color = Color(0xFF051C3F)
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     Surface(
         onClick = onClick,

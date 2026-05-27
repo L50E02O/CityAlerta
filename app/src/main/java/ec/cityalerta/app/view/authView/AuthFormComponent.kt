@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.theme.SuccessGreen
 import ec.cityalerta.app.R
 import ec.cityalerta.app.viewmodel.AuthViewModel
 
@@ -51,7 +52,7 @@ fun AuthFormComponent(
         Text(
             text = "CORREO ELECTRÓNICO",
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF6C757D),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -75,7 +76,7 @@ fun AuthFormComponent(
         Text(
             text = "CONTRASEÑA",
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF6C757D),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -100,7 +101,7 @@ fun AuthFormComponent(
         if (viewModel.uiState.infoMessage != null) {
             Text(
                 text = viewModel.uiState.infoMessage!!,
-                color = Color(0xFF1B5E20),
+                color = SuccessGreen, // Standard Material Success Green
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -136,7 +137,7 @@ private fun EmailField(
     OutlinedTextField(
         value = email,
         onValueChange = onEmailChange,
-        placeholder = { Text(text = "ejemplo@gmail.com", color = Color(0xFFADB5BD)) },
+        placeholder = { Text(text = "ejemplo@gmail.com") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
@@ -146,16 +147,16 @@ private fun EmailField(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = Color(0xFFF8F9FA),
-            focusedContainerColor = Color(0xFFF8F9FA),
-            unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633),
-            unfocusedTextColor = Color(0xFF1B2633),
-            focusedTextColor = Color(0xFF1B2633),
-            errorTextColor = Color(0xFF1B2633),
-            errorBorderColor = Color(0xFFE74C3C),
-            cursorColor = Color(0xFFE74C3C),
-            errorCursorColor = Color(0xFFE74C3C)
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            errorTextColor = MaterialTheme.colorScheme.onSurface,
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            errorCursorColor = MaterialTheme.colorScheme.error
         )
     )
 }
@@ -173,12 +174,11 @@ private fun PasswordField(
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChange,
-        placeholder = { Text(text = "•••••", color = Color(0xFFADB5BD)) },
+        placeholder = { Text(text = "•••••") },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Filled.Lock,
                 contentDescription = null,
-                tint = Color(0xFF1B2633),
                 modifier = Modifier.size(20.dp)
             )
         },
@@ -192,20 +192,19 @@ private fun PasswordField(
             IconButton(onClick = onToggleVisibility) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = description,
-                    tint = Color(0xFF1B2633)
+                    contentDescription = description
                 )
             }
         },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = Color(0xFFF8F9FA),
-            focusedContainerColor = Color(0xFFF8F9FA),
-            unfocusedBorderColor = Color(0xFFE9ECEF),
-            focusedBorderColor = Color(0xFF1B2633),
-            unfocusedTextColor = Color(0xFF1B2633),
-            focusedTextColor = Color(0xFF1B2633)
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface
         )
     )
 }

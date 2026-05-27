@@ -49,6 +49,7 @@ import ec.cityalerta.app.model.utils.EmailValidator
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.theme.AppLanguage
 import ec.cityalerta.app.theme.LocalLocaleManager
+import ec.cityalerta.app.theme.SuccessGreen
 import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.profile.components.LanguagePickerSheet
 import ec.cityalerta.app.view.profile.components.SettingsEditIcon
@@ -78,13 +79,13 @@ internal fun SettingsMainContent(
             stringResource(R.string.settings_title),
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1B2633)
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             stringResource(R.string.settings_subtitle),
             modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
             fontSize = 14.sp,
-            color = Color(0xFF6C757D),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             lineHeight = 20.sp
         )
 
@@ -144,7 +145,7 @@ private fun SettingsStatusMessages(state: ProfileState) {
     state.settingsInfoMessage?.let { message ->
         Text(
             message,
-            color = Color(0xFF1B5E20),
+            color = SuccessGreen, // Standard Material Success Green
             fontSize = 13.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )

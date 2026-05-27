@@ -20,10 +20,13 @@ class CameraXController(
     private val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
     private var imageCapture: ImageCapture? = null
     private val internalPreviewView = PreviewView(context)
+    private var currentLensFacing = CameraSelector.LENS_FACING_BACK
+    private var currentLifecycleOwner: LifecycleOwner? = null
 
     override val previewView: View = internalPreviewView
 
     override fun bind(lifecycleOwner: LifecycleOwner) {
+        currentLifecycleOwner = lifecycleOwner
         val executor = ContextCompat.getMainExecutor(context)
         cameraProviderFuture.addListener({
             val cameraProvider = cameraProviderFuture.get()
@@ -34,15 +37,32 @@ class CameraXController(
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build()
 
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                CameraSelector.DEFAULT_BACK_CAMERA,
-                preview,
-                capture
-            )
-            imageCapture = capture
+            val cameraSelector = CameraSelector.Builder()
+                .requireLensFacing(currentLensFacing)
+                .build()
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    capture
+                )
+                imageCapture = capture
+            } catch (e: Exception) {
+                // Log error or handle failure
+            }
         }, executor)
+    }
+
+    override fun switchCamera() {
+        currentLensFacing = if (currentLensFacing == CameraSelector.LENS_FACING_BACK) {
+            CameraSelector.LENS_FACING_FRONT
+        } else {
+            CameraSelector.LENS_FACING_BACK
+        }
+        currentLifecycleOwner?.let { bind(it) }
     }
 
     override fun capturePhoto(onSuccess: (Uri) -> Unit, onError: (String) -> Unit) {

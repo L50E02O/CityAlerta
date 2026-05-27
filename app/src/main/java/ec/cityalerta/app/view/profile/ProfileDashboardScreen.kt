@@ -185,7 +185,11 @@ fun ProfileDashboardScreen(
                         ) {
                             Button(
                                 onClick = { navController.navigate(Routes.MyReports.route) },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiary,
+                                    contentColor = MaterialTheme.colorScheme.onTertiary
+                                )
                             ) {
                                 Text(stringResource(R.string.profile_view_reports))
                             }

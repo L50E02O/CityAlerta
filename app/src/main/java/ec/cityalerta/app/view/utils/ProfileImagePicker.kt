@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import ec.cityalerta.app.theme.DeleteRed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -123,7 +124,7 @@ private fun ProfileImageSourceDialog(
                 }
                 if (hasCustomImage) {
                     TextButton(onClick = onDelete, modifier = Modifier.fillMaxWidth()) {
-                        Text("Eliminar foto", color = Color(0xFFE74C3C))
+                        Text("Eliminar foto", color = DeleteRed)
                     }
                 }
                 TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {

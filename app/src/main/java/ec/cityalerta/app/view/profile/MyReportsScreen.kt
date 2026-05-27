@@ -149,7 +149,7 @@ fun MyReportsScreen(
                         viewModel.deleteReport(report)
                         reportToDelete = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE64B4B))
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { Text("Eliminar") }
             },
             dismissButton = {
@@ -200,7 +200,7 @@ private fun MyReportCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     ReportTag(report.categoria.toDisplayName(), MaterialTheme.colorScheme.primary)
-                    ReportTag(report.estado.name.replace("_", " "), Color.Black.copy(alpha = 0.45f))
+                    ReportTag(report.estado.name.replace("_", " "), MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
                 }
             }
 

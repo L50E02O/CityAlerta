@@ -1,16 +1,9 @@
 package ec.cityalerta.app.view.reporte
 
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,23 +24,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import ec.cityalerta.app.view.reporte.components.ReporteMapPicker
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.components.AppTopBar
-import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.view.style.ReportUiDimens
 import ec.cityalerta.app.view.style.ReportUiShapes
 import ec.cityalerta.app.viewmodel.ProfileViewModel
@@ -66,33 +50,9 @@ fun ReporteScreen(
     val categoria by viewModel.categoria.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val isSubmitting by viewModel.isSubmitting.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
     val currentLocation by viewModel.currentLocation.collectAsState()
-
-    var locationPermissionGranted by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
-
-    var showMyLocation by remember { mutableStateOf(false) }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        locationPermissionGranted = isGranted
-        if (isGranted) {
-            showMyLocation = true
-            viewModel.requestCurrentLocation()
-        }
-    }
-
-    val defaultLocation = LatLng(-0.95, -80.73)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
+    val selectedLocation = remember(currentLocation) {
+        currentLocation?.let { LatLng(it.latitude, it.longitude) }
     }
 
     LaunchedEffect(Unit) {
@@ -102,25 +62,8 @@ fun ReporteScreen(
     LaunchedEffect(profileState.ciudadId) {
         if (profileState.ciudadId.isNotBlank()) {
             viewModel.getCityCenter(profileState.ciudadId)?.let { center ->
-                cameraPositionState.position = CameraPosition.fromLatLngZoom(center, 15f)
                 viewModel.setUbicacion(center.latitude, center.longitude)
             }
-        }
-    }
-
-    LaunchedEffect(locationPermissionGranted, showMyLocation) {
-        if (locationPermissionGranted && showMyLocation) {
-            viewModel.requestCurrentLocation()
-        }
-    }
-
-    // Actualizar la ubicacion en el ViewModel cuando el usuario mueve el mapa
-    LaunchedEffect(cameraPositionState.isMoving) {
-        if (!cameraPositionState.isMoving) {
-            viewModel.setUbicacion(
-                cameraPositionState.position.target.latitude,
-                cameraPositionState.position.target.longitude
-            )
         }
     }
 
@@ -146,59 +89,26 @@ fun ReporteScreen(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "Seleccione su ubicacion",
+                    text = "Seleccione su ubicación",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Confirme el punto exacto para el despliegue de seguridad.",
+                    text = "Toque el mapa para marcar el punto exacto o use su ubicación actual.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ReportUiDimens.MapHeight)
-                    .background(MaterialTheme.colorScheme.outlineVariant, ReportUiShapes.Card)
-            ) {
-                GoogleMap(
-                    modifier = Modifier.fillMaxSize(),
-                    cameraPositionState = cameraPositionState,
-                    properties = MapProperties(
-                        isMyLocationEnabled = locationPermissionGranted && showMyLocation
-                    ),
-                    uiSettings = MapUiSettings(
-                        zoomControlsEnabled = false,
-                        myLocationButtonEnabled = false,
-                        mapToolbarEnabled = false
-                    )
-                ) {
-                    // Marcador que sigue el centro del mapa
-                    Marker(state = MarkerState(cameraPositionState.position.target))
+            ReporteMapPicker(
+                selectedLocation = selectedLocation,
+                onLocationSelected = { latLng ->
+                    viewModel.setUbicacion(latLng.latitude, latLng.longitude)
+                },
+                onRequestCurrentLocation = {
+                    viewModel.requestCurrentLocation()
                 }
-
-                Button(
-                    onClick = {
-                        if (!locationPermissionGranted) {
-                            permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                        } else {
-                            showMyLocation = !showMyLocation
-                        }
-                    },
-                    modifier = Modifier
-                        .align(androidx.compose.ui.Alignment.BottomCenter)
-                        .padding(bottom = 16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (showMyLocation) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                        contentColor = if (showMyLocation) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                ) {
-                    Text(if (showMyLocation) "Desactivar mi ubicación" else "Usar mi ubicación actual")
-                }
-            }
+            )
 
             Text("CATEGORIA", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
@@ -257,12 +167,6 @@ fun ReporteScreen(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
-        }
-    }
-
-    LaunchedEffect(currentLocation) {
-        currentLocation?.let { location ->
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(location.latitude, location.longitude), 16f)
         }
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.theme.*
 
 @Composable
 fun CategoryFilter(
@@ -42,10 +43,10 @@ fun CategoryFilter(
 @Composable
 fun CategoryCard(category: ReportType, isSelected: Boolean, onClick: () -> Unit) {
     val (icon, label, color) = when (category) {
-        ReportType.ZONA_DE_RIESGO -> Triple(Icons.Default.Warning, "Zona\nDe Riesgo", Color(0xFFD32F2F))
-        ReportType.BACHE -> Triple(Icons.Default.Build, "Bache", Color(0xFF1976D2))
-        ReportType.AGUA -> Triple(Icons.Default.WaterDrop, "Agua", Color(0xFF0288D1))
-        ReportType.LUZ -> Triple(Icons.Default.Lightbulb, "Luz", Color(0xFFFBC02D))
+        ReportType.ZONA_DE_RIESGO -> Triple(Icons.Default.Warning, "Zona\nDe Riesgo", CategoryRisk)
+        ReportType.BACHE -> Triple(Icons.Default.Build, "Bache", CategoryPothole)
+        ReportType.AGUA -> Triple(Icons.Default.WaterDrop, "Agua", CategoryWater)
+        ReportType.LUZ -> Triple(Icons.Default.Lightbulb, "Luz", CategoryLight)
     }
 
     Card(
@@ -53,7 +54,7 @@ fun CategoryCard(category: ReportType, isSelected: Boolean, onClick: () -> Unit)
         modifier = Modifier.size(width = 85.dp, height = 95.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) color.copy(alpha = 0.1f) else Color.White
+            containerColor = if (isSelected) color.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
         ),
         border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, color) else null,
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 0.dp else 4.dp)
@@ -76,7 +77,7 @@ fun CategoryCard(category: ReportType, isSelected: Boolean, onClick: () -> Unit)
                 lineHeight = 13.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                color = Color(0xFF1B2633)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

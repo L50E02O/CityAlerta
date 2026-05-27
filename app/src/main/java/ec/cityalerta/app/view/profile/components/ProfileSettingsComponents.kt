@@ -35,9 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import ec.cityalerta.app.theme.DarkBackground
+import ec.cityalerta.app.theme.DarkSurfaceVariant
+import ec.cityalerta.app.theme.LightBackground
+import ec.cityalerta.app.theme.LightSurfaceVariant
+import ec.cityalerta.app.theme.White
 import ec.cityalerta.app.view.components.AppTopBar
 
-private val AccentBlue = Color(0xFF3B5B7A)
+// Using theme colors instead of hardcoded AccentBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,7 +140,7 @@ fun SettingsInfoField(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -206,7 +211,7 @@ private fun ThemePreviewFrame(isSelected: Boolean, isDarkPreview: Boolean) {
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isDarkPreview) Color(0xFF0F1720) else Color.White)
+            .background(if (isDarkPreview) DarkBackground else LightBackground)
             .padding(12.dp)
     ) {
         ThemePreviewSkeleton(isDarkPreview = isDarkPreview)
@@ -219,7 +224,7 @@ private fun ThemePreviewFrame(isSelected: Boolean, isDarkPreview: Boolean) {
                     .background(MaterialTheme.colorScheme.secondary),
                 contentAlignment = Alignment.Center
             ) {
-                Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("✓", color = White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         } else {
             Box(
@@ -234,7 +239,7 @@ private fun ThemePreviewFrame(isSelected: Boolean, isDarkPreview: Boolean) {
 
 @Composable
 private fun ThemePreviewSkeleton(isDarkPreview: Boolean) {
-    val skeletonColor = if (isDarkPreview) Color(0xFF2A3A4D) else Color(0xFFE9ECEF)
+    val skeletonColor = if (isDarkPreview) DarkSurfaceVariant else LightSurfaceVariant
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(
             modifier = Modifier

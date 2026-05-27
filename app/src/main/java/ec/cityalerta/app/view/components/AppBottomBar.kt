@@ -30,6 +30,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import ec.cityalerta.app.R
 import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.theme.DarkOnSurface
+import ec.cityalerta.app.theme.DarkSurface
 
 @Composable
 fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") {
@@ -45,13 +47,14 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
 
     if (currentRoute?.startsWith("map") == true || currentRoute in bottomBarRoutes) {
         Surface(
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.fillMaxWidth()
+            color = DarkSurface, // Siempre azul oscuro en ambos formatos
+            modifier = Modifier.fillMaxWidth(),
+            tonalElevation = 0.dp
         ) {
             NavigationBar(
                 modifier = Modifier.height(84.dp),
                 containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onSecondary,
+                contentColor = DarkOnSurface,
                 tonalElevation = 0.dp
             ) {
                 NavigationBarItem(
@@ -72,10 +75,10 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     },
                     label = { Text(stringResource(R.string.nav_explore), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondary,
-                        selectedTextColor = MaterialTheme.colorScheme.onSecondary,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        selectedIconColor = MaterialTheme.colorScheme.primary, // Rojo original
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = DarkOnSurface.copy(alpha = 0.6f),
+                        unselectedTextColor = DarkOnSurface.copy(alpha = 0.6f),
                         indicatorColor = Color.Transparent
                     )
                 )
@@ -99,17 +102,17 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                             Icon(
                                 Icons.Default.Add,
                                 contentDescription = "REPORT",
-                                tint = MaterialTheme.colorScheme.onPrimary,
+                                tint = Color.White,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                     },
                     label = { Text(stringResource(R.string.nav_report), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondary,
-                        selectedTextColor = MaterialTheme.colorScheme.onSecondary,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSecondary,
-                        unselectedTextColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = DarkOnSurface.copy(alpha = 0.6f),
+                        unselectedTextColor = DarkOnSurface.copy(alpha = 0.6f),
                         indicatorColor = Color.Transparent
                     )
                 )
@@ -131,10 +134,10 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     },
                     label = { Text(stringResource(R.string.nav_map), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondary,
-                        selectedTextColor = MaterialTheme.colorScheme.onSecondary,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.6f),
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = DarkOnSurface.copy(alpha = 0.6f),
+                        unselectedTextColor = DarkOnSurface.copy(alpha = 0.6f),
                         indicatorColor = Color.Transparent
                     )
                 )

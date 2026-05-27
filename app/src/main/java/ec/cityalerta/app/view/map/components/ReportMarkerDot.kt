@@ -13,6 +13,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberMarkerState
 import ec.cityalerta.app.model.data.MapMarker
 import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.theme.*
 import androidx.core.graphics.createBitmap
 
 @Composable
@@ -41,10 +42,10 @@ fun ReportMarkerDot(
 
 private fun getCategoryColor(type: ReportType): Color {
     return when (type) {
-        ReportType.ZONA_DE_RIESGO -> Color(0xFFFF5252) // Rojo
-        ReportType.BACHE -> Color(0xFFFFC107)         // Ambar
-        ReportType.AGUA -> Color(0xFF2196F3)          // Azul
-        ReportType.LUZ -> Color(0xFF4CAF50)           // Verde
+        ReportType.ZONA_DE_RIESGO -> CategoryRisk
+        ReportType.BACHE -> CategoryPothole
+        ReportType.AGUA -> CategoryWater
+        ReportType.LUZ -> CategoryLight
     }
 }
 

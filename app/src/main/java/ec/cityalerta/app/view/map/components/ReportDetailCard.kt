@@ -33,7 +33,7 @@ fun ReportDetailCard(
             .padding(16.dp)
             .offset(y = (-20).dp),
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F4F8).copy(alpha = 0.95f)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -47,13 +47,13 @@ fun ReportDetailCard(
                     modifier = Modifier
                         .size(60.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color(0xFFFFEAEA)),
+                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = null,
-                        tint = Color(0xFFB71C1C),
+                        tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(30.dp)
                     )
                 }
@@ -70,20 +70,20 @@ fun ReportDetailCard(
                         text = title,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0D1B2A),
+                        color = MaterialTheme.colorScheme.onSurface,
                         lineHeight = 20.sp
                     )
                     Text(
                         text = report.categoria.toDisplayName(),
                         fontSize = 14.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1
                     )
                     if (!isMultiReport) {
                         Text(
                             text = report.descripcion,
                             fontSize = 12.sp,
-                            color = Color(0xFF5D6B78),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 2
                         )
                     }
@@ -94,12 +94,12 @@ fun ReportDetailCard(
                     modifier = Modifier
                         .size(50.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF6B1111))
+                        .background(MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = "Detalles",
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
@@ -115,7 +115,7 @@ fun ReportDetailCard(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Cerrar",
-                    tint = Color.Gray,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }
