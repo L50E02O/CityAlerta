@@ -1,5 +1,10 @@
 package ec.cityalerta.app.view.explore
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,22 +37,31 @@ import androidx.navigation.NavController
 import ec.cityalerta.app.R
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.components.AppTopBar
+import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
+import androidx.core.content.ContextCompat
 
 @Composable
 fun ExploreScreen(
     navController: NavController,
+    authViewModel: AuthViewModel,
     viewModel: ExploreViewModel = viewModel(),
     profileViewModel: ProfileViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val profileState by profileViewModel.state.collectAsState()
 
+    rememberNotificationPermission(
+        onGranted = { authViewModel.onNotificationsPermissionGranted() },
+        onDenied = { authViewModel.onNotificationsPermissionDenied() }
+    )
+
     LaunchedEffect(Unit) {
         viewModel.loadData(force = true)
         profileViewModel.loadSummaryIfNeeded()
     }
+
 
     Scaffold(
         topBar = {
@@ -103,6 +119,44 @@ fun ExploreScreen(
             }
         }
     }
+}
+
+@Composable
+private fun rememberNotificationPermission(
+    onGranted: () -> Unit,
+    onDenied: () -> Unit
+): Boolean {
+    val context = LocalContext.current
+    val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+    var isGranted by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(
+            !needsPermission || ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        isGranted = granted
+        if (granted) onGranted() else onDenied()
+    }
+
+    LaunchedEffect(Unit) {
+        if (needsPermission) {
+            if (!isGranted) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                onGranted()
+            }
+        } else {
+            onGranted()
+        }
+    }
+
+    return isGranted
 }
 
 

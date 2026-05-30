@@ -127,12 +127,12 @@ fun AppNavigation(
             }
             composable(Routes.Home.route) {
                 RequireAuth(navController, authRepository) {
-                    ExploreScreen(navController, exploreViewModel, profileViewModel)
+                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
                 }
             }
             composable(Routes.Explore.route){
                 RequireAuth(navController, authRepository) {
-                    ExploreScreen(navController, exploreViewModel, profileViewModel)
+                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
                 }
             }
 
@@ -188,7 +188,7 @@ fun AppNavigation(
             }
             composable(Routes.Settings.route) {
                 RequireAuth(navController, authRepository) {
-                    SettingsScreen(navController, profileViewModel)
+                    SettingsScreen(navController, profileViewModel, authViewModel)
                 }
             }
             composable(Routes.Appearance.route) {

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt)
+    id("com.google.gms.google-services")
     jacoco
 }
 
@@ -284,4 +285,9 @@ dependencies {
 
     // Annotation processors
     kapt(libs.androidx.room.compiler)
+
+    // firebase push notificationes
+    implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-analytics")
 }

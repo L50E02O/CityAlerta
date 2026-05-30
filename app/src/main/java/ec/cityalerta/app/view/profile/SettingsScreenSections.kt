@@ -26,6 +26,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -63,11 +65,13 @@ internal fun SettingsMainContent(
     state: ProfileState,
     userEmail: String,
     languageSubtitle: String,
+    notificationsEnabled: Boolean,
     onEditName: () -> Unit,
     onEditEmail: () -> Unit,
     onEditLocation: () -> Unit,
     onOpenLanguage: () -> Unit,
-    onOpenDelete: () -> Unit
+    onOpenDelete: () -> Unit,
+    onToggleNotifications: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -125,6 +129,13 @@ internal fun SettingsMainContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        SettingsNotificationsCard(
+            enabled = notificationsEnabled,
+            onToggle = onToggleNotifications
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         SettingsNavigationRow(
             icon = Icons.Default.Language,
             title = stringResource(R.string.settings_language_title),
@@ -137,6 +148,48 @@ internal fun SettingsMainContent(
         SettingsDeleteCard(onOpenDelete)
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun SettingsNotificationsCard(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.settings_notifications_title),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    stringResource(R.string.settings_notifications_desc),
+                    modifier = Modifier.padding(top = 4.dp),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = enabled,
+                onCheckedChange = onToggle,
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
     }
 }
 

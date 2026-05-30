@@ -18,6 +18,7 @@ import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
 import ec.cityalerta.app.model.repository.NominatimGeocodingRepository
+import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
 
 class AppViewModelFactory(
     private val authRepository: AuthRepositoryContract,
@@ -76,11 +77,15 @@ class AppViewModelFactory(
         LocationRepository(appContext)
     }
 
+    private val pushRegistrar by lazy {
+        PushSubscriptionRegistrar.createDefault(appContext)
+    }
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                AuthViewModel(authRepository) as T
+                AuthViewModel(authRepository, pushRegistrar) as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")

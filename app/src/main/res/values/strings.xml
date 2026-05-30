@@ -76,6 +76,11 @@
     <string name="settings_name_update_error">No se pudo actualizar el nombre</string>
     <string name="settings_language_changed">Idioma actualizado</string>
     <string name="settings_edit_location_title">Cambiar ubicacion</string>
+    <string name="settings_notifications_title">Notificaciones</string>
+    <string name="settings_notifications_desc">Recibe alertas de reportes y novedades.</string>
+    <string name="settings_notifications_permission_title">Permiso de notificaciones</string>
+    <string name="settings_notifications_permission_desc">Debes habilitar el permiso en ajustes para recibir notificaciones.</string>
+    <string name="settings_open_settings">Abrir ajustes</string>
 
     <!-- Apariencia -->
     <string name="appearance_title">Apariencia</string>

@@ -1,5 +1,14 @@
 package ec.cityalerta.app.view.profile
 
+import android.Manifest
+import android.app.Activity
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -7,21 +16,55 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import ec.cityalerta.app.R
 import ec.cityalerta.app.theme.AppLanguage
 import ec.cityalerta.app.theme.LocalLocaleManager
 import ec.cityalerta.app.view.profile.components.ProfileSettingsScaffold
+import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    viewModel: ProfileViewModel
+    viewModel: ProfileViewModel,
+    authViewModel: AuthViewModel
 ) {
     val state by viewModel.state.collectAsState()
+    val authState = authViewModel.uiState
     val localeManager = LocalLocaleManager.current
+    val context = LocalContext.current
+    val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+    val activity = context as? Activity
+
+    var hasRequestedNotificationPermission by remember { mutableStateOf(false) }
+    var showNotificationSettingsDialog by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            authViewModel.onNotificationsPermissionGranted()
+        } else {
+            authViewModel.onNotificationsPermissionDenied()
+            val shouldShowRationale = activity?.let {
+                ActivityCompat.shouldShowRequestPermissionRationale(
+                    it,
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            } ?: false
+            if (!shouldShowRationale && hasRequestedNotificationPermission) {
+                showNotificationSettingsDialog = true
+            }
+        }
+    }
 
     var showNameDialog by remember { mutableStateOf(false) }
     var showEmailDialog by remember { mutableStateOf(false) }
@@ -65,6 +108,7 @@ fun SettingsScreen(
             state = state,
             userEmail = state.userEmail,
             languageSubtitle = languageSubtitle,
+            notificationsEnabled = authState.notificationsEnabled,
             onEditName = {
                 editName = state.fullName
                 emailFieldError = null
@@ -86,7 +130,62 @@ fun SettingsScreen(
                 viewModel.clearSettingsMessages()
                 showLanguageDialog = true
             },
-            onOpenDelete = { showDeleteDialog = true }
+            onOpenDelete = { showDeleteDialog = true },
+            onToggleNotifications = { enabled ->
+                if (enabled) {
+                    if (needsPermission) {
+                        val granted = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (granted) {
+                            authViewModel.onNotificationsPermissionGranted()
+                        } else {
+                            val shouldShowRationale = activity?.let {
+                                ActivityCompat.shouldShowRequestPermissionRationale(
+                                    it,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                )
+                            } ?: false
+                            if (!hasRequestedNotificationPermission || shouldShowRationale) {
+                                hasRequestedNotificationPermission = true
+                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                showNotificationSettingsDialog = true
+                            }
+                        }
+                    } else {
+                        authViewModel.onNotificationsPermissionGranted()
+                    }
+                } else {
+                    authViewModel.onNotificationsDisabledByUser()
+                }
+            }
+        )
+    }
+
+    if (showNotificationSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { showNotificationSettingsDialog = false },
+            title = { Text(stringResource(R.string.settings_notifications_permission_title)) },
+            text = { Text(stringResource(R.string.settings_notifications_permission_desc)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showNotificationSettingsDialog = false
+                    val intent = Intent(
+                        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.fromParts("package", context.packageName, null)
+                    )
+                    context.startActivity(intent)
+                }) {
+                    Text(stringResource(R.string.settings_open_settings))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNotificationSettingsDialog = false }) {
+                    Text(stringResource(R.string.settings_cancel))
+                }
+            }
         )
     }
 

@@ -47,7 +47,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
 
     if (currentRoute?.startsWith("map") == true || currentRoute in bottomBarRoutes) {
         Surface(
-            color = DarkSurface, // Siempre azul oscuro en ambos formatos
+            color = DarkSurface,
             modifier = Modifier.fillMaxWidth(),
             tonalElevation = 0.dp
         ) {
@@ -75,7 +75,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     },
                     label = { Text(stringResource(R.string.nav_explore), fontSize = 9.sp) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary, // Rojo original
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
                         selectedTextColor = MaterialTheme.colorScheme.primary,
                         unselectedIconColor = DarkOnSurface.copy(alpha = 0.6f),
                         unselectedTextColor = DarkOnSurface.copy(alpha = 0.6f),
