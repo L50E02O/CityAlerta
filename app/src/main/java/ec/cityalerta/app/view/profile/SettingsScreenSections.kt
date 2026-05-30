@@ -397,54 +397,6 @@ internal fun SettingsEmailDialog(
 }
 
 @Composable
-internal fun SettingsLocationDialog(
-    visible: Boolean,
-    cities: List<ec.cityalerta.app.model.data.ciudad.Ciudad>,
-    query: String,
-    isSaving: Boolean,
-    onQueryChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onSave: (String) -> Unit
-) {
-    if (!visible) return
-
-    var selectedCityId by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = { if (!isSaving) onDismiss() },
-        title = { Text(stringResource(R.string.settings_edit_location_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ec.cityalerta.app.view.authView.CiudadDropdown(
-                    ciudades = cities,
-                    query = query,
-                    selectedId = selectedCityId,
-                    onQueryChange = onQueryChange,
-                    onSelected = { selectedCityId = it.id }
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSave(selectedCityId) },
-                enabled = !isSaving && selectedCityId.isNotEmpty()
-            ) {
-                if (isSaving) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(stringResource(R.string.settings_save))
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss, enabled = !isSaving) {
-                Text(stringResource(R.string.settings_cancel))
-            }
-        }
-    )
-}
-
-@Composable
 internal fun SettingsDeleteDialog(
     visible: Boolean,
     isDeleting: Boolean,

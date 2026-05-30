@@ -153,6 +153,16 @@ class AppViewModelFactory(
                 @Suppress("UNCHECKED_CAST")
                 PasswordRecoveryViewModel(authRepository) as T
             }
+            modelClass.isAssignableFrom(ReportDetailViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                ReportDetailViewModel(
+                    reporteRepository,
+                    imagenReporte,
+                    ubicacionReporte,
+                    storageReporte,
+                    barrioRepository
+                ) as T
+            }
 
             else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
         }

@@ -31,13 +31,17 @@ private const val TIME_AGO_RECENT = "Hace poco"
 data class ReporteUI(
     val id: String,
     val categoria: String,
+    val categoryType: ReportType,
     val imageUrl: String?,
     val barrio: String,
     val direccion: String,
     val descripcion: String,
     val estado: String,
     val fecha: String,
-    val timeAgo: String
+    val timeAgo: String,
+    val lat: Double = 0.0,
+    val lng: Double = 0.0,
+    val ciudadId: String = ""
 )
 
 data class ExploreState(
@@ -145,13 +149,16 @@ class ExploreViewModel(
         ReporteUI(
             id = reporte.id,
             categoria = mapCategoriaLabel(reporte.categoria),
+            categoryType = reporte.categoria,
             imageUrl = imageUrl,
             barrio = barrio?.nombre ?: "Barrio desconocido",
             direccion = ubicacion?.direccion_aproximada ?: "Direccion no disponible",
             descripcion = reporte.descripcion,
             estado = mapEstadoLabel(reporte.estado),
             fecha = reporte.fecha_reporte,
-            timeAgo = calculateTimeAgo(reporte.created_at)
+            timeAgo = calculateTimeAgo(reporte.created_at),
+            lat = ubicacion?.lat ?: 0.0,
+            lng = ubicacion?.lng ?: 0.0
         )
     }
 

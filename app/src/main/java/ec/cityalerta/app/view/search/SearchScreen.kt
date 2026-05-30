@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.explore.ReporteCard
 import ec.cityalerta.app.view.components.AppTopBar
 import ec.cityalerta.app.viewmodel.ProfileViewModel
@@ -141,7 +142,12 @@ fun SearchScreen(
                         items = state.reportes,
                         key = { it.id }
                     ) { reporte ->
-                        ReporteCard(reporte = reporte)
+                        ReporteCard(
+                            reporte = reporte,
+                            onClick = { id ->
+                                navController.navigate(Routes.ReportDetail.route.replace("{reportId}", id))
+                            }
+                        )
                     }
                 }
             }

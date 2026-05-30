@@ -113,7 +113,12 @@ fun ExploreScreen(
                         items = state.reportes,
                         key = { it.id }
                     ) { reporte ->
-                        ReporteCard(reporte = reporte)
+                        ReporteCard(
+                            reporte = reporte,
+                            onClick = { id ->
+                                navController.navigate(Routes.ReportDetail.route.replace("{reportId}", id))
+                            }
+                        )
                     }
                 }
             }

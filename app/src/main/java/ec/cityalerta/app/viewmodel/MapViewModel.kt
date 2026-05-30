@@ -198,7 +198,12 @@ class MapViewModel(
 
     fun onCategorySelected(category: ReportType) {
         val newCategory = if (uiState.selectedCategory == category) null else category
-        uiState = uiState.copy(selectedCategory = newCategory)
+        uiState = uiState.copy(
+            selectedCategory = newCategory,
+            selectedReport = null,
+            isMultiReport = false,
+            reportCount = 0
+        )
     }
 
     fun onReportClicked(reportId: String) {

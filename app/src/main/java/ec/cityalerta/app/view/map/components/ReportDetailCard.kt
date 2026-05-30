@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,9 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
+import ec.cityalerta.app.theme.*
 
 @Composable
 fun ReportDetailCard(
@@ -27,79 +28,99 @@ fun ReportDetailCard(
     onDetailClick: (Reporte) -> Unit,
     onCloseClick: () -> Unit,
 ) {
+    val (icon, color) = when (report.categoria) {
+        ReportType.ZONA_DE_RIESGO -> Pair(Icons.Default.Warning, CategoryRisk)
+        ReportType.BACHE -> Pair(Icons.Default.Build, CategoryPothole)
+        ReportType.AGUA -> Pair(Icons.Default.WaterDrop, CategoryWater)
+        ReportType.LUZ -> Pair(Icons.Default.Lightbulb, CategoryLight)
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
             .offset(y = (-20).dp),
-        shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.98f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
-                    .padding(20.dp)
+                    .padding(16.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(60.dp)
+                        .size(56.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)),
+                        .background(color.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Warning,
+                        imageVector = icon,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(30.dp)
+                        tint = color,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     val title = if (isMultiReport) {
-                        "Múltiples hechos de ${report.categoria.toDisplayName().lowercase()} en este sector"
+                        "Múltiples hechos"
                     } else {
                         "Reporte activo"
                     }
                     Text(
                         text = title,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface,
-                        lineHeight = 20.sp
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = report.categoria.toDisplayName(),
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = color,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                     if (!isMultiReport) {
                         Text(
                             text = report.descripcion,
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 14.sp,
+                            lineHeight = 18.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
 
+                Spacer(modifier = Modifier.width(8.dp))
+
                 IconButton(
                     onClick = { onDetailClick(report) },
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
+                        .background(color)
                 ) {
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = "Detalles",
-                        tint = MaterialTheme.colorScheme.onPrimary
+                        tint = Color.White
                     )
                 }
             }
@@ -123,11 +144,3 @@ fun ReportDetailCard(
     }
 }
 
-private fun categoryLabel(category: ec.cityalerta.app.model.data.reporte.ReportType): String {
-    return when (category) {
-        ec.cityalerta.app.model.data.reporte.ReportType.ZONA_DE_RIESGO -> "Zona de riesgo"
-        ec.cityalerta.app.model.data.reporte.ReportType.BACHE -> "Bache"
-        ec.cityalerta.app.model.data.reporte.ReportType.AGUA -> "Agua"
-        ec.cityalerta.app.model.data.reporte.ReportType.LUZ -> "Luz"
-    }
-}

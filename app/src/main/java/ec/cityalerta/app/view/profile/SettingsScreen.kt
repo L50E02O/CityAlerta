@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import ec.cityalerta.app.R
 import ec.cityalerta.app.theme.AppLanguage
 import ec.cityalerta.app.theme.LocalLocaleManager
+import ec.cityalerta.app.view.components.CityPickerSheet
 import ec.cityalerta.app.view.profile.components.ProfileSettingsScaffold
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
@@ -261,17 +262,16 @@ fun SettingsScreen(
         }
     )
 
-    SettingsLocationDialog(
+    CityPickerSheet(
         visible = showLocationDialog,
         cities = state.cities,
         query = state.ciudadQuery,
-        isSaving = state.isSavingSettings,
         onQueryChange = { viewModel.onCiudadChange(it) },
         onDismiss = { showLocationDialog = false },
-        onSave = { selectedId ->
+        onCitySelected = { ciudad ->
             pendingLocationSave = true
             viewModel.updateCity(
-                ciudadId = selectedId,
+                ciudadId = ciudad.id,
                 successMessage = cityUpdatedMessage,
                 errorMessage = cityUpdateErrorMessage
             )

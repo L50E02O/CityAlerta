@@ -17,12 +17,16 @@ import ec.cityalerta.app.viewmodel.ProfileViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import ec.cityalerta.app.viewmodel.AppViewModelFactory
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import ec.cityalerta.app.view.components.AppBottomBar
 import ec.cityalerta.app.view.explore.ExploreScreen
+import ec.cityalerta.app.view.explore.ReportDetailScreen
+import ec.cityalerta.app.viewmodel.ReportDetailViewModel
 import androidx.navigation.NavController
 import ec.cityalerta.app.view.camera.PhotoScreen
 import ec.cityalerta.app.view.reporte.ReporteScreen
@@ -172,9 +176,20 @@ fun AppNavigation(
                 }
             }
 
-            composable(Routes.Map.route) { backStackEntry ->
+            composable(
+                route = Routes.Map.route,
+                arguments = listOf(
+                    navArgument("ciudadId") { type = NavType.StringType },
+                    navArgument("reportId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
                 val ciudadId = backStackEntry.arguments?.getString("ciudadId") ?: "Sin ciudad"
-                MapScreen(navController, ciudadId, mapViewModel, profileViewModel)
+                val reportId = backStackEntry.arguments?.getString("reportId")
+                MapScreen(navController, ciudadId, reportId, mapViewModel, profileViewModel)
             }
             composable(Routes.Profile.route) {
                 RequireAuth(navController, authRepository) {
@@ -184,6 +199,18 @@ fun AppNavigation(
             composable(Routes.MyReports.route) {
                 RequireAuth(navController, authRepository) {
                     MyReportsScreen(navController, profileViewModel)
+                }
+            }
+            composable(
+                route = Routes.ReportDetail.route,
+                arguments = listOf(navArgument("reportId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val reportId = backStackEntry.arguments?.getString("reportId") ?: ""
+                val detailViewModel: ReportDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = factory
+                )
+                RequireAuth(navController, authRepository) {
+                    ReportDetailScreen(navController, reportId, detailViewModel, profileViewModel)
                 }
             }
             composable(Routes.Settings.route) {

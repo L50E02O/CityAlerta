@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import ec.cityalerta.app.view.components.CityPickerSheet
 import ec.cityalerta.app.R
 
 data class AuthScreenConfig(
@@ -261,7 +262,7 @@ private fun AuthCitySection(
 
     when {
         config.fixedCity != null -> FixedCityField(city = config.fixedCity)
-        config.ciudades.isNotEmpty() -> CiudadDropdown(
+        config.ciudades.isNotEmpty() -> CiudadPickerField(
             ciudades = config.ciudades,
             query = viewModel.uiState.ciudadNombre,
             selectedId = viewModel.uiState.ciudadId,
@@ -345,60 +346,44 @@ fun FixedCityField(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CiudadDropdown(
+fun CiudadPickerField(
     ciudades: List<Ciudad>,
     query: String,
     selectedId: String,
     onQueryChange: (String) -> Unit,
     onSelected: (Ciudad) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showSheet by remember { mutableStateOf(false) }
     val selectedNombre = ciudades.find { it.id == selectedId }?.nombre ?: ""
-    val filteredCities = if (query.isBlank()) {
-        ciudades
-    } else {
-        ciudades.filter { ciudad ->
-            ciudad.nombre.contains(query, ignoreCase = true)
-        }
-    }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
+    Box(modifier = Modifier.fillMaxWidth().clickable { showSheet = true }) {
         OutlinedTextField(
-            value = if (selectedId.isNotEmpty()) selectedNombre else query,
-            onValueChange = {
-                onQueryChange(it)
-                if (!expanded) expanded = true
-            },
-            placeholder = { Text("Escribe o selecciona tu ciudad", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryEditable, true).fillMaxWidth(),
+            value = selectedNombre,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = { Text("Selecciona tu ciudad", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = false,
             shape = RoundedCornerShape(8.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                focusedBorderColor = MaterialTheme.colorScheme.secondary,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            filteredCities.forEach { ciudad ->
-                DropdownMenuItem(
-                    text = { Text(ciudad.nombre) },
-                    onClick = {
-                        onSelected(ciudad)
-                        expanded = false
-                    }
-                )
-            }
-        }
     }
+
+    CityPickerSheet(
+        visible = showSheet,
+        cities = ciudades,
+        query = query,
+        onQueryChange = onQueryChange,
+        onDismiss = { showSheet = false },
+        onCitySelected = { ciudad ->
+            onSelected(ciudad)
+            showSheet = false
+        }
+    )
 }

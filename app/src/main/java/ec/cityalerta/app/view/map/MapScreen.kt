@@ -50,6 +50,7 @@ import kotlin.math.*
 fun MapScreen(
     navController: NavController,
     ciudadId: String = "Sin ciudad",
+    reportId: String? = null,
     viewModel: MapViewModel,
     profileViewModel: ProfileViewModel
 ) {
@@ -61,6 +62,8 @@ fun MapScreen(
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
 
     val locationPermissionGranted = rememberLocationPermission()
+
+    var hasAutoSelected by remember { mutableStateOf(false) }
 
     val defaultLocation = LatLng(-0.95, -80.73)
     val cameraPositionState = rememberCameraPositionState {
@@ -74,16 +77,37 @@ fun MapScreen(
         }
     }
 
+    LaunchedEffect(uiState.reports, reportId) {
+        if (!hasAutoSelected && !reportId.isNullOrBlank() && uiState.reports.isNotEmpty()) {
+            val report = uiState.reports.find { it.id == reportId }
+            if (report != null) {
+                hasAutoSelected = true
+                viewModel.onReportClicked(reportId)
+                // Animamos la cámara hacia el reporte seleccionado
+                viewModel.uiState.reportMarkers.find { it.id == reportId }?.let { marker ->
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(marker.latitude, marker.longitude),
+                            18f
+                        )
+                    )
+                }
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         profileViewModel.loadSummaryIfNeeded()
     }
 
     LaunchedEffect(uiState.ciudad, uiState.cameraZoom) {
-        uiState.ciudad?.let { ciudad ->
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                LatLng(ciudad.centroLat, ciudad.centroLng),
-                uiState.cameraZoom
-            )
+        if (reportId.isNullOrBlank()) {
+            uiState.ciudad?.let { ciudad ->
+                cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                    LatLng(ciudad.centroLat, ciudad.centroLng),
+                    uiState.cameraZoom
+                )
+            }
         }
     }
 
@@ -123,7 +147,8 @@ fun MapScreen(
                     fusedLocationClient = fusedLocationClient,
                     locationPermissionGranted = locationPermissionGranted,
                     cameraPositionState = cameraPositionState,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    navController = navController
                 )
             )
         }
@@ -163,7 +188,8 @@ private data class MapScreenDependencies(
     val fusedLocationClient: FusedLocationProviderClient,
     val locationPermissionGranted: Boolean,
     val cameraPositionState: CameraPositionState,
-    val viewModel: MapViewModel
+    val viewModel: MapViewModel,
+    val navController: NavController
 )
 
 @Composable
@@ -379,7 +405,7 @@ private fun MapCityContent(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(bottom = 180.dp, end = 16.dp),
+                .padding(bottom = 320.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MapControlButton(
@@ -404,11 +430,15 @@ private fun MapCityContent(
             ReportDetailCard(
                 report = uiState.selectedReport,
                 isMultiReport = uiState.isMultiReport,
-                onDetailClick = {},
+                onDetailClick = { reporte ->
+                    if (!uiState.isMultiReport) {
+                        dependencies.navController.navigate(Routes.ReportDetail.route.replace("{reportId}", reporte.id))
+                    }
+                },
                 onCloseClick = { dependencies.viewModel.onDismissReport() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 32.dp)
+                    .padding(bottom = 95.dp)
             )
         }
     }
@@ -424,14 +454,14 @@ fun MapControlButton(
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.size(56.dp),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.size(42.dp),
+        shape = RoundedCornerShape(12.dp),
         color = containerColor,
         contentColor = contentColor,
         shadowElevation = 2.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
         }
     }
 }

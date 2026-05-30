@@ -1,6 +1,7 @@
 package ec.cityalerta.app.view.explore
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,12 +30,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.theme.*
 import ec.cityalerta.app.viewmodel.ReporteUI
 
 @Composable
-fun ReporteCard(reporte: ReporteUI) {
+fun ReporteCard(reporte: ReporteUI, onClick: (String) -> Unit = {}) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick(reporte.id) },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -70,7 +75,13 @@ fun ReporteCard(reporte: ReporteUI) {
                         .align(Alignment.TopStart),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Tag(text = reporte.categoria, backgroundColor = MaterialTheme.colorScheme.primary)
+                    val categoryColor = when (reporte.categoryType) {
+                        ReportType.ZONA_DE_RIESGO -> CategoryRisk
+                        ReportType.BACHE -> CategoryPothole
+                        ReportType.AGUA -> CategoryWater
+                        ReportType.LUZ -> CategoryLight
+                    }
+                    Tag(text = reporte.categoria, backgroundColor = categoryColor)
                     Tag(text = reporte.timeAgo.uppercase(), backgroundColor = Color.Black.copy(alpha = 0.4f))
                 }
             }
