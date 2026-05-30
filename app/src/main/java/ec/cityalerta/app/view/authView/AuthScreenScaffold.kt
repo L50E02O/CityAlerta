@@ -243,16 +243,6 @@ private fun AuthCitySection(
 ) {
     Spacer(modifier = Modifier.height(16.dp))
     Text(
-        text = "PAÍS",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(bottom = 8.dp)
-    )
-    CountryField(country = "Ecuador")
-
-    Spacer(modifier = Modifier.height(16.dp))
-    Text(
         text = "CIUDAD",
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -298,29 +288,6 @@ private fun AuthCitySection(
             style = MaterialTheme.typography.bodySmall
         )
     }
-}
-
-@Composable
-fun CountryField(
-    country: String,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = country,
-        onValueChange = {},
-        readOnly = true,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-            focusedBorderColor = MaterialTheme.colorScheme.secondary,
-            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledTextColor = MaterialTheme.colorScheme.onSurface
-        )
-    )
 }
 
 @Composable
