@@ -10,7 +10,6 @@ import ec.cityalerta.app.model.utils.nullableString
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -42,37 +41,11 @@ class PushSubscriptionRepository(
         }
     }
 
-    override suspend fun getByToken(token: String): Result<PushSubscription?> = safeSupabaseCall {
-        fetchByToken(token)
-    }
-
-    override suspend fun disableByToken(token: String): Result<Unit> = safeSupabaseCall {
-        updateByTokenInternal(
-            token,
-            PushSubscriptionUpdateDto(enabled = false)
-        )
-        Unit
-    }
-
     override suspend fun deleteByToken(token: String): Result<Unit> = safeSupabaseCall {
         SupabaseProvider.client.from(tableName).delete {
             filter { eq(PushColumns.token, token) }
         }
         Unit
-    }
-
-    override suspend fun updateByToken(token: String, entity: PushSubscriptionUpdateDto): Result<PushSubscription> = safeSupabaseCall {
-        updateByTokenInternal(token, entity)
-    }
-
-    private suspend fun fetchByToken(token: String): PushSubscription? {
-        return SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
-                filter { eq(PushColumns.token, token) }
-            }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toPushSubscription()
     }
 
     private suspend fun insert(entity: PushSubscriptionCreateDto): PushSubscription {

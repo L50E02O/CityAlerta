@@ -85,6 +85,17 @@ fun AppNavigation(
         profileViewModel.loadSummaryIfNeeded()
     }
 
+    LaunchedEffect(currentIntent) {
+        profileViewModel.loadSummaryIfNeeded()
+        val reporteId = currentIntent?.getStringExtra("reporte_id")
+        if (!reporteId.isNullOrBlank()) {
+            navController.navigate(Routes.ReportDetail.route.replace("{reportId}", reporteId))
+            currentIntent.removeExtra("reporte_id")
+        }
+    }
+
+
+
     val profileState = profileViewModel.state.collectAsState().value
 
     Scaffold(

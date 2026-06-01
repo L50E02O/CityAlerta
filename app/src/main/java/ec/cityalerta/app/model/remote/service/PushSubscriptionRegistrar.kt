@@ -89,35 +89,19 @@ class PushSubscriptionRegistrar(
 
     fun isNotificationsEnabled(): Boolean = pushPreferences.isNotificationsEnabled()
 
-    suspend fun registerCurrentDevice(): Result<PushSubscription> {
-        val tokenResult = tokenProvider.getToken()
-        val token = tokenResult.getOrElse { return Result.failure(it) }
-        cacheToken(token)
-        return registerToken(token)
-    }
-
-    suspend fun registerStoredTokenIfAllowed(): Result<PushSubscription> {
-        if (!pushPreferences.isNotificationsEnabled()) {
-            return Result.failure(PushSubscriptionDisabledException("Notificaciones desactivadas"))
-        }
-        val token = pushPreferences.getToken()
-            ?: return Result.failure(PushSubscriptionTokenMissingException("Token no disponible"))
-        return registerToken(token)
-    }
-
     suspend fun registerTokenIfAllowed(): Result<PushSubscription> {
         if (!pushPreferences.isNotificationsEnabled()) {
             return Result.failure(PushSubscriptionDisabledException("Notificaciones desactivadas"))
         }
-        val cachedToken = pushPreferences.getToken()
-        val token = if (!cachedToken.isNullOrBlank()) {
-            cachedToken
-        } else {
-            val tokenResult = tokenProvider.getToken()
-            val fetched = tokenResult.getOrElse { return Result.failure(it) }
-            cacheToken(fetched)
-            fetched
+
+        // Simplificación: Intentamos obtener el token de la fuente de verdad (Firebase) 
+        // o de nuestra caché si Firebase falla por alguna razón.
+        val tokenResult = tokenProvider.getToken()
+        val token = tokenResult.getOrElse { 
+            pushPreferences.getToken() ?: return Result.failure(it) 
         }
+        
+        cacheToken(token)
         return registerToken(token)
     }
 
