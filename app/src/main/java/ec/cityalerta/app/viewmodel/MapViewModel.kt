@@ -16,40 +16,14 @@ import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
+import ec.cityalerta.app.model.data.map.BarrioRiskState
 import ec.cityalerta.app.model.utils.GeoJsonConverter
+import ec.cityalerta.app.model.utils.IRiskZoneDetector
+import ec.cityalerta.app.model.utils.RadialRiskZoneDetector
+import ec.cityalerta.app.model.utils.ExponentialRiskColorProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.floor
-
-data class BarrioRiskState(
-    val barrioId: String,
-    val nombre: String,
-    val center: LatLng,
-    val radius: Double,
-    val reportCount: Int,
-    val fillColor: Long,
-    val strokeColor: Long = 0x88287FCCL
-)
-
-interface IRiskColorProvider {
-    fun getColorForReportCount(count: Int): Long
-}
-
-class DefaultRiskColorProvider(
-    private val thresholds: List<Pair<Int, Long>> = listOf(
-        5 to 0x44FF0000L,
-        10 to 0x66FF0000L,
-        15 to 0x88CC0000L,
-        20 to 0xAA990000L
-    ),
-    private val safeColor: Long = 0x00000000L
-) : IRiskColorProvider {
-    override fun getColorForReportCount(count: Int): Long {
-        if (count < thresholds.first().first) return safeColor
-        return thresholds.lastOrNull { count >= it.first }?.second ?: thresholds.last().second
-    }
-}
 
 data class MapUiState(
     val ciudad: Ciudad? = null,
@@ -72,7 +46,7 @@ class MapViewModel(
     private val ubicacionRepository: ReporteUbicacionRepository,
     private val authRepository: AuthRepositoryContract,
     private val barrioRepository: BarrioRepository,
-    private val colorProvider: IRiskColorProvider = DefaultRiskColorProvider()
+    private val riskDetector: IRiskZoneDetector = RadialRiskZoneDetector(ExponentialRiskColorProvider())
 ) : ViewModel() {
 
     var uiState by mutableStateOf(MapUiState())
@@ -119,36 +93,7 @@ class MapViewModel(
                             .distinctBy { it.id }
 
                         val riskZones = withContext(Dispatchers.Default) {
-                            val cellSize = 0.0015
-                            val reportLocs = filteredReports.mapNotNull { allUbicaciones[it.ubicacion_id] }
-
-                            if (reportLocs.isEmpty()) return@withContext emptyList<BarrioRiskState>()
-
-                            val grid = mutableMapOf<Pair<Int, Int>, MutableList<LatLng>>()
-                            reportLocs.forEach { loc ->
-                                val cellX = floor(loc.lat / cellSize).toInt()
-                                val cellY = floor(loc.lng / cellSize).toInt()
-                                val key = Pair(cellX, cellY)
-                                grid.getOrPut(key) { mutableListOf() }.add(LatLng(loc.lat, loc.lng))
-                            }
-
-                            grid.mapNotNull { (key, points) ->
-                                val count = points.size
-                                val color = colorProvider.getColorForReportCount(count)
-                                if (color != 0x00000000L) {
-                                    val avgLat = points.map { it.latitude }.average()
-                                    val avgLng = points.map { it.longitude }.average()
-
-                                    BarrioRiskState(
-                                        barrioId = "zone_${key.first}_${key.second}",
-                                        nombre = "Zona de Riesgo",
-                                        center = LatLng(avgLat, avgLng),
-                                        radius = 120.0,
-                                        reportCount = count,
-                                        fillColor = color
-                                    )
-                                } else null
-                            }
+                            riskDetector.detectRiskZones(filteredReports, allUbicaciones)
                         }
 
                         val markers = filteredReports.mapNotNull { report ->

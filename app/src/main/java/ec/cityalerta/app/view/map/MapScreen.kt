@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
 import ec.cityalerta.app.model.data.ciudad.Ciudad
+import ec.cityalerta.app.model.data.map.BarrioRiskState
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.components.AppTopBar

@@ -49,6 +49,9 @@ import androidx.compose.ui.unit.sp
 import ec.cityalerta.app.view.components.CityPickerSheet
 import ec.cityalerta.app.R
 
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+
 data class AuthScreenConfig(
     val title: String,
     val subtitle: String? = null,
