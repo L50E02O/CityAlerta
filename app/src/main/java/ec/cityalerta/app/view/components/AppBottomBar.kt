@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import ec.cityalerta.app.R
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.theme.DarkOnSurface
@@ -46,6 +47,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
     )
 
     if (currentRoute?.startsWith("map") == true || currentRoute in bottomBarRoutes) {
+        val startDestinationId = navController.graph.findStartDestination().id
         Surface(
             color = DarkSurface,
             modifier = Modifier.fillMaxWidth(),
@@ -61,7 +63,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     selected = currentRoute == Routes.Explore.route || currentRoute == Routes.Home.route,
                     onClick = {
                         navController.navigate(Routes.Explore.route) {
-                            popUpTo(Routes.Home.route) { saveState = true }
+                            popUpTo(startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -86,7 +88,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     selected = currentRoute == Routes.Post.route,
                     onClick = {
                         navController.navigate(Routes.Post.route) {
-                            popUpTo(Routes.Home.route) { saveState = true }
+                            popUpTo(startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -120,7 +122,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                     selected = currentRoute?.startsWith("map") == true,
                     onClick = {
                         navController.navigate("map/Sin ciudad") {
-                            popUpTo(Routes.Home.route) { saveState = true }
+                            popUpTo(startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
                         }

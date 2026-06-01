@@ -1,13 +1,19 @@
 package ec.cityalerta.app.navigation
 
 import ec.cityalerta.app.model.repository.AuthRepository
+import ec.cityalerta.app.model.remote.SupabaseProvider
+import ec.cityalerta.app.model.session.SessionManager
+import ec.cityalerta.app.model.session.SessionState
 import ec.cityalerta.app.view.SplashScreen
 import ec.cityalerta.app.view.authView.LoginScreen
 import ec.cityalerta.app.view.authView.RecoverPasswordScreen
 import ec.cityalerta.app.view.authView.RegisterScreen
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import ec.cityalerta.app.view.map.MapScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
@@ -40,8 +46,13 @@ import ec.cityalerta.app.view.search.SearchScreen
 import ec.cityalerta.app.viewmodel.SearchReportViewModel
 import androidx.compose.runtime.LaunchedEffect
 import android.app.Activity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import io.github.jan.supabase.gotrue.auth
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
@@ -55,6 +66,10 @@ fun AppNavigation(
     val activity = context as? Activity
     val currentIntent = activity?.intent
     val factory = remember { AppViewModelFactory(authRepository, context) }
+    val sessionManager = remember { SessionManager(SupabaseProvider.client.auth) }
+    val sessionState by sessionManager.state.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
 
     val authViewModel: AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
@@ -85,18 +100,43 @@ fun AppNavigation(
         profileViewModel.loadSummaryIfNeeded()
     }
 
-    LaunchedEffect(currentIntent) {
-        profileViewModel.loadSummaryIfNeeded()
-        val reporteId = currentIntent?.getStringExtra("reporte_id")
-        if (!reporteId.isNullOrBlank()) {
-            navController.navigate(Routes.ReportDetail.route.replace("{reportId}", reporteId))
-            currentIntent.removeExtra("reporte_id")
+    DisposableEffect(sessionManager) {
+        sessionManager.start()
+        onDispose {
+            sessionManager.stop()
         }
     }
 
-
+    DisposableEffect(lifecycleOwner, sessionManager) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                scope.launch {
+                    sessionManager.refreshIfNeeded()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     val profileState = profileViewModel.state.collectAsState().value
+
+    val reportIdFromIntent = remember(currentIntent) {
+        currentIntent?.getStringExtra("reporte_id")
+    }
+
+    LaunchedEffect(reportIdFromIntent) {
+        if (!reportIdFromIntent.isNullOrBlank() && !AuthDeepLinkParser.isAppAuthDeepLink(currentIntent)) {
+            if (sessionState is SessionState.Authenticated) {
+                navController.navigate(Routes.ReportDetail.route.replace("{reportId}", reportIdFromIntent)) {
+                    launchSingleTop = true
+                }
+            }
+            currentIntent?.removeExtra("reporte_id")
+        }
+    }
 
     Scaffold(
         bottomBar = { AppBottomBar(navController, ciudadId = if (profileState.ciudadId.isBlank()) "Sin ciudad" else profileState.ciudadId) }
@@ -109,7 +149,7 @@ fun AppNavigation(
             composable(Routes.Splash.route) {
                 SplashScreen(
                     onTimeout = {
-                        val hasSession = authRepository.getCurrentSession() != null
+                        val hasSession = sessionState is SessionState.Authenticated
                         val linkType = AuthDeepLinkParser.parseType(currentIntent)
                         val isDeepLink = AuthDeepLinkParser.isAppAuthDeepLink(currentIntent)
                         val nextRoute = if (!isDeepLink) {
@@ -141,25 +181,25 @@ fun AppNavigation(
                 RecoverPasswordScreen(navController, recoveryViewModel)
             }
             composable(Routes.Home.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
                 }
             }
             composable(Routes.Explore.route){
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
                 }
             }
 
             composable(Routes.Search.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     SearchScreen(navController, searchReportViewModel, profileViewModel)
                 }
             }
 
 
             composable(Routes.Post.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     PhotoScreen(
                         navController = navController,
                         viewModel = reporteViewModel,
@@ -172,7 +212,7 @@ fun AppNavigation(
             }
 
             composable(Routes.ReporteForm.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     ReporteScreen(
                         navController = navController,
                         viewModel = reporteViewModel,
@@ -203,12 +243,12 @@ fun AppNavigation(
                 MapScreen(navController, ciudadId, reportId, mapViewModel, profileViewModel)
             }
             composable(Routes.Profile.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     ProfileDashboardScreen(navController, profileViewModel)
                 }
             }
             composable(Routes.MyReports.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     MyReportsScreen(navController, profileViewModel)
                 }
             }
@@ -220,22 +260,22 @@ fun AppNavigation(
                 val detailViewModel: ReportDetailViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
                     factory = factory
                 )
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     ReportDetailScreen(navController, reportId, detailViewModel, profileViewModel)
                 }
             }
             composable(Routes.Settings.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     SettingsScreen(navController, profileViewModel, authViewModel)
                 }
             }
             composable(Routes.Appearance.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     AppearanceScreen(navController)
                 }
             }
             composable(Routes.Accessibility.route) {
-                RequireAuth(navController, authRepository) {
+                RequireAuth(navController, sessionState) {
                     AccessibilityScreen(navController)
                 }
             }
@@ -246,17 +286,18 @@ fun AppNavigation(
 @Composable
 private fun RequireAuth(
     navController: NavController,
-    authRepository: AuthRepository,
+    sessionState: SessionState,
     content: @Composable () -> Unit
 ) {
-    val hasSession = authRepository.getCurrentSession() != null
-    if (hasSession) {
-        content()
-    } else {
-        LaunchedEffect(Unit) {
-            navController.navigate(Routes.Login.route) {
-                popUpTo(Routes.Login.route) { inclusive = true }
-                launchSingleTop = true
+    when (sessionState) {
+        is SessionState.Authenticated -> content()
+        is SessionState.Refreshing -> Unit
+        else -> {
+            LaunchedEffect(sessionState) {
+                navController.navigate(Routes.Login.route) {
+                    popUpTo(Routes.Login.route) { inclusive = true }
+                    launchSingleTop = true
+                }
             }
         }
     }

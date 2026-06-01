@@ -108,15 +108,35 @@ class PushSubscriptionRegistrar(
     suspend fun unregisterToken(): Result<Unit> {
         pushPreferences.setNotificationsEnabled(false)
         val cachedToken = pushPreferences.getToken()
-        if (cachedToken.isNullOrBlank()) {
+        val tokensToDelete = mutableSetOf<String>()
+
+        if (!cachedToken.isNullOrBlank()) {
+            tokensToDelete.add(cachedToken)
+        }
+
+        // Intentamos obtener el token actual de Firebase por si la cache esta vacia o desactualizada.
+        val currentToken = tokenProvider.getToken().getOrNull()
+        if (!currentToken.isNullOrBlank()) {
+            tokensToDelete.add(currentToken)
+        }
+
+        if (tokensToDelete.isEmpty()) {
             pushPreferences.clearToken()
             return Result.success(Unit)
         }
-        val result = subscriptionRepository.deleteByToken(cachedToken)
-        result.onSuccess {
-            pushPreferences.clearToken()
+
+        var firstFailure: Throwable? = null
+        for (token in tokensToDelete) {
+            val result = subscriptionRepository.deleteByToken(token)
+            result.onFailure { error ->
+                if (firstFailure == null) {
+                    firstFailure = error
+                }
+            }
         }
-        return result
+
+        pushPreferences.clearToken()
+        return firstFailure?.let { Result.failure(it) } ?: Result.success(Unit)
     }
 
     suspend fun registerToken(token: String): Result<PushSubscription> {
