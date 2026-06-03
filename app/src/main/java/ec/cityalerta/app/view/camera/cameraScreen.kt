@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -171,7 +172,7 @@ fun PhotoScreen(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(ReportUiDimens.ScreenPadding)
                 .padding(padding)
-                .padding(bottom = 96.dp),
+                .padding(bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(ReportUiDimens.SectionSpacing)
         ) {
             Spacer(modifier = Modifier.height(12.dp))
@@ -179,10 +180,9 @@ fun PhotoScreen(
                 photoUri = photoUri,
                 previewView = cameraController.previewView,
                 hasCameraPermission = hasCameraPermission,
-                onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) }
+                onRequestPermission = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                modifier = Modifier.weight(1f)
             )
-
-            Spacer(modifier = Modifier.weight(1f))
 
             CameraControls(
                 hasCameraPermission = hasCameraPermission,
@@ -208,12 +208,13 @@ private fun CameraPreviewFrame(
     photoUri: Uri?,
     previewView: View,
     hasCameraPermission: Boolean,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(ReportUiDimens.FrameHeight)
+            .heightIn(max = ReportUiDimens.FrameHeight)
             .background(Color.Black, ReportUiShapes.Frame)
             .clip(ReportUiShapes.Frame)
     ) {
