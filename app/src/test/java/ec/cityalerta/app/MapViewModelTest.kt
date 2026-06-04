@@ -1,6 +1,7 @@
 package ec.cityalerta.app
 
 import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.testdoubles.NoOpRiskZoneDetector
 import ec.cityalerta.app.viewmodel.MapUiState
 import ec.cityalerta.app.viewmodel.MapViewModel
 import org.junit.Before
@@ -9,6 +10,7 @@ import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
+import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
 import kotlin.test.assertEquals
@@ -35,6 +37,9 @@ class MapViewModelTest {
     @Mock
     private lateinit var mockAuthRepository: AuthRepositoryContract
 
+    @Mock
+    private lateinit var mockBarrioRepository: BarrioRepository
+
     private lateinit var viewModel: MapViewModel
 
     @Before
@@ -44,7 +49,9 @@ class MapViewModelTest {
             mockMapRepository,
             mockReporteRepository,
             mockUbicacionRepository,
-            mockAuthRepository
+            mockAuthRepository,
+            mockBarrioRepository,
+            NoOpRiskZoneDetector
         )
     }
 
@@ -92,7 +99,9 @@ class MapViewModelTest {
             mockMapRepository,
             mockReporteRepository,
             mockUbicacionRepository,
-            mockAuthRepository
+            mockAuthRepository,
+            mockBarrioRepository,
+            NoOpRiskZoneDetector
         )
 
         // Assert

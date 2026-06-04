@@ -2,12 +2,15 @@ package ec.cityalerta.app.testdoubles
 
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacion
+import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
 import kotlinx.coroutines.runBlocking
 import org.mockito.Mockito
 
 object RepositoryMockHelpers {
+
+    fun barrioRepository(): BarrioRepository = Mockito.mock(BarrioRepository::class.java)
 
     fun reporteRepositoryReturning(reportes: List<Reporte>): ReporteRepository {
         val mock = Mockito.mock(ReporteRepository::class.java)

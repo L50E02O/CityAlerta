@@ -3,12 +3,17 @@ package ec.cityalerta.app
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.testdoubles.FakeAuthRepository
 import ec.cityalerta.app.testdoubles.MapViewModelTestFixtures
+import ec.cityalerta.app.testdoubles.NoOpRiskZoneDetector
 import ec.cityalerta.app.testdoubles.MapViewModelTestFixtures.CIUDAD_UUID
 import ec.cityalerta.app.testdoubles.RepositoryMockHelpers
 import ec.cityalerta.app.viewmodel.MapViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -42,8 +47,20 @@ class MapViewModelLoadCiudadCoverageTest {
         Dispatchers.resetMain()
     }
 
+    private suspend fun TestScope.awaitMapLoad() {
+        withContext(Dispatchers.Default.limitedParallelism(1)) {
+            withTimeout(5_000) {
+                while (viewModel.uiState.isLoading) {
+                    advanceUntilIdle()
+                    testDispatcher.scheduler.advanceUntilIdle()
+                    delay(20)
+                }
+            }
+        }
+    }
+
     @Test
-    fun loadCiudad_uuid_cargaReportesYMarcadores() = runTest {
+    fun loadCiudad_uuid_cargaReportesYMarcadores() = runTest(testDispatcher) {
         val ciudad = MapViewModelTestFixtures.sampleCiudad()
         val reporte = MapViewModelTestFixtures.sampleReporte()
         val ubicacion = MapViewModelTestFixtures.sampleUbicacion()
@@ -55,11 +72,13 @@ class MapViewModelLoadCiudadCoverageTest {
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(listOf(reporte)),
             RepositoryMockHelpers.ubicacionRepositoryReturning(listOf(ubicacion)),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
+        awaitMapLoad()
 
         val state = viewModel.uiState
         assertFalse(state.isLoading)
@@ -72,7 +91,7 @@ class MapViewModelLoadCiudadCoverageTest {
     }
 
     @Test
-    fun loadCiudad_porNombre_resuelveUuid() = runTest {
+    fun loadCiudad_porNombre_resuelveUuid() = runTest(testDispatcher) {
         val ciudad = MapViewModelTestFixtures.sampleCiudad(nombre = "Manta")
         authRepository.buscarCiudadPorNombreResult = Result.success(CIUDAD_UUID)
         val mapRepository = MapRepositoryContract { id ->
@@ -83,19 +102,20 @@ class MapViewModelLoadCiudadCoverageTest {
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(emptyList()),
             RepositoryMockHelpers.ubicacionRepositoryReturning(emptyList()),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad("Manta")
-        advanceUntilIdle()
-
+        awaitMapLoad()
         assertEquals("Manta", authRepository.lastCiudadNombre)
         assertEquals(ciudad, viewModel.uiState.ciudad)
         assertTrue(viewModel.uiState.reportMarkers.isEmpty())
     }
 
     @Test
-    fun loadCiudad_porNombre_sinResultado_usaNombreOriginal() = runTest {
+    fun loadCiudad_porNombre_sinResultado_usaNombreOriginal() = runTest(testDispatcher) {
         authRepository.buscarCiudadPorNombreResult = Result.success(null)
         val mapRepository = MapRepositoryContract { id ->
             assertEquals("Manta", id)
@@ -105,87 +125,92 @@ class MapViewModelLoadCiudadCoverageTest {
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(emptyList()),
             RepositoryMockHelpers.ubicacionRepositoryReturning(emptyList()),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad("Manta")
-        advanceUntilIdle()
-
+        awaitMapLoad()
         assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.errorMessage)
         assertFalse(viewModel.uiState.isLoading)
     }
 
     @Test
-    fun loadCiudad_ciudadNoEncontrada() = runTest {
+    fun loadCiudad_ciudadNoEncontrada() = runTest(testDispatcher) {
         val mapRepository = MapRepositoryContract { null }
         viewModel = MapViewModel(
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(emptyList()),
             RepositoryMockHelpers.ubicacionRepositoryReturning(emptyList()),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
-
+        awaitMapLoad()
         assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.errorMessage)
         assertNull(viewModel.uiState.ciudad)
     }
 
     @Test
-    fun loadCiudad_falloAlObtenerReportes() = runTest {
+    fun loadCiudad_falloAlObtenerReportes() = runTest(testDispatcher) {
         val ciudad = MapViewModelTestFixtures.sampleCiudad()
         val mapRepository = MapRepositoryContract { ciudad }
         viewModel = MapViewModel(
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryFailing("DB error"),
             RepositoryMockHelpers.ubicacionRepositoryReturning(emptyList()),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
-
+        awaitMapLoad()
         assertEquals(ciudad, viewModel.uiState.ciudad)
-        assertEquals("Error al obtener reportes de la base de datos", viewModel.uiState.errorMessage)
+        assertEquals("Error al obtener datos de la base de datos", viewModel.uiState.errorMessage)
         assertTrue(viewModel.uiState.reportMarkers.isEmpty())
     }
 
     @Test
-    fun loadCiudad_falloAlObtenerUbicaciones() = runTest {
+    fun loadCiudad_falloAlObtenerUbicaciones() = runTest(testDispatcher) {
         val ciudad = MapViewModelTestFixtures.sampleCiudad()
         val mapRepository = MapRepositoryContract { ciudad }
         viewModel = MapViewModel(
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(emptyList()),
             RepositoryMockHelpers.ubicacionRepositoryFailing("ubicaciones"),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
-
-        assertEquals("Error al obtener reportes de la base de datos", viewModel.uiState.errorMessage)
+        awaitMapLoad()
+        assertEquals("Error al obtener datos de la base de datos", viewModel.uiState.errorMessage)
     }
 
     @Test
-    fun loadCiudad_excepcion_muestraMensaje() = runTest {
+    fun loadCiudad_excepcion_muestraMensaje() = runTest(testDispatcher) {
         val mapRepository = MapRepositoryContract { throw IllegalStateException("fallo red") }
         viewModel = MapViewModel(
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(emptyList()),
             RepositoryMockHelpers.ubicacionRepositoryReturning(emptyList()),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
-
+        awaitMapLoad()
         assertEquals("Error cargando ciudad: fallo red", viewModel.uiState.errorMessage)
     }
 
     @Test
-    fun loadCiudad_omiteReporteSinUbicacion() = runTest {
+    fun loadCiudad_omiteReporteSinUbicacion() = runTest(testDispatcher) {
         val ciudad = MapViewModelTestFixtures.sampleCiudad()
         val reporteConUbicacion = MapViewModelTestFixtures.sampleReporte(id = "r1", ubicacionId = "u1")
         val reporteSinUbicacion = MapViewModelTestFixtures.sampleReporte(
@@ -199,18 +224,19 @@ class MapViewModelLoadCiudadCoverageTest {
             RepositoryMockHelpers.ubicacionRepositoryReturning(
                 listOf(MapViewModelTestFixtures.sampleUbicacion(id = "u1"))
             ),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
-
+        awaitMapLoad()
         assertEquals(2, viewModel.uiState.reports.size)
         assertEquals(1, viewModel.uiState.reportMarkers.size)
     }
 
     @Test
-    fun loadCiudad_filtraReportesPorCiudad() = runTest {
+    fun loadCiudad_filtraReportesPorCiudad() = runTest(testDispatcher) {
         val ciudad = MapViewModelTestFixtures.sampleCiudad()
         val otroCiudadId = "87654321-4321-4321-4321-210987654321"
         val reporteCiudad = MapViewModelTestFixtures.sampleReporte(id = "r1", ciudadId = CIUDAD_UUID)
@@ -220,18 +246,19 @@ class MapViewModelLoadCiudadCoverageTest {
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(listOf(reporteCiudad, reporteOtraCiudad)),
             RepositoryMockHelpers.ubicacionRepositoryReturning(emptyList()),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
-
+        awaitMapLoad()
         assertEquals(1, viewModel.uiState.reports.size)
         assertEquals("r1", viewModel.uiState.reports.first().id)
     }
 
     @Test
-    fun onReportClicked_conReporteCargado() = runTest {
+    fun onReportClicked_conReporteCargado() = runTest(testDispatcher) {
         val ciudad = MapViewModelTestFixtures.sampleCiudad()
         val reporte = MapViewModelTestFixtures.sampleReporte()
         val ubicacion = MapViewModelTestFixtures.sampleUbicacion()
@@ -240,11 +267,13 @@ class MapViewModelLoadCiudadCoverageTest {
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(listOf(reporte)),
             RepositoryMockHelpers.ubicacionRepositoryReturning(listOf(ubicacion)),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)
-        advanceUntilIdle()
+        awaitMapLoad()
         viewModel.onReportClicked("reporte-1")
 
         assertNotNull(viewModel.uiState.selectedReport)
@@ -258,7 +287,9 @@ class MapViewModelLoadCiudadCoverageTest {
             mapRepository,
             RepositoryMockHelpers.reporteRepositoryReturning(emptyList()),
             RepositoryMockHelpers.ubicacionRepositoryReturning(emptyList()),
-            authRepository
+            authRepository,
+            RepositoryMockHelpers.barrioRepository(),
+            NoOpRiskZoneDetector
         )
 
         viewModel.loadCiudad(CIUDAD_UUID)

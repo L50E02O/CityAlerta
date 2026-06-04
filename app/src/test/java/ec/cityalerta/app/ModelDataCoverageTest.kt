@@ -78,6 +78,7 @@ class ModelDataCoverageTest {
         val ui = ReporteUI(
             id = "r1",
             categoria = "Bache",
+            categoryType = ReportType.BACHE,
             imageUrl = null,
             barrio = "Centro",
             direccion = "Calle 1",
