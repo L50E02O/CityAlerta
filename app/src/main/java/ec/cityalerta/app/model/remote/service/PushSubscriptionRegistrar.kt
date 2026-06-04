@@ -1,7 +1,6 @@
 package ec.cityalerta.app.model.remote.service
 
 import android.content.Context
-import android.provider.Settings
 import com.google.firebase.messaging.FirebaseMessaging
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.data.contracts.notifications.PushSubscriptionRepositoryContract
@@ -9,6 +8,7 @@ import ec.cityalerta.app.model.data.push.PushSubscription
 import ec.cityalerta.app.model.data.push.PushSubscriptionCreateDto
 import ec.cityalerta.app.model.repository.AuthRepository
 import ec.cityalerta.app.model.repository.PushSubscriptionRepository
+import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -35,6 +35,7 @@ interface PushPreferences {
     fun clearToken()
     fun setNotificationsEnabled(enabled: Boolean)
     fun isNotificationsEnabled(): Boolean
+    fun getDeviceId(): String
 }
 
 class AndroidPushPreferences(context: Context) : PushPreferences {
@@ -56,17 +57,25 @@ class AndroidPushPreferences(context: Context) : PushPreferences {
 
     override fun isNotificationsEnabled(): Boolean = prefs.getBoolean(KEY_NOTIFICATIONS_ENABLED, false)
 
+    override fun getDeviceId(): String {
+        var id = prefs.getString(KEY_DEVICE_ID, null)
+        if (id == null) {
+            id = UUID.randomUUID().toString()
+            prefs.edit().putString(KEY_DEVICE_ID, id).apply()
+        }
+        return id
+    }
+
     companion object {
         private const val PREFS_NAME = "cityalerta_prefs"
         private const val KEY_TOKEN = "push_token"
         private const val KEY_NOTIFICATIONS_ENABLED = "push_enabled"
+        private const val KEY_DEVICE_ID = "device_id"
     }
 }
 
-class AndroidDeviceInfoProvider(private val context: Context) : DeviceInfoProvider {
-    override fun getDeviceId(): String {
-        return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID).orEmpty()
-    }
+class AndroidDeviceInfoProvider(private val pushPreferences: PushPreferences) : DeviceInfoProvider {
+    override fun getDeviceId(): String = pushPreferences.getDeviceId()
 
     override fun getPlatform(): String = "android"
 }
@@ -163,12 +172,13 @@ class PushSubscriptionRegistrar(
 
     companion object {
         fun createDefault(context: Context): PushSubscriptionRegistrar {
+            val pushPrefs = AndroidPushPreferences(context)
             return PushSubscriptionRegistrar(
                 authRepository = AuthRepository(),
                 subscriptionRepository = PushSubscriptionRepository(),
-                deviceInfoProvider = AndroidDeviceInfoProvider(context),
+                deviceInfoProvider = AndroidDeviceInfoProvider(pushPrefs),
                 tokenProvider = FirebasePushTokenProvider(),
-                pushPreferences = AndroidPushPreferences(context)
+                pushPreferences = pushPrefs
             )
         }
     }
