@@ -21,6 +21,7 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.whenever
 import kotlin.test.assertEquals
@@ -119,19 +120,17 @@ class SearchReportViewModelTest {
 
         whenever(authRepository.getUserId()).thenReturn(Result.success(userId))
         whenever(perfilRepository.getById(userId)).thenReturn(Result.success(perfil))
-        whenever(reporteRepository.searchReportes(eq(ciudadId), any(), any())).thenReturn(Result.success(listOf(searchResult)))
+        whenever(reporteRepository.searchReportes(eq(ciudadId), anyOrNull(), anyOrNull())).thenReturn(Result.success(listOf(searchResult)))
         whenever(reporteImagenRepository.getFirstImagenesByReporteIds(any())).thenReturn(Result.success(emptyMap()))
         whenever(reporteStorageRepository.generateSignedImageUrls(any())).thenReturn(Result.success(emptyMap()))
 
         viewModel.loadData()
+        
+        // Ejecuta initializeCiudadId Y la corrutina de search("") que esta lanza internamente
         advanceUntilIdle()
 
         assertNull(viewModel.state.value.error)
         assertEquals(ciudadId, viewModel.state.value.ciudadId)
-        
-        // Ensure all background tasks finished
-        advanceUntilIdle()
-
         assertEquals(1, viewModel.state.value.reportes.size)
         assertEquals("Centro", viewModel.state.value.reportes[0].barrio)
     }
