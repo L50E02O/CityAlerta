@@ -1,12 +1,17 @@
 package ec.cityalerta.app
 
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
+import ec.cityalerta.app.util.MainDispatcherRule
 import ec.cityalerta.app.viewmodel.AuthState
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -18,15 +23,22 @@ import kotlin.test.assertTrue
  */
 class AuthViewModelTest {
 
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @Mock
     private lateinit var mockAuthRepository: AuthRepositoryContract
+
+    @Mock
+    private lateinit var mockPushRegistrar: PushSubscriptionRegistrar
 
     private lateinit var viewModel: AuthViewModel
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        viewModel = AuthViewModel(mockAuthRepository)
+        whenever(mockPushRegistrar.isNotificationsEnabled()).thenReturn(false)
+        viewModel = AuthViewModel(mockAuthRepository, mockPushRegistrar)
     }
 
     @Test
@@ -42,8 +54,39 @@ class AuthViewModelTest {
         assertEquals("", state.ciudadId)
         assertFalse(state.isLoading)
         assertFalse(state.isEmailUnconfirmed)
+        assertFalse(state.notificationsEnabled)
         assertEquals(null, state.errorMessage)
         assertEquals(null, state.infoMessage)
+    }
+
+    @Test
+    fun testOnNotificationsPermissionGranted() {
+        // Act
+        viewModel.onNotificationsPermissionGranted()
+
+        // Assert
+        assertTrue(viewModel.uiState.notificationsEnabled)
+        verify(mockPushRegistrar).setNotificationsEnabled(true)
+    }
+
+    @Test
+    fun testOnNotificationsPermissionDenied() {
+        // Act
+        viewModel.onNotificationsPermissionDenied()
+
+        // Assert
+        assertFalse(viewModel.uiState.notificationsEnabled)
+        verify(mockPushRegistrar).setNotificationsEnabled(false)
+    }
+
+    @Test
+    fun testOnNotificationsDisabledByUser() {
+        // Act
+        viewModel.onNotificationsDisabledByUser()
+
+        // Assert
+        assertFalse(viewModel.uiState.notificationsEnabled)
+        verify(mockPushRegistrar).setNotificationsEnabled(false)
     }
 
     @Test

@@ -410,8 +410,7 @@ class ProfileViewModel(
 
     fun updateCity(ciudadId: String, successMessage: String, errorMessage: String) {
         viewModelScope.launch {
-            val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
-                ?: authRepository.getUserId().getOrNull()
+            val userId = authRepository.getUserId().getOrNull()
                 ?: run {
                     _state.value = _state.value.copy(errorMessage = errorMessage)
                     return@launch
@@ -447,8 +446,7 @@ class ProfileViewModel(
         }
 
         viewModelScope.launch {
-            val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
-                ?: authRepository.getUserId().getOrNull()
+            val userId = authRepository.getUserId().getOrNull()
                 ?: run {
                     _state.value = _state.value.copy(errorMessage = errorMessage)
                     return@launch
@@ -565,14 +563,6 @@ class ProfileViewModel(
         get() = !_state.value.profileImageId.isNullOrBlank()
 
     private suspend fun loadSummaryInternal(): PerfilResumen? {
-        val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
-            ?: authRepository.getUserId().getOrNull()
-
-        if (userId == null) {
-            _state.value = _state.value.copy(errorMessage = "Usuario no autenticado")
-            return null
-        }
-
         return perfilResumenRepository.getCurrentResumen().getOrNull()
     }
 

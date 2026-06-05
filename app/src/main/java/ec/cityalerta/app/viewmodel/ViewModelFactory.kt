@@ -143,6 +143,7 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(SearchReportViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
                 SearchReportViewModel(
+                    authRepository,
                     reporteRepository,
                     imagenReporte,
                     storageReporte,
