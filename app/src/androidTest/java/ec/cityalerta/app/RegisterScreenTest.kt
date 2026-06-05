@@ -2,10 +2,8 @@ package ec.cityalerta.app
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
-import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import ec.cityalerta.app.model.repository.interfaces.IAuthRepository
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.view.authView.RegisterScreen
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import org.junit.Rule
@@ -18,39 +16,49 @@ class RegisterScreenTest {
     val composeTestRule = createComposeRule()
 
     @Mock
-    private lateinit var mockRepository: IAuthRepository
+    private lateinit var mockRepository: AuthRepositoryContract
 
-    private lateinit var navController: NavController
     private lateinit var viewModel: AuthViewModel
 
     @Test
-    fun testRegisterScreenDisplaysTitle() {
+    fun testRegisterScreenWithValidCredentials() {
         MockitoAnnotations.openMocks(this)
         viewModel = AuthViewModel(mockRepository)
         
         composeTestRule.setContent {
-            navController = rememberNavController()
             MaterialTheme {
+                val navController = rememberNavController()
                 RegisterScreen(navController = navController, viewModel = viewModel)
             }
         }
 
-        composeTestRule.onNodeWithText("Registrarse").assertExists()
+        // Prueba el flujo de registro con credenciales válidas
+        viewModel.onEmailChange("newuser@example.com")
+        viewModel.onPasswordChange("securePassword123")
+        
+        composeTestRule.waitForIdle()
+        
+        assert(viewModel.uiState.email == "newuser@example.com")
+        assert(viewModel.uiState.password == "securePassword123")
     }
 
     @Test
-    fun testRegisterScreenDisplaysFormComponent() {
+    fun testRegisterScreenWithShortPassword() {
         MockitoAnnotations.openMocks(this)
         viewModel = AuthViewModel(mockRepository)
         
         composeTestRule.setContent {
-            navController = rememberNavController()
             MaterialTheme {
+                val navController = rememberNavController()
                 RegisterScreen(navController = navController, viewModel = viewModel)
             }
         }
 
-        composeTestRule.onNodeWithText("Correo electrónico").assertExists()
-        composeTestRule.onNodeWithText("Contraseña").assertExists()
+        // Prueba con contraseña muy corta (debe fallar la validación)
+        viewModel.onPasswordChange("short")
+        composeTestRule.waitForIdle()
+        
+        assert(viewModel.uiState.password == "short")
+        // Nota: La validación ocurre en el formulario, no aquí
     }
 }

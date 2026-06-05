@@ -21,6 +21,8 @@ class FakeAuthRepository(
     var getCiudadIdResult: Result<String> = Result.success("ciudad-1")
 ) : AuthRepositoryContract {
 
+    private var _currentSession: Any? = null
+
     var verifyRecoveryEmailCalls: Int = 0
     var lastVerifyEmail: String? = null
     var lastResetEmail: String? = null
@@ -71,4 +73,6 @@ class FakeAuthRepository(
         lastCiudadNombre = nombre
         return buscarCiudadPorNombreResult
     }
+
+    override fun getCurrentSession(): Any? = _currentSession
 }

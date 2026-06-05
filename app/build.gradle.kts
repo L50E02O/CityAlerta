@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt)
+    id("com.google.gms.google-services")
     jacoco
 }
 
@@ -19,12 +20,12 @@ jacoco {
 
 android {
     namespace = "ec.cityalerta.app"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "ec.cityalerta.app"
         minSdk = 28
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -108,6 +109,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 
@@ -231,6 +238,9 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
     implementation(libs.coil.compose)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
 
     // Network / backend
     implementation(libs.supabase.gotrue)
@@ -275,4 +285,9 @@ dependencies {
 
     // Annotation processors
     kapt(libs.androidx.room.compiler)
+
+    // firebase push notificationes
+    implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-analytics")
 }

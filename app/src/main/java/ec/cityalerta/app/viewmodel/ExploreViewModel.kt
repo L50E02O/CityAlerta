@@ -13,6 +13,7 @@ import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.PerfilRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.CoroutineScope
@@ -30,13 +31,17 @@ private const val TIME_AGO_RECENT = "Hace poco"
 data class ReporteUI(
     val id: String,
     val categoria: String,
+    val categoryType: ReportType,
     val imageUrl: String?,
     val barrio: String,
     val direccion: String,
     val descripcion: String,
     val estado: String,
     val fecha: String,
-    val timeAgo: String
+    val timeAgo: String,
+    val lat: Double = 0.0,
+    val lng: Double = 0.0,
+    val ciudadId: String = ""
 )
 
 data class ExploreState(
@@ -47,6 +52,7 @@ data class ExploreState(
 )
 
 class ExploreViewModel(
+    private val authRepository: AuthRepositoryContract,
     private val reporteRepository: ReporteRepository = ReporteRepository(),
     private val reporteImagenRepository: ReporteImagenRepository = ReporteImagenRepository(),
     private val reporteUbicacionRepository: ReporteUbicacionRepository = ReporteUbicacionRepository(),
@@ -67,17 +73,28 @@ class ExploreViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val perfil = loadAuthenticatedPerfil() ?: return@launch
+                // Obtenemos la ciudad directamente de la fuente de verdad (Perfil en DB)
+                val ciudadId = authRepository.getCiudadId().getOrNull()
+                
+                if (ciudadId == null) {
+                    _state.value = _state.value.copy(isLoading = false, error = "No se pudo determinar la ciudad")
+                    return@launch
+                }
+
                 val ciudadNombreDeferred = coroutineScope {
-                    async { loadCiudadNombre(perfil.ciudadId) }
+                    async { loadCiudadNombre(ciudadId) }
                 }
                 val reportesUIDeferred = coroutineScope {
-                    async { loadReportesForCiudad(perfil.ciudadId) }
+                    async { loadReportesForCiudad(ciudadId) }
                 }
+                
+                val nombre = ciudadNombreDeferred.await()
+                val listaReportes = reportesUIDeferred.await()
+
                 _state.value = _state.value.copy(
                     isLoading = false,
-                    ciudadNombre = ciudadNombreDeferred.await(),
-                    reportes = reportesUIDeferred.await()
+                    ciudadNombre = nombre,
+                    reportes = listaReportes
                 )
                 dataLoaded = true
             } catch (e: Exception) {
@@ -107,20 +124,6 @@ class ExploreViewModel(
         }
     }
 
-    private suspend fun loadAuthenticatedPerfil(): Perfil? {
-        val userId = SupabaseProvider.client.auth.currentUserOrNull()?.id
-        if (userId == null) {
-            _state.value = _state.value.copy(isLoading = false, error = "Usuario no autenticado")
-            return null
-        }
-
-        val perfil = perfilRepository.getById(userId).getOrNull()
-        if (perfil == null) {
-            _state.value = _state.value.copy(isLoading = false, error = "Perfil no encontrado")
-        }
-        return perfil
-    }
-
     private suspend fun loadCiudadNombre(ciudadId: String): String {
         return ciudadRepository.getById(ciudadId).getOrNull()?.nombre ?: "Ubicacion desconocida"
     }
@@ -146,13 +149,16 @@ class ExploreViewModel(
         ReporteUI(
             id = reporte.id,
             categoria = mapCategoriaLabel(reporte.categoria),
+            categoryType = reporte.categoria,
             imageUrl = imageUrl,
             barrio = barrio?.nombre ?: "Barrio desconocido",
             direccion = ubicacion?.direccion_aproximada ?: "Direccion no disponible",
             descripcion = reporte.descripcion,
             estado = mapEstadoLabel(reporte.estado),
             fecha = reporte.fecha_reporte,
-            timeAgo = calculateTimeAgo(reporte.created_at)
+            timeAgo = calculateTimeAgo(reporte.created_at),
+            lat = ubicacion?.lat ?: 0.0,
+            lng = ubicacion?.lng ?: 0.0
         )
     }
 

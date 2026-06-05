@@ -303,15 +303,10 @@ class AuthRepository : AuthRepositoryContract {
                 ?.trim('"')
                 ?.takeIf { it != "null" && it.isNotEmpty() }
 
-            val metadataCiudadId = user.userMetadata?.get("ciudad_id")
-                ?.toString()
-                ?.trim('"')
-                ?.takeIf { it != "null" && it.isNotEmpty() }
-
-            when {
-                ciudadId != null -> Result.success(ciudadId)
-                metadataCiudadId != null -> Result.success(metadataCiudadId)
-                else -> Result.failure(Exception("Ciudad no configurada en el perfil"))
+            if (ciudadId != null) {
+                Result.success(ciudadId)
+            } else {
+                Result.failure(Exception("Ciudad no configurada en el perfil"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -330,6 +325,10 @@ class AuthRepository : AuthRepositoryContract {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override fun getCurrentSession(): Any? {
+        return SupabaseProvider.client.auth.currentSessionOrNull()
     }
 
     private fun mapAuthException(exception: Exception): Exception {

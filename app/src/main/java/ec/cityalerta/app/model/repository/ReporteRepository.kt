@@ -3,6 +3,7 @@ package ec.cityalerta.app.model.repository
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
+import ec.cityalerta.app.model.data.reporte.ReporteSearchResult
 import ec.cityalerta.app.model.data.reporte.ReporteUpdateDto
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.data.contracts.crud.CrudRepositoryContract
@@ -12,7 +13,10 @@ import ec.cityalerta.app.model.utils.stringOrEmpty
 import ec.cityalerta.app.model.utils.toReportTypeOrDefault
 import ec.cityalerta.app.model.utils.toReporteEstadoOrDefault
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
@@ -88,9 +92,35 @@ class ReporteRepository : CrudRepositoryContract<Reporte, ReporteCreateDto, Repo
                 filter {
                     eq("ciudad_id", ciudadId)
                 }
+                order("created_at", Order.DESCENDING)
             }
             .decodeList<JsonObject>()
             .map { it.toReporte() }
+    }
+
+    suspend fun searchReportes(
+        ciudadId: String,
+        categoria: ReportType? = null,
+        barrioNombreQuery: String? = null
+    ): Result<List<ReporteSearchResult>> = safeSupabaseCall {
+        SupabaseProvider.client.postgrest.rpc(
+            "search_reportes",
+            mapOf(
+                "p_ciudad_id" to ciudadId,
+                "p_categoria" to categoria?.name,
+                "p_barrio_nombre" to barrioNombreQuery?.trim()?.takeIf { it.isNotEmpty() }
+            )
+        )
+            .decodeList<JsonObject>()
+            .map { it.toReporteSearchResult() }
+    }
+
+    private fun JsonObject.toReporteSearchResult(): ReporteSearchResult {
+        return ReporteSearchResult(
+            reporte = toReporte(),
+            barrioNombre = stringOrEmpty("barrio_nombre"),
+            direccionAproximada = nullableString("direccion_aproximada")
+        )
     }
 
     private fun JsonObject.toReporte(): Reporte {

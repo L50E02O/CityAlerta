@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -58,7 +59,7 @@ fun AccessibilityScreen(navController: NavController) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
@@ -68,7 +69,7 @@ fun AccessibilityScreen(navController: NavController) {
                         Icon(
                             Icons.Default.TextFields,
                             contentDescription = null,
-                            tint = Color(0xFF3B5B7A),
+                            tint = MaterialTheme.colorScheme.secondary,
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
@@ -78,7 +79,7 @@ fun AccessibilityScreen(navController: NavController) {
                             stringResource(R.string.accessibility_text_size),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
-                            color = Color(0xFF1B2633)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
@@ -88,7 +89,7 @@ fun AccessibilityScreen(navController: NavController) {
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("A", fontSize = 12.sp, color = Color(0xFF6C757D))
+                        Text("A", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Slider(
                             value = textScale,
                             onValueChange = { accessibilityManager.setTextScale(it) },
@@ -97,12 +98,12 @@ fun AccessibilityScreen(navController: NavController) {
                                 .weight(1f)
                                 .padding(horizontal = 8.dp),
                             colors = SliderDefaults.colors(
-                                thumbColor = Color(0xFF3B5B7A),
-                                activeTrackColor = Color(0xFF3B5B7A),
-                                inactiveTrackColor = Color(0xFFD6E4F0)
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
                             )
                         )
-                        Text("A", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1B2633))
+                        Text("A", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     }
 
                     Text(
@@ -111,7 +112,7 @@ fun AccessibilityScreen(navController: NavController) {
                             .fillMaxWidth()
                             .padding(top = 4.dp),
                         fontSize = 12.sp,
-                        color = Color(0xFF6C757D)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -123,7 +124,7 @@ fun AccessibilityScreen(navController: NavController) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -136,21 +137,21 @@ fun AccessibilityScreen(navController: NavController) {
                             stringResource(R.string.accessibility_high_contrast),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
-                            color = Color(0xFF1B2633)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             stringResource(R.string.accessibility_high_contrast_desc),
                             modifier = Modifier.padding(top = 4.dp),
                             fontSize = 13.sp,
-                            color = Color(0xFF6C757D)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Switch(
                         checked = highContrast,
                         onCheckedChange = { accessibilityManager.setHighContrast(it) },
                         colors = SwitchDefaults.colors(
-                            checkedTrackColor = Color(0xFF3B5B7A),
-                            checkedThumbColor = Color.White
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary
                         )
                     )
                 }

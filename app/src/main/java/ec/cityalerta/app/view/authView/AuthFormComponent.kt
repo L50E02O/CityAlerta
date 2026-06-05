@@ -6,13 +6,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -22,12 +27,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.theme.SuccessGreen
 import ec.cityalerta.app.R
 import ec.cityalerta.app.viewmodel.AuthViewModel
 
@@ -43,6 +49,13 @@ fun AuthFormComponent(
     val isPasswordValid = password.isNotEmpty() && password.length >= 8
 
     Column(modifier = modifier) {
+        Text(
+            text = "CORREO ELECTRÓNICO",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
         EmailField(
             email = email,
             isEmailValid = isEmailValid,
@@ -58,8 +71,15 @@ fun AuthFormComponent(
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
+        Text(
+            text = "CONTRASEÑA",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
         PasswordField(
             password = password,
             passwordVisible = passwordVisible,
@@ -81,7 +101,7 @@ fun AuthFormComponent(
         if (viewModel.uiState.infoMessage != null) {
             Text(
                 text = viewModel.uiState.infoMessage!!,
-                color = Color(0xFF1B5E20),
+                color = SuccessGreen, // Standard Material Success Green
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
@@ -117,14 +137,27 @@ private fun EmailField(
     OutlinedTextField(
         value = email,
         onValueChange = onEmailChange,
-        label = { Text(text = stringResource(R.string.auth_email_label)) },
+        placeholder = { Text(text = "ejemplo@gmail.com") },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
             autoCorrectEnabled = false
         ),
         isError = email.isNotEmpty() && !isEmailValid,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            errorTextColor = MaterialTheme.colorScheme.onSurface,
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            errorCursorColor = MaterialTheme.colorScheme.error
+        )
     )
 }
 
@@ -136,12 +169,19 @@ private fun PasswordField(
     onToggleVisibility: () -> Unit
 ) {
     val icon = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
-    val description = if (passwordVisible) "Ocultar contrasena" else "Mostrar contrasena"
+    val description = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
 
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChange,
-        label = { Text(text = stringResource(R.string.auth_password_label)) },
+        placeholder = { Text(text = "•••••") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Filled.Lock,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+        },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
@@ -156,6 +196,15 @@ private fun PasswordField(
                 )
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface
+        )
     )
 }

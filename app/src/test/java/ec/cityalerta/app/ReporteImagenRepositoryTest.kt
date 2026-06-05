@@ -178,4 +178,30 @@ class ReporteImagenRepositoryTest {
     fun testReporteImagenRepositoryImplementaContratoCrud() {
         assertTrue(repository is CrudRepositoryContract<*, *, *>)
     }
+
+    @Test
+    fun testGetFirstImagenesByReporteIds_emptyInputProducesEmptyMap() {
+        val grouped = emptyList<ReporteImagen>()
+            .groupBy { it.reporte_id }
+            .mapValues { (_, imagenes) -> imagenes.first() }
+
+        assertTrue(grouped.isEmpty())
+    }
+
+    @Test
+    fun testGetFirstImagenesByReporteIds_keepsFirstPerReporte() {
+        val imagenes = listOf(
+            ReporteImagen("img-1", "reporte-1", "uuid-1", "/a.jpg"),
+            ReporteImagen("img-2", "reporte-1", "uuid-2", "/b.jpg"),
+            ReporteImagen("img-3", "reporte-2", "uuid-3", "/c.jpg")
+        )
+
+        val firstByReporte = imagenes
+            .groupBy { it.reporte_id }
+            .mapValues { (_, items) -> items.first() }
+
+        assertEquals(2, firstByReporte.size)
+        assertEquals("img-1", firstByReporte["reporte-1"]?.id)
+        assertEquals("img-3", firstByReporte["reporte-2"]?.id)
+    }
 }

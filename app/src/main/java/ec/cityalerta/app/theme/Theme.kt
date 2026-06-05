@@ -26,17 +26,41 @@ val LocalLocaleManager = staticCompositionLocalOf<LocaleManager> {
 }
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF3B5B7A),
-    onPrimary = Color.White,
-    background = Color(0xFFF6F7F9),
-    surface = Color.White,
+    primary = CityRed,
+    onPrimary = White,
+    secondary = LightOnSurface,
+    onSecondary = White,
+    tertiary = ActionBlue,
+    onTertiary = White,
+    background = LightBackground,
+    onBackground = LightOnSurface,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline,
+    outlineVariant = LightOutlineVariant
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF3B5B7A),
-    onPrimary = Color.White,
-    background = Color(0xFF0F1720),
-    surface = Color(0xFF1B2633),
+    primary = CityRed,
+    onPrimary = White,
+    secondary = DarkSecondary,
+    onSecondary = White,
+    tertiary = ActionBlueDark,
+    onTertiary = White,
+    background = DarkBackground,
+    onBackground = DarkOnSurface,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant,
+    error = ErrorRed,
+    onError = Black,
+    errorContainer = CityRedDark.copy(alpha = 0.2f),
+    onErrorContainer = White
 )
 
 @Composable
@@ -58,14 +82,14 @@ fun CityAlertaTheme(
 
     val colors: ColorScheme = when {
         highContrast && isDark -> DarkColors.copy(
-            primary = Color(0xFF5B8FC7),
-            background = Color(0xFF000000),
-            surface = Color(0xFF1A1A1A)
+            primary = HighContrastPrimaryDark,
+            background = HighContrastDarkBackground,
+            surface = HighContrastDarkSurface
         )
         highContrast && !isDark -> LightColors.copy(
-            primary = Color(0xFF1E4D7B),
-            background = Color(0xFFFFFFFF),
-            surface = Color(0xFFF0F0F0)
+            primary = HighContrastPrimaryLight,
+            background = White,
+            surface = HighContrastSurfaceLight
         )
         isDark -> DarkColors
         else -> LightColors

@@ -4,6 +4,9 @@ import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.utils.safeSupabaseCall
 import io.github.jan.supabase.storage.storage
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
@@ -32,6 +35,22 @@ class ReporteStorageRepository {
             .createSignedUrl(objectPath, expirationDuration)
         normalizeSignedUrl(signedUrl)
     }
+
+    suspend fun generateSignedImageUrls(objectPaths: List<String>): Result<Map<String, String>> =
+        safeSupabaseCall {
+            if (objectPaths.isEmpty()) {
+                return@safeSupabaseCall emptyMap()
+            }
+            coroutineScope {
+                objectPaths.distinct().map { path ->
+                    async {
+                        path to generateSignedImageUrl(path).getOrNull()
+                    }
+                }.awaitAll()
+                    .mapNotNull { (path, url) -> url?.let { path to it } }
+                    .toMap()
+            }
+        }
 
     private fun normalizeSignedUrl(url: String): String {
         val trimmed = url.trim()

@@ -14,6 +14,7 @@ import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -26,7 +27,6 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
             mapOf(
                 "p_ciudad_id" to entity.ciudadId,
                 "p_nombre" to entity.nombre,
-                "p_nivel_peligrosidad" to entity.nivelPeligrosidad,
                 "p_geojson" to entity.perimetro.toGeoJsonObject()
             )
         ).decodeAs<String>()
@@ -40,7 +40,6 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
             mapOf(
                 "p_id" to id,
                 "p_nombre" to entity.nombre,
-                "p_nivel_peligrosidad" to entity.nivelPeligrosidad,
                 "p_geojson" to entity.perimetro?.toGeoJsonObject()
             )
         )
@@ -64,6 +63,20 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
             ?.toBarrio()
     }
 
+    suspend fun getByPoint(ciudadId: String, lat: Double, lng: Double): Result<Barrio?> = safeSupabaseCall {
+        SupabaseProvider.client.postgrest.rpc(
+            "get_barrio_by_point",
+            buildJsonObject {
+                put("p_ciudad_id", JsonPrimitive(ciudadId))
+                put("p_lat", JsonPrimitive(lat))
+                put("p_lng", JsonPrimitive(lng))
+            }
+        )
+            .decodeList<JsonObject>()
+            .firstOrNull()
+            ?.toBarrio()
+    }
+
     override suspend fun delete(id: String): Result<Unit> = safeSupabaseCall {
         SupabaseProvider.client.postgrest.rpc(
             "delete_barrio",
@@ -73,35 +86,51 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
     }
 
     private fun JsonObject.toBarrio(): Barrio {
+        val perimetroElement = this["perimetro"]
+        val geometry = if (perimetroElement != null && perimetroElement is JsonObject) {
+            perimetroElement.toGeometry()
+        } else {
+            Geometry("Polygon", emptyList())
+        }
+
         return Barrio(
             id = stringOrEmpty("id"),
             ciudadId = nullableString("ciudad_id") ?: stringOrEmpty("ciudadId"),
             nombre = stringOrEmpty("nombre"),
-            nivelPeligrosidad = nullableString("nivel_peligrosidad") ?: stringOrEmpty("nivelPeligrosidad"),
-            perimetro = this["perimetro"]?.let { jsonElement ->
-                (jsonElement as JsonObject).toGeometry()
-            } ?: Geometry("Polygon", emptyList()),
+            perimetro = geometry,
             createdAt = nullableString("created_at") ?: nullableString("createdAt"),
             updatedAt = nullableString("updated_at") ?: nullableString("updatedAt")
         )
     }
 
-    // Convierte GeoJSON JSON (retornado por el backend) a Geometry
     private fun JsonObject.toGeometry(): Geometry {
         val type = this["type"]?.jsonPrimitive?.content ?: "Polygon"
-        val coordinates = this["coordinates"]?.jsonArray?.map { ringElement ->
+        val coordinates = when (type) {
+            "MultiPolygon" -> this["coordinates"]?.jsonArray
+                ?.firstOrNull()
+                ?.jsonArray
+                ?.toPolygonCoordinates()
+                ?: emptyList()
+            "Polygon" -> this["coordinates"]?.jsonArray?.toPolygonCoordinates() ?: emptyList()
+            else -> emptyList()
+        }
+
+        return Geometry(type = type, coordinates = coordinates)
+    }
+
+    private fun JsonArray.toPolygonCoordinates(): List<List<List<Double>>> {
+        return map { ringElement ->
             ringElement.jsonArray.map { coordElement ->
                 coordElement.jsonArray.map { valueElement ->
                     valueElement.jsonPrimitive.content.toDouble()
                 }
             }
-        } ?: emptyList()
-
-        return Geometry(type = type, coordinates = coordinates)
+        }
     }
 
-    // Convierte Geometry a GeoJSON JsonObject para enviar al backend
     private fun Geometry.toGeoJsonObject(): JsonObject {
+        val effectiveType = if (type == "FeatureCollection" && coordinates.isNotEmpty()) "Polygon" else type
+
         val coordinatesJson = JsonArray(
             this.coordinates.map { ring ->
                 JsonArray(
@@ -114,7 +143,7 @@ class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioU
 
         return JsonObject(
             mapOf(
-                "type" to JsonPrimitive(this.type),
+                "type" to JsonPrimitive(effectiveType),
                 "coordinates" to coordinatesJson
             )
         )

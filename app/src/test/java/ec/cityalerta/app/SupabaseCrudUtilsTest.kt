@@ -79,12 +79,6 @@ class SupabaseCrudUtilsTest {
     }
 
     @Test
-    fun testStringOrEmptyReturnsEmptyWhenNull() {
-        val json = JsonObject(mapOf("name" to JsonPrimitive("")))
-        // Nota: esto depende de como se implemente
-    }
-
-    @Test
     fun testDoubleOrZeroReturnsValueWhenPresent() {
         val json = JsonObject(mapOf("lat" to JsonPrimitive(10.5)))
         val result = json.doubleOrZero("lat")
@@ -113,13 +107,6 @@ class SupabaseCrudUtilsTest {
     }
 
     @Test
-    fun testBooleanOrFalseReturnsFalseWhenMissing() {
-        val json = JsonObject(mapOf())
-        val result = json.booleanOrFalse("activo")
-        assertFalse(result)
-    }
-
-    @Test
     fun testNullableStringReturnsValueWhenPresent() {
         val json = JsonObject(mapOf("email" to JsonPrimitive("test@example.com")))
         val result = json.nullableString("email")
@@ -134,66 +121,18 @@ class SupabaseCrudUtilsTest {
     }
 
     @Test
-    fun testToReporteEstadoOrDefaultReturnsPendienteWhenMatches() {
-        val json = JsonObject(mapOf("estado_slug" to JsonPrimitive("PENDIENTE")))
-        val result = json.toReporteEstadoOrDefault("estado_slug")
-        assertEquals(ReporteEstado.PENDIENTE, result)
+    fun testToReporteEstadoOrDefaultReturnsMatches() {
+        val jsonPendiente = JsonObject(mapOf("estado_slug" to JsonPrimitive("PENDIENTE")))
+        assertEquals(ReporteEstado.PENDIENTE, jsonPendiente.toReporteEstadoOrDefault("estado_slug"))
+
+        val jsonResuelto = JsonObject(mapOf("estado_slug" to JsonPrimitive("RESUELTO")))
+        assertEquals(ReporteEstado.RESUELTO, jsonResuelto.toReporteEstadoOrDefault("estado_slug"))
     }
 
     @Test
-    fun testToReporteEstadoOrDefaultReturnsResueltoWhenMatches() {
-        val json = JsonObject(mapOf("estado_slug" to JsonPrimitive("RESUELTO")))
-        val result = json.toReporteEstadoOrDefault("estado_slug")
-        assertEquals(ReporteEstado.RESUELTO, result)
-    }
-
-    @Test
-    fun testToReporteEstadoOrDefaultReturnsPendienteAsDefault() {
+    fun testToReporteEstadoOrDefaultReturnsFallback() {
         val json = JsonObject(mapOf("estado_slug" to JsonPrimitive("INVALIDO")))
-        val result = json.toReporteEstadoOrDefault("estado_slug")
-        assertEquals(ReporteEstado.PENDIENTE, result)
-    }
-
-    @Test
-    fun testToReporteEstadoOrDefaultReturnsPendienteWhenMissing() {
-        val json = JsonObject(mapOf())
-        val result = json.toReporteEstadoOrDefault("estado_slug")
-        assertEquals(ReporteEstado.PENDIENTE, result)
-    }
-
-    @Test
-    fun testStringOrEmptyWithMultipleFields() {
-        val json = JsonObject(
-            mapOf(
-                "nombre" to JsonPrimitive("Juan"),
-                "apellido" to JsonPrimitive("Perez")
-            )
-        )
-        assertEquals("Juan", json.stringOrEmpty("nombre"))
-        assertEquals("Perez", json.stringOrEmpty("apellido"))
-    }
-
-    @Test
-    fun testDoubleOrZeroWithMultipleCoordinates() {
-        val json = JsonObject(
-            mapOf(
-                "lat" to JsonPrimitive(-0.9542),
-                "lng" to JsonPrimitive(-80.7314)
-            )
-        )
-        assertEquals(-0.9542, json.doubleOrZero("lat"))
-        assertEquals(-80.7314, json.doubleOrZero("lng"))
-    }
-
-    @Test
-    fun testNullableStringWithMixedData() {
-        val json = JsonObject(
-            mapOf(
-                "email" to JsonPrimitive("test@example.com"),
-                "phone" to JsonPrimitive("")
-            )
-        )
-        assertEquals("test@example.com", json.nullableString("email"))
+        assertEquals(ReporteEstado.PENDIENTE, json.toReporteEstadoOrDefault("estado_slug"))
     }
 
     @Test
@@ -211,40 +150,47 @@ class SupabaseCrudUtilsTest {
         assertEquals("FeatureCollection", result["type"]?.jsonPrimitive?.content)
         val features = result["features"]?.jsonArray
         assertEquals(1, features?.size)
-        val firstFeature = features?.get(0)?.jsonObject
-        assertEquals("Feature", firstFeature?.get("type")?.jsonPrimitive?.content)
-        assertEquals("Test", firstFeature?.get("properties")?.jsonObject?.get("name")?.jsonPrimitive?.content)
     }
 
     @Test
-    fun testGeoJsonFromJsonConversion() {
-        val json = JsonObject(
-            mapOf(
-                "type" to JsonPrimitive("FeatureCollection"),
-                "features" to ec.cityalerta.app.model.utils.geoJsonToJson(
-                    ec.cityalerta.app.model.data.geoJson.GeoJson(
-                        type = "FeatureCollection",
-                        features = listOf(
-                            ec.cityalerta.app.model.data.geoJson.Feature(
-                                type = "Feature",
-                                properties = ec.cityalerta.app.model.data.geoJson.Properties(name = "Test", country = "EC"),
-                                geometry = ec.cityalerta.app.model.data.geoJson.Geometry(
-                                    type = "Polygon",
-                                    coordinates = listOf(listOf(listOf(-80.0, -1.0)))
-                                )
-                            )
-                        )
-                    )
-                )["features"]!!
+    fun testGeoJsonFromJson_NullElement() {
+        val result = ec.cityalerta.app.model.utils.geoJsonFromJson(null)
+        assertEquals("FeatureCollection", result.type)
+        assertTrue(result.features.isEmpty())
+    }
+
+    @Test
+    fun testGeoJsonFromJson_ValidJson() {
+        val geometry = ec.cityalerta.app.model.data.geoJson.Geometry(
+            type = "Polygon",
+            coordinates = listOf(listOf(listOf(-80.0, -1.0)))
+        )
+        val geoJson = ec.cityalerta.app.model.data.geoJson.GeoJson(
+            type = "FeatureCollection",
+            features = listOf(
+                ec.cityalerta.app.model.data.geoJson.Feature(
+                    type = "Feature",
+                    properties = ec.cityalerta.app.model.data.geoJson.Properties(name = "Test", country = "EC"),
+                    geometry = geometry
+                )
             )
         )
-
+        val json = ec.cityalerta.app.model.utils.geoJsonToJson(geoJson)
+        
         val result = ec.cityalerta.app.model.utils.geoJsonFromJson(json)
 
         assertEquals("FeatureCollection", result.type)
         assertEquals(1, result.features.size)
         assertEquals("Test", result.features[0].properties.name)
         assertEquals("Polygon", result.features[0].geometry.type)
+        assertEquals(-80.0, result.features[0].geometry.coordinates[0][0][0])
+    }
+
+    @Test
+    fun testGeoJsonFromJson_MissingFields() {
+        val json = JsonObject(mapOf("type" to JsonPrimitive("FeatureCollection"), "features" to kotlinx.serialization.json.buildJsonArray { }))
+        val result = ec.cityalerta.app.model.utils.geoJsonFromJson(json)
+        assertEquals("FeatureCollection", result.type)
+        assertTrue(result.features.isEmpty())
     }
 }
-

@@ -16,7 +16,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,10 +25,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +51,7 @@ import ec.cityalerta.app.model.utils.EmailValidator
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.theme.AppLanguage
 import ec.cityalerta.app.theme.LocalLocaleManager
+import ec.cityalerta.app.theme.SuccessGreen
 import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.profile.components.LanguagePickerSheet
 import ec.cityalerta.app.view.profile.components.SettingsEditIcon
@@ -58,10 +65,13 @@ internal fun SettingsMainContent(
     state: ProfileState,
     userEmail: String,
     languageSubtitle: String,
+    notificationsEnabled: Boolean,
     onEditName: () -> Unit,
     onEditEmail: () -> Unit,
+    onEditLocation: () -> Unit,
     onOpenLanguage: () -> Unit,
-    onOpenDelete: () -> Unit
+    onOpenDelete: () -> Unit,
+    onToggleNotifications: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -73,13 +83,13 @@ internal fun SettingsMainContent(
             stringResource(R.string.settings_title),
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1B2633)
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             stringResource(R.string.settings_subtitle),
             modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
             fontSize = 14.sp,
-            color = Color(0xFF6C757D),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             lineHeight = 20.sp
         )
 
@@ -113,13 +123,15 @@ internal fun SettingsMainContent(
             label = stringResource(R.string.settings_location_label),
             value = state.cityName.ifBlank { stringResource(R.string.profile_city_unavailable) },
             trailing = {
-                Icon(
-                    Icons.Default.LocationOn,
-                    contentDescription = null,
-                    tint = Color(0xFF3B5B7A),
-                    modifier = Modifier.size(22.dp)
-                )
+                SettingsEditIcon(onClick = onEditLocation)
             }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        SettingsNotificationsCard(
+            enabled = notificationsEnabled,
+            onToggle = onToggleNotifications
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -140,11 +152,53 @@ internal fun SettingsMainContent(
 }
 
 @Composable
+private fun SettingsNotificationsCard(
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.settings_notifications_title),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    stringResource(R.string.settings_notifications_desc),
+                    modifier = Modifier.padding(top = 4.dp),
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = enabled,
+                onCheckedChange = onToggle,
+                colors = SwitchDefaults.colors(
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+    }
+}
+
+@Composable
 private fun SettingsStatusMessages(state: ProfileState) {
     state.settingsInfoMessage?.let { message ->
         Text(
             message,
-            color = Color(0xFF1B5E20),
+            color = SuccessGreen, // Standard Material Success Green
             fontSize = 13.sp,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -164,7 +218,7 @@ private fun SettingsProfileCard(state: ProfileState) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -181,14 +235,14 @@ private fun SettingsProfileCard(state: ProfileState) {
                     state.fullName.ifBlank { stringResource(R.string.profile_user_fallback) },
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp,
-                    color = Color(0xFF1B2633)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     stringResource(R.string.profile_active_member),
                     modifier = Modifier.padding(top = 4.dp),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF3B5B7A),
+                    color = MaterialTheme.colorScheme.secondary,
                     letterSpacing = 0.8.sp
                 )
             }
@@ -201,29 +255,31 @@ private fun SettingsDeleteCard(onOpenDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8E8E8))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 stringResource(R.string.settings_delete_title),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = Color(0xFF1B2633)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 stringResource(R.string.settings_delete_desc),
                 modifier = Modifier.padding(vertical = 8.dp),
                 fontSize = 13.sp,
-                color = Color(0xFF6C757D),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp
             )
             Button(
                 onClick = onOpenDelete,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE74C3C))
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(stringResource(R.string.settings_delete_button), color = Color.White)
+                Text(stringResource(R.string.settings_delete_button), color = MaterialTheme.colorScheme.onError)
             }
         }
     }
@@ -250,7 +306,11 @@ internal fun SettingsNameDialog(
                 label = { Text(stringResource(R.string.settings_edit_name_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isSaving
+                enabled = !isSaving,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                )
             )
         },
         confirmButton = {
@@ -296,7 +356,11 @@ internal fun SettingsEmailDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     isError = editEmail.isNotEmpty() && !isEmailValid,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !isSaving
+                    enabled = !isSaving,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                    )
                 )
                 if (editEmail.isNotEmpty() && !isEmailValid) {
                     Text(
@@ -308,7 +372,7 @@ internal fun SettingsEmailDialog(
                 Text(
                     stringResource(R.string.settings_edit_email_info),
                     fontSize = 12.sp,
-                    color = Color(0xFF6C757D)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 emailFieldError?.let {
                     Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -370,7 +434,7 @@ internal fun SettingsDeleteDialog(
                 },
                 enabled = !isDeleting
             ) {
-                Text(stringResource(R.string.settings_confirm), color = Color(0xFFE74C3C))
+                Text(stringResource(R.string.settings_confirm), color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {

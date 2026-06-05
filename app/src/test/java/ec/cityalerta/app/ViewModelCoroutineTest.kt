@@ -9,14 +9,22 @@ import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacion
 import ec.cityalerta.app.model.repository.AuthMappedException
+import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
+import ec.cityalerta.app.testdoubles.FakeAuthRepository
+import ec.cityalerta.app.testdoubles.NoOpRiskZoneDetector
 import ec.cityalerta.app.util.MainDispatcherRule
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
 import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -50,12 +58,27 @@ class ViewModelCoroutineTest {
     @Mock
     private lateinit var ubicacionRepository: ReporteUbicacionRepository
 
+    @Mock
+    private lateinit var barrioRepository: BarrioRepository
+
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
     }
 
     private val ciudadId = "550e8400-e29b-41d4-a716-446655440000"
+
+    private suspend fun TestScope.awaitMapLoad(viewModel: MapViewModel) {
+        withContext(Dispatchers.Default.limitedParallelism(1)) {
+            withTimeout(5_000) {
+                while (viewModel.uiState.isLoading) {
+                    advanceUntilIdle()
+                    mainDispatcherRule.dispatcher.scheduler.advanceUntilIdle()
+                    delay(20)
+                }
+            }
+        }
+    }
 
     private fun sampleCiudad() = Ciudad(
         id = ciudadId,
@@ -202,7 +225,7 @@ class ViewModelCoroutineTest {
     }
 
     @Test
-    fun mapViewModel_loadCiudad_success() = runTest {
+    fun mapViewModel_loadCiudad_success() = runTest(mainDispatcherRule.dispatcher) {
         val ciudad = sampleCiudad()
         val ubicacion = ReporteUbicacion(
             id = "loc-1",
@@ -220,10 +243,12 @@ class ViewModelCoroutineTest {
             mapRepository,
             reporteRepository,
             ubicacionRepository,
-            authRepository
+            authRepository,
+            barrioRepository,
+            NoOpRiskZoneDetector
         )
         viewModel.loadCiudad(ciudadId)
-        advanceUntilIdle()
+        awaitMapLoad(viewModel)
 
         assertNotNull(viewModel.uiState.ciudad)
         assertEquals(1, viewModel.uiState.reportMarkers.size)
@@ -232,14 +257,16 @@ class ViewModelCoroutineTest {
     }
 
     @Test
-    fun mapViewModel_loadCiudad_notFound() = runTest {
+    fun mapViewModel_loadCiudad_notFound() = runTest(mainDispatcherRule.dispatcher) {
         whenever(mapRepository.getCiudadById(ciudadId)).thenReturn(null)
 
         val viewModel = MapViewModel(
             mapRepository,
             reporteRepository,
             ubicacionRepository,
-            authRepository
+            authRepository,
+            barrioRepository,
+            NoOpRiskZoneDetector
         )
         viewModel.loadCiudad(ciudadId)
         advanceUntilIdle()
@@ -249,7 +276,7 @@ class ViewModelCoroutineTest {
     }
 
     @Test
-    fun mapViewModel_loadCiudad_resolvesNameWhenIdIsShort() = runTest {
+    fun mapViewModel_loadCiudad_resolvesNameWhenIdIsShort() = runTest(mainDispatcherRule.dispatcher) {
         val ciudad = sampleCiudad()
         whenever(authRepository.buscarCiudadPorNombre("Manta")).thenReturn(Result.success(ciudadId))
         whenever(mapRepository.getCiudadById(ciudadId)).thenReturn(ciudad)
@@ -260,10 +287,12 @@ class ViewModelCoroutineTest {
             mapRepository,
             reporteRepository,
             ubicacionRepository,
-            authRepository
+            authRepository,
+            barrioRepository,
+            NoOpRiskZoneDetector
         )
         viewModel.loadCiudad("Manta")
-        advanceUntilIdle()
+        awaitMapLoad(viewModel)
 
         assertNotNull(viewModel.uiState.ciudad)
         assertEquals("Manta", viewModel.uiState.ciudad?.nombre)
@@ -271,7 +300,7 @@ class ViewModelCoroutineTest {
 
     @Test
     fun exploreViewModel_initialState() {
-        val viewModel = ExploreViewModel()
+        val viewModel = ExploreViewModel(FakeAuthRepository())
         assertEquals("Cargando...", viewModel.state.value.ciudadNombre)
     }
 }

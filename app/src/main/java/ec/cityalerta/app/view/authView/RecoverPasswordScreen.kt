@@ -19,12 +19,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.theme.SuccessGreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -79,7 +82,7 @@ fun RecoverPasswordScreen(
         state.newPassword == state.confirmPassword &&
         !state.isLoading
 
-    Surface(color = ReportUiColors.ScreenBackground) {
+    Surface(color = MaterialTheme.colorScheme.background) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -112,7 +115,7 @@ fun RecoverPasswordScreen(
 
             Text(
                 text = "Regresar al login",
-                color = Color(0xFF3B5B7A),
+                color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .clickable {
@@ -129,7 +132,7 @@ fun RecoverPasswordScreen(
 private fun RecoverPasswordHeader(onBack: () -> Unit) {
     Text(
         text = "ATRAS",
-        color = Color(0xFF1B2633),
+        color = MaterialTheme.colorScheme.onSurface,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier.clickable(onClick = onBack)
     )
@@ -138,14 +141,14 @@ private fun RecoverPasswordHeader(onBack: () -> Unit) {
         Text(
             text = "Restablecer Contrasena",
             style = MaterialTheme.typography.headlineMedium,
-            color = Color(0xFF1B2633),
+            color = MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.SemiBold
         )
         Spacer(modifier = Modifier.height(6.dp))
         Box(
             modifier = Modifier
                 .size(width = 38.dp, height = 4.dp)
-                .background(ReportUiColors.AccentRed, RoundedCornerShape(999.dp))
+                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(999.dp))
         )
     }
 }
@@ -159,7 +162,7 @@ private fun EmailVerificationCard(
 ) {
     Card(
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -171,7 +174,7 @@ private fun EmailVerificationCard(
             Text(
                 text = "Verifica tu correo",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF1B2633),
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold
             )
             OutlinedTextField(
@@ -181,18 +184,26 @@ private fun EmailVerificationCard(
                 singleLine = true,
                 enabled = !state.isLoading,
                 label = { Text("Correo electronico") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface
+                )
             )
             Text(
                 text = "La app validara que el correo exista y luego actualizara la contrasena con la edge function.",
-                color = ReportUiColors.HintText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall
             )
 
             Button(
                 onClick = onVerifyEmail,
                 enabled = canVerifyEmail,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Text(if (state.isLoading) "Verificando..." else "Verificar correo")
             }
@@ -200,7 +211,7 @@ private fun EmailVerificationCard(
             if (state.isEmailVerified) {
                 Text(
                     text = "Correo verificado. Paso 02 habilitado.",
-                    color = Color(0xFF1B5E20),
+                    color = SuccessGreen,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -218,7 +229,7 @@ private fun PasswordResetCard(
 ) {
     Card(
         shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -232,12 +243,12 @@ private fun PasswordResetCard(
             Text(
                 text = "Restablecer Contrasena",
                 style = MaterialTheme.typography.titleMedium,
-                color = Color(0xFF1B2633),
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = "Escribe una nueva contrasena y confirmala. Si el correo existe, la edge function la guardara en Supabase Auth.",
-                color = ReportUiColors.HintText,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall
             )
 
@@ -258,7 +269,11 @@ private fun PasswordResetCard(
             Button(
                 onClick = onResetPassword,
                 enabled = canUpdatePassword,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Text(if (state.isLoading) "Procesando..." else "Actualizar Contrasena")
             }
@@ -271,6 +286,7 @@ private fun PasswordResetCard(
     }
 }
 
+
 @Composable
 private fun RecoverPasswordStatusMessages(
     successMessage: String?,
@@ -279,7 +295,7 @@ private fun RecoverPasswordStatusMessages(
     successMessage?.let { message ->
         Text(
             text = message,
-            color = Color(0xFF1B5E20),
+            color = SuccessGreen,
             style = MaterialTheme.typography.bodySmall
         )
     }
@@ -297,7 +313,7 @@ private fun RecoverPasswordStatusMessages(
 private fun SectionLabel(text: String) {
     Text(
         text = text,
-        color = ReportUiColors.HintText,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold
     )
@@ -331,6 +347,10 @@ private fun PasswordField(
                     contentDescription = if (isVisible) "Ocultar contrasena" else "Mostrar contrasena"
                 )
             }
-        }
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface
+        )
     )
 }

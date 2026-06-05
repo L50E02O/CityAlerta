@@ -1,7 +1,11 @@
 package ec.cityalerta.app.viewmodel
 
-import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.remote.service.PushSubscriptionAuthRequiredException
+import ec.cityalerta.app.model.remote.service.PushSubscriptionDisabledException
+import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
+import ec.cityalerta.app.model.remote.service.PushSubscriptionTokenMissingException
+import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import ec.cityalerta.app.model.utils.MappedAuthError
 import androidx.compose.runtime.getValue
@@ -18,19 +22,28 @@ data class AuthState(
     val password: String = "",
     val ciudadNombre: String = "",
     val ciudadId: String = "",
+    val notificationsEnabled: Boolean = false,
     val isLoading: Boolean = false,
     val isEmailUnconfirmed: Boolean = false,
     val errorMessage: String? = null,
     val infoMessage: String? = null
 )
 
-class AuthViewModel(private val repository: AuthRepositoryContract) : ViewModel() {
+class AuthViewModel(
+    private val repository: AuthRepositoryContract,
+    private val pushRegistrar: PushSubscriptionRegistrar? = null
+) : ViewModel() {
     var uiState by mutableStateOf(AuthState())
         private set
 
+    init {
+        val enabled = pushRegistrar?.isNotificationsEnabled() ?: false
+        uiState = uiState.copy(notificationsEnabled = enabled)
+    }
+
     fun onEmailChange(email: String){
         uiState = uiState.copy(
-            email = email,
+            email = email.trim(),
             isEmailUnconfirmed = false,
             errorMessage = null
         )
@@ -74,7 +87,10 @@ class AuthViewModel(private val repository: AuthRepositoryContract) : ViewModel(
 
             try {
                 repository.signIn(uiState.email, uiState.password).fold(
-                    onSuccess = { onSuccess() },
+                    onSuccess = {
+                        registerPushSubscriptionIfPossible()
+                        onSuccess()
+                    },
                     onFailure = { error -> applyAuthFailure(error) }
                 )
             } catch (e: Exception) {
@@ -108,6 +124,7 @@ class AuthViewModel(private val repository: AuthRepositoryContract) : ViewModel(
                     onSuccess = {
                         val hasSession = repository.getUserId().isSuccess
                         if (hasSession) {
+                            registerPushSubscriptionIfPossible()
                             onSuccess()
                         } else {
                             uiState = uiState.copy(
@@ -171,5 +188,46 @@ class AuthViewModel(private val repository: AuthRepositoryContract) : ViewModel(
             errorMessage = mapped.message,
             isEmailUnconfirmed = mapped.isEmailUnconfirmed
         )
+    }
+
+    fun onNotificationsPermissionGranted() {
+        val registrar = pushRegistrar ?: return
+        registrar.setNotificationsEnabled(true)
+        uiState = uiState.copy(notificationsEnabled = true)
+        registerPushSubscriptionIfPossible()
+    }
+
+    fun onNotificationsPermissionDenied() {
+        val registrar = pushRegistrar ?: return
+        registrar.setNotificationsEnabled(false)
+        uiState = uiState.copy(notificationsEnabled = false)
+    }
+
+    fun onNotificationsDisabledByUser() {
+        val registrar = pushRegistrar ?: return
+        registrar.setNotificationsEnabled(false)
+        uiState = uiState.copy(notificationsEnabled = false)
+        viewModelScope.launch {
+            registrar.unregisterToken().onFailure { error ->
+            }
+        }
+    }
+
+    private fun registerPushSubscriptionIfPossible() {
+        val registrar = pushRegistrar ?: return
+        viewModelScope.launch {
+            registrar.registerTokenIfAllowed().onFailure { error ->
+                if (
+                    error is PushSubscriptionAuthRequiredException ||
+                    error is PushSubscriptionDisabledException ||
+                    error is PushSubscriptionTokenMissingException
+                ) {
+                    return@onFailure
+                }
+            }
+        }
+    }
+
+    companion object {
     }
 }

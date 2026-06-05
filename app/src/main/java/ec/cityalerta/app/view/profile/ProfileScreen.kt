@@ -10,20 +10,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.view.components.AppTopBar
 import ec.cityalerta.app.view.components.ProfileAvatar
 import ec.cityalerta.app.view.utils.rememberProfileImagePicker
 import ec.cityalerta.app.viewmodel.ProfileViewModel
@@ -59,13 +56,11 @@ fun ProfileScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Perfil") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atras")
-                    }
-                }
+            AppTopBar(
+                title = "Perfil",
+                showBack = true,
+                showProfile = false,
+                onBackClick = { navController.popBackStack() }
             )
         }
     ) { padding ->
@@ -73,7 +68,7 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            color = Color(0xFFF6F7F9)
+            color = MaterialTheme.colorScheme.background
         ) {
             when {
                 state.isLoading -> {
@@ -98,14 +93,14 @@ fun ProfileScreen(
                         Text(
                             "Toca la foto para cambiarla",
                             fontSize = 12.sp,
-                            color = Color(0xFF6C757D)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         state.errorMessage?.let { message ->
-                            Text(message, fontSize = 12.sp, color = Color(0xFFE74C3C))
+                            Text(message, fontSize = 12.sp, color = MaterialTheme.colorScheme.error)
                         }
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(state.fullName.ifBlank { "Usuario" }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1B2633))
-                        Text(state.cityName.ifBlank { "Ciudad no disponible" }, fontSize = 14.sp, color = Color(0xFF6C757D))
+                        Text(state.fullName.ifBlank { "Usuario" }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Text(state.cityName.ifBlank { "Ciudad no disponible" }, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                         Spacer(modifier = Modifier.height(20.dp))
                         Row(
@@ -117,35 +112,48 @@ fun ProfileScreen(
                                     .weight(1f)
                                     .clickable { navController.navigate(Routes.MyReports.route) },
                                 shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
                             ) {
                                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(state.totalReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text("REPORTES", fontSize = 12.sp, color = Color.Gray)
+                                    Text("REPORTES", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                             Card(
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color.White)
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
                             ) {
                                 Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(state.resolvedReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text("RESUELTOS", fontSize = 12.sp, color = Color.Gray)
+                                    Text("RESUELTOS", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
+                        val logoutButtonColor = Color(0xFFD32F2F)
+
                         Column(
                             modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Button(
                                 onClick = { navController.navigate(Routes.MyReports.route) },
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiary,
+                                    contentColor = MaterialTheme.colorScheme.onTertiary
+                                )
                             ) {
-                                Text("Ver mis reportes")
+                                Text("Ver mis reportes", fontWeight = FontWeight.Bold)
                             }
                             Button(
                                 onClick = {
@@ -156,9 +164,13 @@ fun ProfileScreen(
                                     }
                                 },
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE74C3C))
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = logoutButtonColor,
+                                    contentColor = Color.White
+                                )
                             ) {
-                                Text("Cerrar sesion", color = Color.White)
+                                Text("Cerrar sesión", fontWeight = FontWeight.Medium)
                             }
                         }
                     }

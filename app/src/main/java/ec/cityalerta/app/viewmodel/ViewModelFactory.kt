@@ -17,7 +17,8 @@ import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteStorageRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
+import ec.cityalerta.app.model.repository.NominatimGeocodingRepository
+import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
 
 class AppViewModelFactory(
     private val authRepository: AuthRepositoryContract,
@@ -68,19 +69,23 @@ class AppViewModelFactory(
         PerfilStorageRepository()
     }
 
+    private val geocodingRepository by lazy {
+        NominatimGeocodingRepository()
+    }
+
     private val locationProvider by lazy {
         LocationRepository(appContext)
+    }
+
+    private val pushRegistrar by lazy {
+        PushSubscriptionRegistrar.createDefault(appContext)
     }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                AuthViewModel(authRepository) as T
-            }
-            modelClass.isAssignableFrom(PasswordRecoveryViewModel::class.java) -> {
-                @Suppress("UNCHECKED_CAST")
-                PasswordRecoveryViewModel(authRepository) as T
+                AuthViewModel(authRepository, pushRegistrar) as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
@@ -88,12 +93,22 @@ class AppViewModelFactory(
                     mapRepository,
                     reporteRepository,
                     ubicacionReporte,
-                    authRepository
+                    authRepository,
+                    barrioRepository
                 ) as T
             }
             modelClass.isAssignableFrom(ExploreViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                ExploreViewModel() as T
+                ExploreViewModel(
+                    authRepository,
+                    reporteRepository,
+                    imagenReporte,
+                    ubicacionReporte,
+                    storageReporte,
+                    perfilRepository,
+                    ciudadRepository,
+                    barrioRepository
+                ) as T
             }
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
@@ -119,7 +134,34 @@ class AppViewModelFactory(
                     ubicacionReporte,
                     storageReporte,
                     locationProvider,
-                    authRepository
+                    authRepository,
+                    mapRepository,
+                    barrioRepository,
+                    geocodingRepository
+                ) as T
+            }
+            modelClass.isAssignableFrom(SearchReportViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                SearchReportViewModel(
+                    authRepository,
+                    reporteRepository,
+                    imagenReporte,
+                    storageReporte,
+                    perfilRepository
+                ) as T
+            }
+            modelClass.isAssignableFrom(PasswordRecoveryViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                PasswordRecoveryViewModel(authRepository) as T
+            }
+            modelClass.isAssignableFrom(ReportDetailViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                ReportDetailViewModel(
+                    reporteRepository,
+                    imagenReporte,
+                    ubicacionReporte,
+                    storageReporte,
+                    barrioRepository
                 ) as T
             }
 

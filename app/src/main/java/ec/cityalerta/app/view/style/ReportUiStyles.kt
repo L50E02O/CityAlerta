@@ -1,18 +1,31 @@
 package ec.cityalerta.app.view.style
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import ec.cityalerta.app.theme.DeepNavyBlack
+import ec.cityalerta.app.theme.MapPlaceholderGreen
 
 object ReportUiColors {
-    val ScreenBackground = Color(0xFFF6F2F8)
-    val CardBackground = Color.White
-    val FrameBackground = Color(0xFF0F1216)
+    @Composable
+    fun screenBackground() = MaterialTheme.colorScheme.background
+    
+    @Composable
+    fun cardBackground() = MaterialTheme.colorScheme.surface
+    
+    val FrameBackground = DeepNavyBlack
     val FrameBorder = Color.White
-    val HintText = Color(0xFF8A8D99)
-    val AccentRed = Color(0xFFE64B4B)
-    val MapPlaceholder = Color(0xFF365F52)
+    
+    @Composable
+    fun hintText() = MaterialTheme.colorScheme.onSurfaceVariant
+    
+    @Composable
+    fun accentRed() = MaterialTheme.colorScheme.error
+
+    val MapPlaceholder = MapPlaceholderGreen
 }
 
 object ReportUiDimens {

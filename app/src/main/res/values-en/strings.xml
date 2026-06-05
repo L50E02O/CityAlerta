@@ -71,6 +71,12 @@
     <string name="settings_email_update_error">Could not update email</string>
     <string name="settings_name_update_error">Could not update name</string>
     <string name="settings_language_changed">Language updated</string>
+    <string name="settings_edit_location_title">Change location</string>
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_desc">Receive alerts for reports and updates.</string>
+    <string name="settings_notifications_permission_title">Notifications permission</string>
+    <string name="settings_notifications_permission_desc">You must enable the permission in settings to receive notifications.</string>
+    <string name="settings_open_settings">Open settings</string>
 
     <string name="appearance_title">Appearance</string>
     <string name="appearance_subtitle">Choose the app theme.</string>

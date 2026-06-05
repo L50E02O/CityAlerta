@@ -91,6 +91,23 @@ class ReporteImagenRepository : CrudRepositoryContract<ReporteImagen, ReporteIma
             .map { it.toReporteImagen() }
     }
 
+    suspend fun getFirstImagenesByReporteIds(reporteIds: List<String>): Result<Map<String, ReporteImagen>> =
+        safeSupabaseCall {
+            if (reporteIds.isEmpty()) {
+                return@safeSupabaseCall emptyMap()
+            }
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL) {
+                    filter {
+                        isIn("reporte_id", reporteIds)
+                    }
+                }
+                .decodeList<JsonObject>()
+                .map { it.toReporteImagen() }
+                .groupBy { it.reporte_id }
+                .mapValues { (_, imagenes) -> imagenes.first() }
+        }
+
     private fun JsonObject.toReporteImagen(): ReporteImagen {
         return ReporteImagen(
             id = stringOrEmpty("id"),

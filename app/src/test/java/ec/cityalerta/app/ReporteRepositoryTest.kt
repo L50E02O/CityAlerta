@@ -3,8 +3,10 @@ package ec.cityalerta.app
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
+import ec.cityalerta.app.model.data.reporte.ReporteSearchResult
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.ReporteUpdateDto
+import ec.cityalerta.app.testdoubles.SearchReportTestFixtures
 import ec.cityalerta.app.model.repository.ReporteRepository
 import org.junit.Before
 import org.junit.Test
@@ -174,6 +176,32 @@ class ReporteRepositoryTest {
     fun testReporteRepositoryInitialization() {
         assertNotNull(repository)
         assertTrue(repository is ReporteRepository)
+    }
+
+    @Test
+    fun testReporteSearchResultFromRepositoryContract() {
+        val result = ReporteSearchResult(
+            reporte = SearchReportTestFixtures.sampleReporte(),
+            barrioNombre = "Centro Historico",
+            direccionAproximada = "Av. Malecon"
+        )
+
+        assertNotNull(result)
+        assertEquals("Centro Historico", result.barrioNombre)
+        assertEquals(SearchReportTestFixtures.CIUDAD_ID, result.reporte.ciudad_id)
+    }
+
+    @Test
+    fun testSearchReportesParametersForRpc() {
+        val ciudadId = SearchReportTestFixtures.CIUDAD_ID
+        val categoria = ReportType.AGUA
+        val barrioQuery = "  centro  "
+
+        val trimmedQuery = barrioQuery.trim().takeIf { it.isNotEmpty() }
+
+        assertEquals("centro", trimmedQuery)
+        assertEquals(ReportType.AGUA, categoria)
+        assertTrue(ciudadId.isNotBlank())
     }
 
     @Test

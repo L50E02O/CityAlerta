@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -41,7 +42,7 @@ fun LanguagePickerSheet(
                 text = title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1B2633),
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
@@ -82,7 +83,7 @@ private fun LanguageOptionRow(
             text = label,
             modifier = Modifier.padding(start = 12.dp),
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = Color(0xFF1B2633),
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 16.sp
         )
     }

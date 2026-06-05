@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
@@ -26,7 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,11 +35,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import ec.cityalerta.app.theme.DarkBackground
+import ec.cityalerta.app.theme.DarkSurfaceVariant
+import ec.cityalerta.app.theme.LightBackground
+import ec.cityalerta.app.theme.LightSurfaceVariant
+import ec.cityalerta.app.theme.White
+import ec.cityalerta.app.view.components.AppTopBar
 
-private val ScreenBackground = Color(0xFFF6F7F9)
-private val TitleColor = Color(0xFF1B2633)
-private val HintColor = Color(0xFF6C757D)
-private val AccentBlue = Color(0xFF3B5B7A)
+// Using theme colors instead of hardcoded AccentBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,32 +53,20 @@ fun ProfileSettingsScaffold(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        title,
-                        color = AccentBlue,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atras",
-                            tint = AccentBlue
-                        )
-                    }
-                }
+            AppTopBar(
+                title = title,
+                showBack = true,
+                showProfile = false,
+                onBackClick = { navController.popBackStack() }
             )
         },
-        containerColor = ScreenBackground
+        containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { padding ->
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            color = ScreenBackground
+            color = MaterialTheme.colorScheme.surfaceVariant
         ) {
             content()
         }
@@ -91,7 +80,7 @@ fun SettingsSectionLabel(text: String, modifier: Modifier = Modifier) {
         modifier = modifier.padding(start = 4.dp, bottom = 8.dp),
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
-        color = HintColor,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         letterSpacing = 1.sp
     )
 }
@@ -109,7 +98,7 @@ fun SettingsNavigationRow(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -123,19 +112,19 @@ fun SettingsNavigationRow(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFE8EEF4)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = AccentBlue, modifier = Modifier.size(22.dp))
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(22.dp))
             }
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.SemiBold, color = TitleColor, fontSize = 15.sp)
-                Text(subtitle, color = HintColor, fontSize = 13.sp)
+                Text(title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp)
+                Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
             }
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = HintColor
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -151,7 +140,7 @@ fun SettingsInfoField(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F2F5)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -165,7 +154,7 @@ fun SettingsInfoField(
                     label.uppercase(),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
-                    color = HintColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 0.8.sp
                 )
                 Text(
@@ -173,7 +162,7 @@ fun SettingsInfoField(
                     modifier = Modifier.padding(top = 4.dp),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TitleColor
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             trailing?.invoke()
@@ -184,7 +173,7 @@ fun SettingsInfoField(
 @Composable
 fun SettingsEditIcon(onClick: () -> Unit) {
     IconButton(onClick = onClick, modifier = Modifier.size(36.dp)) {
-        Icon(Icons.Default.Edit, contentDescription = "Editar", tint = AccentBlue, modifier = Modifier.size(18.dp))
+        Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -205,7 +194,7 @@ fun ThemePreviewCard(
             label,
             modifier = Modifier.padding(top = 10.dp),
             fontWeight = FontWeight.SemiBold,
-            color = TitleColor,
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 14.sp
         )
     }
@@ -218,11 +207,11 @@ private fun ThemePreviewFrame(isSelected: Boolean, isDarkPreview: Boolean) {
             .fillMaxWidth()
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) AccentBlue else Color(0xFFDEE2E6),
+                color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outline,
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isDarkPreview) Color(0xFF0F1720) else Color.White)
+            .background(if (isDarkPreview) DarkBackground else LightBackground)
             .padding(12.dp)
     ) {
         ThemePreviewSkeleton(isDarkPreview = isDarkPreview)
@@ -232,17 +221,17 @@ private fun ThemePreviewFrame(isSelected: Boolean, isDarkPreview: Boolean) {
                     .align(Alignment.TopEnd)
                     .size(22.dp)
                     .clip(CircleShape)
-                    .background(AccentBlue),
+                    .background(MaterialTheme.colorScheme.secondary),
                 contentAlignment = Alignment.Center
             ) {
-                Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("✓", color = White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         } else {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .size(22.dp)
-                    .border(1.dp, Color(0xFFCED4DA), CircleShape)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
             )
         }
     }
@@ -250,7 +239,7 @@ private fun ThemePreviewFrame(isSelected: Boolean, isDarkPreview: Boolean) {
 
 @Composable
 private fun ThemePreviewSkeleton(isDarkPreview: Boolean) {
-    val skeletonColor = if (isDarkPreview) Color(0xFF2A3A4D) else Color(0xFFE9ECEF)
+    val skeletonColor = if (isDarkPreview) DarkSurfaceVariant else LightSurfaceVariant
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(
             modifier = Modifier
@@ -270,7 +259,7 @@ private fun ThemePreviewSkeleton(isDarkPreview: Boolean) {
             modifier = Modifier
                 .fillMaxWidth(0.55f)
                 .clip(RoundedCornerShape(6.dp))
-                .background(AccentBlue)
+                .background(MaterialTheme.colorScheme.secondary)
                 .padding(vertical = 8.dp)
         )
     }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -48,13 +49,13 @@ fun AppearanceScreen(navController: NavController) {
                 stringResource(R.string.appearance_title),
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1B2633)
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 stringResource(R.string.appearance_subtitle),
                 modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
                 fontSize = 14.sp,
-                color = Color(0xFF6C757D)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Row(
@@ -82,7 +83,7 @@ fun AppearanceScreen(navController: NavController) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -95,13 +96,13 @@ fun AppearanceScreen(navController: NavController) {
                             stringResource(R.string.appearance_system),
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
-                            color = Color(0xFF1B2633)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             stringResource(R.string.appearance_system_desc),
                             modifier = Modifier.padding(top = 4.dp),
                             fontSize = 13.sp,
-                            color = Color(0xFF6C757D),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             lineHeight = 18.sp
                         )
                     }
@@ -113,8 +114,8 @@ fun AppearanceScreen(navController: NavController) {
                             )
                         },
                         colors = SwitchDefaults.colors(
-                            checkedTrackColor = Color(0xFF3B5B7A),
-                            checkedThumbColor = Color.White
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary
                         )
                     )
                 }

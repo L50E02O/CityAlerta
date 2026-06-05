@@ -1,30 +1,27 @@
 package ec.cityalerta.app.view.map
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import android.content.Context
-import org.json.JSONArray
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.theme.MapStrokeBlue
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import ec.cityalerta.app.view.components.ProfileAvatar
-import ec.cityalerta.app.navigation.Routes
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -33,20 +30,28 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
 import ec.cityalerta.app.model.data.ciudad.Ciudad
+import ec.cityalerta.app.model.data.map.BarrioRiskState
 import ec.cityalerta.app.model.utils.GeoJsonConverter
+import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.view.components.AppTopBar
 import ec.cityalerta.app.view.map.components.CategoryFilter
+import ec.cityalerta.app.view.map.components.ReportClusterMarker
 import ec.cityalerta.app.view.map.components.ReportDetailCard
-import ec.cityalerta.app.viewmodel.MapViewModel
+import ec.cityalerta.app.view.map.components.ReportMarkerDot
 import ec.cityalerta.app.viewmodel.MapUiState
+import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import kotlin.math.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapScreen(
     navController: NavController,
-    ciudadId: String = "manta",
+    ciudadId: String = "Sin ciudad",
+    reportId: String? = null,
     viewModel: MapViewModel,
     profileViewModel: ProfileViewModel
 ) {
@@ -59,13 +64,37 @@ fun MapScreen(
 
     val locationPermissionGranted = rememberLocationPermission()
 
+    var hasAutoSelected by remember { mutableStateOf(false) }
+
     val defaultLocation = LatLng(-0.95, -80.73)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(defaultLocation, 15f)
     }
 
-    LaunchedEffect(ciudadId) {
-        viewModel.loadCiudad(ciudadId)
+    LaunchedEffect(ciudadId, profileState.ciudadId) {
+        val targetId = if (ciudadId == "Sin ciudad") profileState.ciudadId else ciudadId
+        if (targetId.isNotBlank() && targetId != "Sin ciudad") {
+            viewModel.loadCiudad(targetId)
+        }
+    }
+
+    LaunchedEffect(uiState.reports, reportId) {
+        if (!hasAutoSelected && !reportId.isNullOrBlank() && uiState.reports.isNotEmpty()) {
+            val report = uiState.reports.find { it.id == reportId }
+            if (report != null) {
+                hasAutoSelected = true
+                viewModel.onReportClicked(reportId)
+                // Animamos la cámara hacia el reporte seleccionado
+                viewModel.uiState.reportMarkers.find { it.id == reportId }?.let { marker ->
+                    cameraPositionState.animate(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(marker.latitude, marker.longitude),
+                            18f
+                        )
+                    )
+                }
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -73,11 +102,13 @@ fun MapScreen(
     }
 
     LaunchedEffect(uiState.ciudad, uiState.cameraZoom) {
-        uiState.ciudad?.let { ciudad ->
-            cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                LatLng(ciudad.centroLat, ciudad.centroLng),
-                uiState.cameraZoom
-            )
+        if (reportId.isNullOrBlank()) {
+            uiState.ciudad?.let { ciudad ->
+                cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                    LatLng(ciudad.centroLat, ciudad.centroLng),
+                    uiState.cameraZoom
+                )
+            }
         }
     }
 
@@ -92,29 +123,13 @@ fun MapScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                modifier = Modifier.height(56.dp),
-                windowInsets = WindowInsets(0, 0, 0, 0),
-                title = {
-                    Box(modifier = Modifier.padding(top = 10.dp)) {
-                        Text(uiState.ciudad?.nombre ?: "Mapa")
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Atras"
-                        )
-                    }
-                },
-                actions = {
-                    ProfileAvatar(
-                        imageUrl = profileState.profileImageUrl,
-                        isLoading = profileState.isUploadingImage,
-                        onClick = { navController.navigate(Routes.Profile.route) }
-                    )
-                }
+            AppTopBar(
+                title = uiState.ciudad?.nombre ?: "Mapa",
+                showBack = true,
+                profileImageUrl = profileState.profileImageUrl,
+                isProfileLoading = profileState.isUploadingImage,
+                onBackClick = { navController.popBackStack() },
+                onProfileClick = { navController.navigate(Routes.Profile.route) }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -133,7 +148,8 @@ fun MapScreen(
                     fusedLocationClient = fusedLocationClient,
                     locationPermissionGranted = locationPermissionGranted,
                     cameraPositionState = cameraPositionState,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    navController = navController
                 )
             )
         }
@@ -173,7 +189,8 @@ private data class MapScreenDependencies(
     val fusedLocationClient: FusedLocationProviderClient,
     val locationPermissionGranted: Boolean,
     val cameraPositionState: CameraPositionState,
-    val viewModel: MapViewModel
+    val viewModel: MapViewModel,
+    val navController: NavController
 )
 
 @Composable
@@ -182,177 +199,249 @@ private fun MapScreenBody(
     ciudadId: String,
     dependencies: MapScreenDependencies
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        when {
-            uiState.isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+    when {
+        uiState.isLoading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+        }
 
-            uiState.errorMessage != null -> {
+        uiState.errorMessage != null -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = uiState.errorMessage,
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                    modifier = Modifier.padding(16.dp)
                 )
             }
+        }
 
-            uiState.ciudad != null -> {
-                MapCityContent(
-                    uiState = uiState,
-                    ciudad = uiState.ciudad,
-                    ciudadId = ciudadId,
-                    dependencies = dependencies
-                )
-            }
+        uiState.ciudad != null -> {
+            MapCityContent(
+                uiState = uiState,
+                ciudad = uiState.ciudad,
+                ciudadId = ciudadId,
+                dependencies = dependencies
+            )
         }
     }
 }
 
 @Composable
-private fun BoxScope.MapCityContent(
+private fun MapCityContent(
     uiState: MapUiState,
     ciudad: Ciudad,
     ciudadId: String,
     dependencies: MapScreenDependencies
 ) {
-    val polygonPoints = remember(ciudad) {
-        GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
-    }
-    val assetBounds = remember(ciudadId) { loadCityBboxFromAssets(dependencies.context, ciudadId) }
+    var showMyLocation by remember { mutableStateOf(false) }
 
-    val cityBounds = remember(polygonPoints, assetBounds) {
-        assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(
-            LatLng(ciudad.centroLat - 0.12, ciudad.centroLng - 0.12),
-            LatLng(ciudad.centroLat + 0.12, ciudad.centroLng + 0.12)
-        ))
-    }
-
-    val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
-        uiState.reports.filter {
-            uiState.selectedCategory == null || it.categoria == uiState.selectedCategory
+    Box(modifier = Modifier.fillMaxSize()) {
+        val polygonPoints = remember(ciudad) {
+            GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
         }
-    }
+        val assetBounds = remember(ciudadId, ciudad) {
+            val searchKey = if (ciudadId == "Sin ciudad") ciudad.nombre else ciudadId
+            loadCityBboxFromAssets(dependencies.context, searchKey)
+        }
 
-    val visibleReportIds = remember(filteredReports) {
-        filteredReports.map { it.id }.toSet()
-    }
+        val cityBounds = remember(polygonPoints, assetBounds) {
+            assetBounds ?: (buildCityBounds(polygonPoints) ?: LatLngBounds(
+                LatLng(ciudad.centroLat - 0.12, ciudad.centroLng - 0.12),
+                LatLng(ciudad.centroLat + 0.12, ciudad.centroLng + 0.12)
+            ))
+        }
 
-    GoogleMap(
-        modifier = Modifier.fillMaxSize(),
-        cameraPositionState = dependencies.cameraPositionState,
-        properties = MapProperties(
-            isMyLocationEnabled = dependencies.locationPermissionGranted,
-            latLngBoundsForCameraTarget = cityBounds,
-            minZoomPreference = 12f,
-            maxZoomPreference = 18f
-        ),
-        uiSettings = MapUiSettings(
-            zoomControlsEnabled = false,
-            myLocationButtonEnabled = false,
-            mapToolbarEnabled = false
-        ),
-        contentPadding = PaddingValues(top = 110.dp, bottom = 165.dp)
-    ) {
-        if (polygonPoints.isNotEmpty()) {
-            Polygon(
-                points = polygonPoints,
-                fillColor = Color(0x4287F5CC),
-                strokeColor = Color(0xFF287FCC),
-                strokeWidth = 2f
+        val filteredReports = remember(uiState.reports, uiState.selectedCategory) {
+            uiState.reports.filter {
+                uiState.selectedCategory == null || it.categoria == uiState.selectedCategory
+            }
+        }
+
+        val visibleReportIds = remember(filteredReports) {
+            filteredReports.map { it.id }.toSet()
+        }
+
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = dependencies.cameraPositionState,
+            properties = MapProperties(
+                isMyLocationEnabled = dependencies.locationPermissionGranted && showMyLocation,
+                latLngBoundsForCameraTarget = cityBounds,
+                minZoomPreference = 12f,
+                maxZoomPreference = 18f
+            ),
+            uiSettings = MapUiSettings(
+                zoomControlsEnabled = false,
+                myLocationButtonEnabled = false,
+                mapToolbarEnabled = false
+            ),
+            contentPadding = PaddingValues(top = 110.dp, bottom = 165.dp)
+        ) {
+            if (polygonPoints.isNotEmpty()) {
+                Polygon(
+                    points = polygonPoints,
+                    fillColor = Color(0x4287F5CC),
+                    strokeColor = MapStrokeBlue,
+                    strokeWidth = 2f
+                )
+            }
+
+            uiState.barrioRisks.forEach { risk ->
+                key(risk.barrioId) {
+                    Circle(
+                        center = risk.center,
+                        radius = risk.radius,
+                        fillColor = Color(risk.fillColor),
+                        strokeColor = Color(risk.strokeColor),
+                        strokeWidth = 2f
+                    )
+                }
+            }
+
+            // Lógica de clustering optimizada
+            val zoom = dependencies.cameraPositionState.position.zoom
+            val baseRadius = 170.0
+            val clusterRadius = if (zoom < 14f) {
+                baseRadius * (14f - zoom + 1).toDouble().pow(1.5)
+            } else {
+                baseRadius
+            }
+
+            val processedMarkerIds = mutableSetOf<String>()
+
+            val reportsByCategory = uiState.reports
+                .filter { it.id in visibleReportIds }
+                .groupBy { it.categoria }
+
+            reportsByCategory.forEach { (category, categoryReports) ->
+                val categoryMarkerIds = categoryReports.map { it.id }.toSet()
+                val categoryMarkers = uiState.reportMarkers
+                    .filter { it.id in categoryMarkerIds }
+                    .distinctBy { it.id }
+
+                categoryMarkers.forEach { marker ->
+                    if (marker.id !in processedMarkerIds) {
+                        val nearbyMarkers = categoryMarkers
+                            .filter { it.id !in processedMarkerIds }
+                            .filter { other ->
+                                calculateDistance(
+                                    marker.latitude, marker.longitude,
+                                    other.latitude, other.longitude
+                                ) <= clusterRadius
+                            }
+
+                        if (nearbyMarkers.size >= 5 && zoom < 17.5f) {
+                            val avgLat = nearbyMarkers.map { it.latitude }.average()
+                            val avgLng = nearbyMarkers.map { it.longitude }.average()
+
+                            key("cluster_${category.name}_${marker.id}") {
+                                ReportClusterMarker(
+                                    position = LatLng(avgLat, avgLng),
+                                    count = nearbyMarkers.size,
+                                    reportType = category,
+                                    onClick = {
+                                        dependencies.viewModel.onClusterClicked(category, nearbyMarkers.size)
+                                    }
+                                )
+                            }
+                            processedMarkerIds.addAll(nearbyMarkers.map { it.id })
+                        } else {
+                            key(marker.id) {
+                                ReportMarkerDot(
+                                    marker = marker,
+                                    reportType = category,
+                                    onClick = {
+                                        dependencies.viewModel.onReportClicked(marker.id)
+                                    }
+                                )
+                            }
+                            processedMarkerIds.add(marker.id)
+                        }
+                    }
+                }
+            }
+        }
+
+        CategoryFilter(
+            categories = uiState.categories,
+            selectedCategory = uiState.selectedCategory,
+            onCategoryClick = { dependencies.viewModel.onCategorySelected(it) },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp)
+        )
+
+        MapControlButton(
+            icon = Icons.Default.MyLocation,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 124.dp, end = 16.dp),
+            containerColor = if (showMyLocation) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            contentColor = if (showMyLocation) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            onClick = {
+                if (dependencies.locationPermissionGranted) {
+                    if (!showMyLocation) {
+                        showMyLocation = true
+                        try {
+                            dependencies.fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                location?.let {
+                                    dependencies.scope.launch {
+                                        dependencies.cameraPositionState.animate(
+                                            CameraUpdateFactory.newLatLngZoom(
+                                                LatLng(it.latitude, it.longitude),
+                                                15f
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        } catch (_: SecurityException) { }
+                    } else {
+                        showMyLocation = false
+                    }
+                }
+            }
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 320.dp, end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MapControlButton(
+                icon = Icons.Default.Add,
+                onClick = {
+                    dependencies.scope.launch {
+                        dependencies.cameraPositionState.animate(CameraUpdateFactory.zoomIn())
+                    }
+                }
+            )
+            MapControlButton(
+                icon = Icons.Default.Remove,
+                onClick = {
+                    dependencies.scope.launch {
+                        dependencies.cameraPositionState.animate(CameraUpdateFactory.zoomOut())
+                    }
+                }
             )
         }
 
-        uiState.reportMarkers
-            .filter { it.id in visibleReportIds }
-            .forEach { marker ->
-                key(marker.id) {
-                    Marker(
-                        state = rememberMarkerState(
-                            position = LatLng(marker.latitude, marker.longitude)
-                        ),
-                        title = marker.title,
-                        snippet = marker.description ?: "",
-                        onClick = {
-                            dependencies.viewModel.onReportClicked(marker.id)
-                            true
-                        }
-                    )
-                }
-            }
-    }
-
-    CategoryFilter(
-        categories = uiState.categories,
-        selectedCategory = uiState.selectedCategory,
-        onCategoryClick = { dependencies.viewModel.onCategorySelected(it) },
-        modifier = Modifier
-            .align(Alignment.TopCenter)
-            .padding(top = 8.dp)
-    )
-
-    MapControlButton(
-        icon = Icons.Default.MyLocation,
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .padding(top = 124.dp, end = 16.dp),
-        containerColor = Color(0xFF051C3F),
-        contentColor = Color.White,
-        onClick = { centerMapOnUserLocation(dependencies) }
-    )
-
-    Column(
-        modifier = Modifier
-            .align(Alignment.BottomEnd)
-            .padding(bottom = 180.dp, end = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        MapControlButton(
-            icon = Icons.Default.Add,
-            onClick = {
-                dependencies.scope.launch {
-                    dependencies.cameraPositionState.animate(CameraUpdateFactory.zoomIn())
-                }
-            }
-        )
-        MapControlButton(
-            icon = Icons.Default.Remove,
-            onClick = {
-                dependencies.scope.launch {
-                    dependencies.cameraPositionState.animate(CameraUpdateFactory.zoomOut())
-                }
-            }
-        )
-    }
-
-    if (uiState.selectedReport != null) {
-        ReportDetailCard(
-            report = uiState.selectedReport,
-            onDetailClick = {},
-            onCloseClick = { dependencies.viewModel.onDismissReport() },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp)
-        )
-    }
-}
-
-private fun centerMapOnUserLocation(dependencies: MapScreenDependencies) {
-    if (!dependencies.locationPermissionGranted) return
-
-    try {
-        dependencies.fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-            location?.let {
-                dependencies.scope.launch {
-                    dependencies.cameraPositionState.animate(
-                        CameraUpdateFactory.newLatLngZoom(
-                            LatLng(it.latitude, it.longitude),
-                            15f
-                        )
-                    )
-                }
-            }
+        if (uiState.selectedReport != null) {
+            ReportDetailCard(
+                report = uiState.selectedReport,
+                isMultiReport = uiState.isMultiReport,
+                onDetailClick = { reporte ->
+                    if (!uiState.isMultiReport) {
+                        dependencies.navController.navigate(Routes.ReportDetail.route.replace("{reportId}", reporte.id))
+                    }
+                },
+                onCloseClick = { dependencies.viewModel.onDismissReport() },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 95.dp)
+            )
         }
-    } catch (_: SecurityException) {
-        // Sin permiso de ubicacion
     }
 }
 
@@ -361,21 +450,36 @@ fun MapControlButton(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = Color(0xFFE3E9F0),
-    contentColor: Color = Color(0xFF051C3F)
+    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     Surface(
         onClick = onClick,
-        modifier = modifier.size(56.dp),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.size(42.dp),
+        shape = RoundedCornerShape(12.dp),
         color = containerColor,
         contentColor = contentColor,
         shadowElevation = 2.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
         }
     }
+}
+
+private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val r = 6371e3
+    val phi1 = lat1 * PI / 180
+    val phi2 = lat2 * PI / 180
+    val deltaPhi = (lat2 - lat1) * PI / 180
+    val deltaLambda = (lon2 - lon1) * PI / 180
+
+    val a = sin(deltaPhi / 2) * sin(deltaPhi / 2) +
+            cos(phi1) * cos(phi2) *
+            sin(deltaLambda / 2) * sin(deltaLambda / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    return r * c
 }
 
 private fun buildCityBounds(points: List<LatLng>): LatLngBounds? {
