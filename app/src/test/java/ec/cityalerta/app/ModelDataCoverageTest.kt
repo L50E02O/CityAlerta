@@ -22,6 +22,7 @@ import ec.cityalerta.app.model.data.perfilimagen.PerfilImagenCreateDto
 import ec.cityalerta.app.model.data.perfilimagen.PerfilImagenUpdateDto
 import ec.cityalerta.app.model.data.push.PushSubscription
 import ec.cityalerta.app.model.data.push.PushSubscriptionCreateDto
+import ec.cityalerta.app.model.data.push.PushSubscriptionUpdateDto
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
@@ -202,9 +203,17 @@ class ModelDataCoverageTest {
     fun pushModels() {
         val sub = PushSubscription("s1", "u1", "token", "now", "now")
         val create = PushSubscriptionCreateDto("u1", "token")
+        val update = PushSubscriptionUpdateDto(
+            usuario_id = "u1",
+            device_id = "device-1",
+            platform = "android",
+            enabled = true
+        )
 
         assertEquals("s1", sub.id)
         assertEquals("token", create.token)
+        assertEquals("device-1", update.device_id)
+        assertEquals(true, update.enabled)
     }
 
     @Test
