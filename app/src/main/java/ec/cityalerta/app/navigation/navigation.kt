@@ -54,10 +54,19 @@ import androidx.compose.runtime.getValue
 import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.launch
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.PermanentNavigationDrawer
+import ec.cityalerta.app.view.components.AppNavigationRail
+import ec.cityalerta.app.view.components.AppNavigationDrawer
+import ec.cityalerta.app.view.utils.CityAlertaNavigationType
+import androidx.compose.ui.unit.dp
+
 @Composable
 fun AppNavigation(
     startDestination: String = Routes.Splash.route,
-    authInfoMessage: String? = null
+    authInfoMessage: String? = null,
+    navigationType: CityAlertaNavigationType = CityAlertaNavigationType.BOTTOM_NAVIGATION
 ) {
 
     val navController = rememberNavController()
@@ -138,13 +147,13 @@ fun AppNavigation(
         }
     }
 
-    Scaffold(
-        bottomBar = { AppBottomBar(navController, ciudadId = if (profileState.ciudadId.isBlank()) "Sin ciudad" else profileState.ciudadId) }
-    ) { innerPadding ->
+    val ciudadIdToUse = if (profileState.ciudadId.isBlank()) "Sin ciudad" else profileState.ciudadId
+
+    val navHostContent: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit = { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(top = innerPadding.calculateTopPadding())
+            modifier = Modifier.padding(top = innerPadding.calculateTopPadding()).fillMaxSize()
         ) {
             composable(Routes.Splash.route) {
                 SplashScreen(
@@ -277,6 +286,35 @@ fun AppNavigation(
             composable(Routes.Accessibility.route) {
                 RequireAuth(navController, sessionState) {
                     AccessibilityScreen(navController)
+                }
+            }
+        }
+    }
+
+    when (navigationType) {
+        CityAlertaNavigationType.BOTTOM_NAVIGATION -> {
+            Scaffold(
+                bottomBar = { AppBottomBar(navController, ciudadId = ciudadIdToUse) }
+            ) { innerPadding ->
+                navHostContent(innerPadding)
+            }
+        }
+        CityAlertaNavigationType.NAVIGATION_RAIL -> {
+            Scaffold(
+                bottomBar = {}
+            ) { innerPadding ->
+                Row(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                    AppNavigationRail(navController, ciudadId = ciudadIdToUse)
+                    navHostContent(androidx.compose.foundation.layout.PaddingValues(0.dp))
+                }
+            }
+        }
+        CityAlertaNavigationType.PERMANENT_NAVIGATION_DRAWER -> {
+            PermanentNavigationDrawer(
+                drawerContent = { AppNavigationDrawer(navController, ciudadId = ciudadIdToUse) }
+            ) {
+                Scaffold { innerPadding ->
+                    navHostContent(innerPadding)
                 }
             }
         }

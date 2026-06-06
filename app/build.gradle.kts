@@ -241,6 +241,7 @@ dependencies {
     implementation(libs.camerax.camera2)
     implementation(libs.camerax.lifecycle)
     implementation(libs.camerax.view)
+    implementation("androidx.compose.material3:material3-window-size-class")
 
     // Network / backend
     implementation(libs.supabase.gotrue)
