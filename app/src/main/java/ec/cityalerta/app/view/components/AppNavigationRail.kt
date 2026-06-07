@@ -18,7 +18,6 @@ import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,8 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import ec.cityalerta.app.R
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.theme.DarkOnSurface
@@ -36,25 +33,10 @@ import ec.cityalerta.app.theme.DarkSurface
 
 @Composable
 fun AppNavigationRail(navController: NavController, ciudadId: String = "Sin ciudad") {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-
-    val bottomBarRoutes = listOf(
-        Routes.Home.route,
-        Routes.Explore.route,
-        Routes.Post.route,
-        Routes.Map.route,
-        Routes.Search.route,
-        Routes.Profile.route,
-        Routes.MyReports.route,
-        Routes.Settings.route,
-        Routes.Appearance.route,
-        Routes.Accessibility.route,
-        Routes.ReportDetail.route   
-    )
-
-    if (currentRoute?.startsWith("map") == true || currentRoute in bottomBarRoutes) {
-        val startDestinationId = navController.graph.findStartDestination().id
+    val navigation = rememberAppNavigationContext(navController, AppNavigationRoutes.extended)
+    if (navigation != null) {
+        val currentRoute = navigation.currentRoute
+        val startDestinationId = navigation.startDestinationId
         Surface(
             color = DarkSurface,
             modifier = Modifier.fillMaxHeight(),
