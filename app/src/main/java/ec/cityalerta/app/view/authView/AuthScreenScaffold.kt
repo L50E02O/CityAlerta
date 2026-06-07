@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,142 +75,149 @@ fun AuthScreenScaffold(
     config: AuthScreenConfig
 ) {
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
-    val isPasswordValid = viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
+    val isPasswordValid =
+        viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
     val isCiudadValid = !config.showCitySection ||
             (config.fixedCity != null || (config.ciudades.isNotEmpty() && viewModel.uiState.ciudadId.isNotEmpty()))
     val isFormValid = isEmailValid && isPasswordValid && isCiudadValid
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Logo Section
-        Image(
-            painter = painterResource(id = R.drawable.cityalerta_logo),
-            contentDescription = "CityAlerta Logo",
-            modifier = Modifier.size(80.dp),
-            contentScale = ContentScale.Fit
-        )
-
-        Text(
-            text = "CityAlerta",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text = "REPORTE CIUDADANO",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            letterSpacing = 2.sp
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // Tabs Section
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            AuthTab(
-                text = "Login",
-                selected = config.isLogin,
-                onClick = { if (!config.isLogin) config.onTabSwitch() }
-            )
-            AuthTab(
-                text = "Registro",
-                selected = !config.isLogin,
-                onClick = { if (config.isLogin) config.onTabSwitch() }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp)
+                .widthIn(max = 600.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Logo Section
+            Image(
+                painter = painterResource(id = R.drawable.cityalerta_logo),
+                contentDescription = "CityAlerta Logo",
+                modifier = Modifier.size(80.dp),
+                contentScale = ContentScale.Fit
+            )
+
             Text(
-                text = config.title,
+                text = "CityAlerta",
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Bold
             )
 
-            config.subtitle?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            Text(
+                text = "REPORTE CIUDADANO",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                letterSpacing = 2.sp
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Tabs Section
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                AuthTab(
+                    text = "Login",
+                    selected = config.isLogin,
+                    onClick = { if (!config.isLogin) config.onTabSwitch() }
                 )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            AuthFormComponent(
-                viewModel = viewModel,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (config.showCitySection) {
-                AuthCitySection(
-                    config = config,
-                    viewModel = viewModel
+                AuthTab(
+                    text = "Registro",
+                    selected = !config.isLogin,
+                    onClick = { if (config.isLogin) config.onTabSwitch() }
                 )
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = config.onPrimaryAction,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                enabled = isFormValid && !viewModel.uiState.isLoading,
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-                )
+                    .padding(horizontal = 32.dp)
             ) {
                 Text(
-                    text = if (viewModel.uiState.isLoading) "Cargando..." else "${config.primaryButtonText} →",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    text = config.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                Text(
-                    text = config.secondaryActionText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.clickable(onClick = config.onSecondaryAction)
-                )
-            }
-
-            config.bottomContent?.let { content ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    content()
+                config.subtitle?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                AuthFormComponent(
+                    viewModel = viewModel,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (config.showCitySection) {
+                    AuthCitySection(
+                        config = config,
+                        viewModel = viewModel
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Button(
+                    onClick = config.onPrimaryAction,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = isFormValid && !viewModel.uiState.isLoading,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
+                ) {
+                    Text(
+                        text = if (viewModel.uiState.isLoading) "Cargando..." else "${config.primaryButtonText} →",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = config.secondaryActionText,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.clickable(onClick = config.onSecondaryAction)
+                    )
+                }
+
+                config.bottomContent?.let { content ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        content()
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(48.dp))
+            }
         }
     }
 }
-
 @Composable
 fun AuthTab(
     text: String,

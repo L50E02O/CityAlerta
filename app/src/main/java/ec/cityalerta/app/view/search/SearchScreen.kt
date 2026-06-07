@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -70,101 +71,112 @@ fun SearchScreen(
         },
         containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(padding)
-                .padding(horizontal = 20.dp)
+                .padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Campo de busqueda por nombre de barrio
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = { viewModel.updateSearchQuery(it) },
-                placeholder = { Text("Busca por barrio") },
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(8.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    cursorColor = MaterialTheme.colorScheme.primary,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface
-                )
-            )
+                    .widthIn(max = 1100.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Etiqueta de filtros
-            Text(
-                text = "Categoria",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Filtros por categoria con opcion Todos
-            CategoryFilterRow(
-                selectedCategory = state.selectedCategory,
-                onCategorySelected = { viewModel.selectCategory(it) }
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Resultados de busqueda
-            if (state.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
-            } else if (state.reportes.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "No se encontraron reportes",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Campo de busqueda por nombre de barrio
+                OutlinedTextField(
+                    value = state.searchQuery,
+                    onValueChange = { viewModel.updateSearchQuery(it) },
+                    placeholder = { Text("Busca por barrio") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface
                     )
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    items(
-                        items = state.reportes,
-                        key = { it.id }
-                    ) { reporte ->
-                        ReporteCard(
-                            reporte = reporte,
-                            onClick = { id ->
-                                navController.navigate(Routes.ReportDetail.route.replace("{reportId}", id))
-                            }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Etiqueta de filtros
+                Text(
+                    text = "Categoria",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Filtros por categoria con opcion Todos
+                CategoryFilterRow(
+                    selectedCategory = state.selectedCategory,
+                    onCategorySelected = { viewModel.selectCategory(it) }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Resultados de busqueda
+                if (state.isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                    }
+                } else if (state.reportes.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "No se encontraron reportes",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        contentPadding = PaddingValues(bottom = 100.dp)
+                    ) {
+                        items(
+                            items = state.reportes,
+                            key = { it.id }
+                        ) { reporte ->
+                            ReporteCard(
+                                reporte = reporte,
+                                onClick = { id ->
+                                    navController.navigate(
+                                        Routes.ReportDetail.route.replace(
+                                            "{reportId}",
+                                            id
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                    }
                 }
-            }
 
-            state.error?.let {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = it,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                state.error?.let {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = it,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
     }
 }
-
 // Componente de filtros de categoria en forma de botones toggleables
 @Composable
 fun CategoryFilterRow(

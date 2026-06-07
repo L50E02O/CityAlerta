@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -109,11 +110,15 @@ fun MyReportsScreen(
                 }
 
                 else -> {
-                    LazyColumn(
+                    Box(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)
+                        contentAlignment = Alignment.TopCenter
                     ) {
+                        LazyColumn(
+                            modifier = Modifier.widthIn(max = 1100.dp).fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)
+                        ) {
                         items(state.myReports, key = { it.id }) { report ->
                             MyReportCard(
                                 report = report,
@@ -122,6 +127,7 @@ fun MyReportsScreen(
                             )
                         }
                     }
+                }
                 }
             }
         }

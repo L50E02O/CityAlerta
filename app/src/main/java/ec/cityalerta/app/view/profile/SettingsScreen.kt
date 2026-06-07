@@ -12,6 +12,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +26,7 @@ import androidx.core.content.ContextCompat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.unit.dp
 import ec.cityalerta.app.R
 import ec.cityalerta.app.theme.AppLanguage
 import ec.cityalerta.app.theme.LocalLocaleManager
@@ -105,64 +108,71 @@ fun SettingsScreen(
         navController = navController,
         title = stringResource(R.string.settings_title)
     ) {
-        SettingsMainContent(
-            state = state,
-            userEmail = state.userEmail,
-            languageSubtitle = languageSubtitle,
-            notificationsEnabled = authState.notificationsEnabled,
-            onEditName = {
-                editName = state.fullName
-                emailFieldError = null
-                viewModel.clearSettingsMessages()
-                showNameDialog = true
-            },
-            onEditEmail = {
-                editEmail = state.userEmail
-                emailFieldError = null
-                viewModel.clearSettingsMessages()
-                showEmailDialog = true
-            },
-            onEditLocation = {
-                viewModel.clearSettingsMessages()
-                viewModel.loadCities()
-                showLocationDialog = true
-            },
-            onOpenLanguage = {
-                viewModel.clearSettingsMessages()
-                showLanguageDialog = true
-            },
-            onOpenDelete = { showDeleteDialog = true },
-            onToggleNotifications = { enabled ->
-                if (enabled) {
-                    if (needsPermission) {
-                        val granted = ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.POST_NOTIFICATIONS
-                        ) == PackageManager.PERMISSION_GRANTED
-                        if (granted) {
-                            authViewModel.onNotificationsPermissionGranted()
-                        } else {
-                            val shouldShowRationale = activity?.let {
-                                ActivityCompat.shouldShowRequestPermissionRationale(
-                                    it,
+        androidx.compose.foundation.layout.Box(
+            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.TopCenter
+        ) {
+            androidx.compose.foundation.layout.Box(modifier = androidx.compose.ui.Modifier.widthIn(max = 1100.dp).fillMaxSize()) {
+                SettingsMainContent(
+                    state = state,
+                    userEmail = state.userEmail,
+                    languageSubtitle = languageSubtitle,
+                    notificationsEnabled = authState.notificationsEnabled,
+                    onEditName = {
+                        editName = state.fullName
+                        emailFieldError = null
+                        viewModel.clearSettingsMessages()
+                        showNameDialog = true
+                    },
+                    onEditEmail = {
+                        editEmail = state.userEmail
+                        emailFieldError = null
+                        viewModel.clearSettingsMessages()
+                        showEmailDialog = true
+                    },
+                    onEditLocation = {
+                        viewModel.clearSettingsMessages()
+                        viewModel.loadCities()
+                        showLocationDialog = true
+                    },
+                    onOpenLanguage = {
+                        viewModel.clearSettingsMessages()
+                        showLanguageDialog = true
+                    },
+                    onOpenDelete = { showDeleteDialog = true },
+                    onToggleNotifications = { enabled ->
+                        if (enabled) {
+                            if (needsPermission) {
+                                val granted = ContextCompat.checkSelfPermission(
+                                    context,
                                     Manifest.permission.POST_NOTIFICATIONS
-                                )
-                            } ?: false
-                            if (!hasRequestedNotificationPermission || shouldShowRationale) {
-                                hasRequestedNotificationPermission = true
-                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                ) == PackageManager.PERMISSION_GRANTED
+                                if (granted) {
+                                    authViewModel.onNotificationsPermissionGranted()
+                                } else {
+                                    val shouldShowRationale = activity?.let {
+                                        ActivityCompat.shouldShowRequestPermissionRationale(
+                                            it,
+                                            Manifest.permission.POST_NOTIFICATIONS
+                                        )
+                                    } ?: false
+                                    if (!hasRequestedNotificationPermission || shouldShowRationale) {
+                                        hasRequestedNotificationPermission = true
+                                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        showNotificationSettingsDialog = true
+                                    }
+                                }
                             } else {
-                                showNotificationSettingsDialog = true
+                                authViewModel.onNotificationsPermissionGranted()
                             }
+                        } else {
+                            authViewModel.onNotificationsDisabledByUser()
                         }
-                    } else {
-                        authViewModel.onNotificationsPermissionGranted()
                     }
-                } else {
-                    authViewModel.onNotificationsDisabledByUser()
-                }
+                )
             }
-        )
+        }
     }
 
     if (showNotificationSettingsDialog) {
