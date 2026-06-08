@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
@@ -77,55 +78,66 @@ fun ExploreScreen(
         },
         containerColor = MaterialTheme.colorScheme.surfaceVariant
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(padding)
-                .padding(horizontal = 20.dp)
+                .padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Text(
-                text = stringResource(R.string.explore_title),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            
-            Text(
-                text = stringResource(R.string.explore_subtitle),
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 1100.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            if (state.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
-                }
-            } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    contentPadding = PaddingValues(bottom = 100.dp)
-                ) {
-                    items(
-                        items = state.reportes,
-                        key = { it.id }
-                    ) { reporte ->
-                        ReporteCard(
-                            reporte = reporte,
-                            onClick = { id ->
-                                navController.navigate(Routes.ReportDetail.route.replace("{reportId}", id))
-                            }
-                        )
+                Text(
+                    text = stringResource(R.string.explore_title),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = stringResource(R.string.explore_subtitle),
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+                )
+
+                if (state.isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(20.dp),
+                        contentPadding = PaddingValues(bottom = 100.dp)
+                    ) {
+                        items(
+                            items = state.reportes,
+                            key = { it.id }
+                        ) { reporte ->
+                            ReporteCard(
+                                reporte = reporte,
+                                onClick = { id ->
+                                    navController.navigate(
+                                        Routes.ReportDetail.route.replace(
+                                            "{reportId}",
+                                            id
+                                        )
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 private fun rememberNotificationPermission(
     onGranted: () -> Unit,

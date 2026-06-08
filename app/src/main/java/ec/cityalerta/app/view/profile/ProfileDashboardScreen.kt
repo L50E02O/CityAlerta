@@ -2,6 +2,7 @@ package ec.cityalerta.app.view.profile
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -85,129 +87,154 @@ fun ProfileDashboardScreen(
                 }
 
                 else -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(horizontal = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopCenter
                     ) {
-                        Spacer(modifier = Modifier.height(28.dp))
-                        ProfileAvatar(
-                            imageUrl = state.profileImageUrl,
-                            size = 96.dp,
-                            isLoading = state.isUploadingImage,
-                            onClick = launchProfileImagePicker
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            stringResource(R.string.profile_tap_photo),
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            state.fullName.ifBlank { stringResource(R.string.profile_user_fallback) },
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            state.cityName.ifBlank { stringResource(R.string.profile_city_unavailable) },
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Card(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { navController.navigate(Routes.MyReports.route) },
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(state.totalReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text(stringResource(R.string.profile_reports), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                            Card(
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(state.resolvedReports.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                    Text(stringResource(R.string.profile_resolved), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                            modifier = Modifier
+                                .widthIn(max = 600.dp)
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            SettingsNavigationRow(
-                                icon = Icons.Default.Settings,
-                                title = stringResource(R.string.profile_settings_config),
-                                subtitle = stringResource(R.string.profile_settings_config_sub),
-                                onClick = { navController.navigate(Routes.Settings.route) }
+                            Spacer(modifier = Modifier.height(28.dp))
+                            ProfileAvatar(
+                                imageUrl = state.profileImageUrl,
+                                size = 96.dp,
+                                isLoading = state.isUploadingImage,
+                                onClick = launchProfileImagePicker
                             )
-                            SettingsNavigationRow(
-                                icon = Icons.Default.Palette,
-                                title = stringResource(R.string.profile_settings_appearance),
-                                subtitle = stringResource(R.string.profile_settings_appearance_sub),
-                                onClick = { navController.navigate(Routes.Appearance.route) }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                stringResource(R.string.profile_tap_photo),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            SettingsNavigationRow(
-                                icon = Icons.Default.AccessibilityNew,
-                                title = stringResource(R.string.profile_settings_accessibility),
-                                subtitle = stringResource(R.string.profile_settings_accessibility_sub),
-                                onClick = { navController.navigate(Routes.Accessibility.route) }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                state.fullName.ifBlank { stringResource(R.string.profile_user_fallback) },
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                        }
+                            Text(
+                                state.cityName.ifBlank { stringResource(R.string.profile_city_unavailable) },
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
 
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Button(
-                                onClick = { navController.navigate(Routes.MyReports.route) },
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiary,
-                                    contentColor = MaterialTheme.colorScheme.onTertiary
-                                )
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Text(stringResource(R.string.profile_view_reports))
-                            }
-                            Button(
-                                onClick = {
-                                    viewModel.logOut {
-                                        navController.navigate(Routes.Login.route) {
-                                            popUpTo(0) { inclusive = true }
-                                        }
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { navController.navigate(Routes.MyReports.route) },
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            state.totalReports.toString(),
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            stringResource(R.string.profile_reports),
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
                                     }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                            ) {
-                                Text(stringResource(R.string.profile_logout), color = MaterialTheme.colorScheme.onError)
+                                }
+                                Card(
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            state.resolvedReports.toString(),
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            stringResource(R.string.profile_resolved),
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
+
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                SettingsNavigationRow(
+                                    icon = Icons.Default.Settings,
+                                    title = stringResource(R.string.profile_settings_config),
+                                    subtitle = stringResource(R.string.profile_settings_config_sub),
+                                    onClick = { navController.navigate(Routes.Settings.route) }
+                                )
+                                SettingsNavigationRow(
+                                    icon = Icons.Default.Palette,
+                                    title = stringResource(R.string.profile_settings_appearance),
+                                    subtitle = stringResource(R.string.profile_settings_appearance_sub),
+                                    onClick = { navController.navigate(Routes.Appearance.route) }
+                                )
+                                SettingsNavigationRow(
+                                    icon = Icons.Default.AccessibilityNew,
+                                    title = stringResource(R.string.profile_settings_accessibility),
+                                    subtitle = stringResource(R.string.profile_settings_accessibility_sub),
+                                    onClick = { navController.navigate(Routes.Accessibility.route) }
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Button(
+                                    onClick = { navController.navigate(Routes.MyReports.route) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiary,
+                                        contentColor = MaterialTheme.colorScheme.onTertiary
+                                    )
+                                ) {
+                                    Text(stringResource(R.string.profile_view_reports))
+                                }
+                                Button(
+                                    onClick = {
+                                        viewModel.logOut {
+                                            navController.navigate(Routes.Login.route) {
+                                                popUpTo(0) { inclusive = true }
+                                            }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                                ) {
+                                    Text(
+                                        stringResource(R.string.profile_logout),
+                                        color = MaterialTheme.colorScheme.onError
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(24.dp))
                         }
-                        Spacer(modifier = Modifier.height(24.dp))
                     }
                 }
             }

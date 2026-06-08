@@ -77,6 +77,7 @@ fun ReportDetailScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
                 state.error != null -> {
                     Text(
                         text = state.error ?: "Error desconocido",
@@ -84,226 +85,256 @@ fun ReportDetailScreen(
                         color = MaterialTheme.colorScheme.error
                     )
                 }
+
                 state.report != null -> {
                     val report = state.report!!
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopCenter
                     ) {
-                        // Image and Tags Section
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(250.dp)
-                        ) {
-                            if (report.imageUrl != null) {
-                                AsyncImage(
-                                    model = report.imageUrl,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.outlineVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("Imagen no disponible", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .align(Alignment.TopStart),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                val categoryColor = when (report.categoryType) {
-                                    ReportType.ZONA_DE_RIESGO -> CategoryRisk
-                                    ReportType.BACHE -> CategoryPothole
-                                    ReportType.AGUA -> CategoryWater
-                                    ReportType.LUZ -> CategoryLight
-                                }
-                                DetailTag(text = report.categoria.uppercase(), backgroundColor = categoryColor)
-                                DetailTag(text = report.timeAgo.uppercase(), backgroundColor = Color.Black.copy(alpha = 0.5f))
-                            }
-                        }
-
-                        // Content Section
                         Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(24.dp)
+                                .widthIn(max = 1100.dp)
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.Top
+                            // Image and Tags Section
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(250.dp)
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = report.barrio,
-                                        fontSize = 26.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        lineHeight = 32.sp
+                                if (report.imageUrl != null) {
+                                    AsyncImage(
+                                        model = report.imageUrl,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
                                     )
-
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                                        Icon(
-                                            imageVector = Icons.Default.LocationOn,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.secondary,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(4.dp))
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(MaterialTheme.colorScheme.outlineVariant),
+                                        contentAlignment = Alignment.Center
+                                    ) {
                                         Text(
-                                            text = report.direccion.uppercase(),
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.secondary
+                                            "Imagen no disponible",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
 
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = report.estado,
-                                        fontSize = 22.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.primary
+                                Row(
+                                    modifier = Modifier
+                                        .padding(16.dp)
+                                        .align(Alignment.TopStart),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    val categoryColor = when (report.categoryType) {
+                                        ReportType.ZONA_DE_RIESGO -> CategoryRisk
+                                        ReportType.BACHE -> CategoryPothole
+                                        ReportType.AGUA -> CategoryWater
+                                        ReportType.LUZ -> CategoryLight
+                                    }
+                                    DetailTag(
+                                        text = report.categoria.uppercase(),
+                                        backgroundColor = categoryColor
                                     )
-                                    Text(
-                                        text = "ESTADO",
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    DetailTag(
+                                        text = report.timeAgo.uppercase(),
+                                        backgroundColor = Color.Black.copy(alpha = 0.5f)
                                     )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            Text(
-                                text = "DESCRIPCIÓN",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                letterSpacing = 0.5.sp
-                            )
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                text = report.descripcion,
-                                fontSize = 16.sp,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                lineHeight = 24.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(32.dp))
-
-                            Text(
-                                text = "UBICACIÓN DEL INCIDENTE",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                letterSpacing = 0.5.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Small Map View
-                            Card(
+                            // Content Section
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(200.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                    .padding(24.dp)
                             ) {
-                                Box(modifier = Modifier.fillMaxSize()) {
-                                    val position = LatLng(report.lat, report.lng)
-                                    val cameraPositionState = rememberCameraPositionState {
-                                        this.position = CameraPosition.fromLatLngZoom(position, 16f)
-                                    }
-
-                                    GoogleMap(
-                                        modifier = Modifier.fillMaxSize(),
-                                        cameraPositionState = cameraPositionState,
-                                        uiSettings = MapUiSettings(
-                                            zoomControlsEnabled = false,
-                                            myLocationButtonEnabled = false,
-                                            scrollGesturesEnabled = false,
-                                            zoomGesturesEnabled = false,
-                                            tiltGesturesEnabled = false,
-                                            rotationGesturesEnabled = false,
-                                            mapToolbarEnabled = false
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = report.barrio,
+                                            fontSize = 26.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            lineHeight = 32.sp
                                         )
-                                    ) {
-                                        Marker(
-                                            state = MarkerState(position = position),
-                                            title = report.barrio
-                                        )
-                                    }
 
-                                    // Botones de acción (Simulando el toolbar de Google Maps)
-                                    Surface(
-                                        modifier = Modifier
-                                            .align(Alignment.BottomEnd)
-                                            .padding(8.dp),
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = Color.White,
-                                        shadowElevation = 2.dp
-                                    ) {
                                         Row(
-                                            modifier = Modifier.padding(4.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(top = 8.dp)
                                         ) {
-                                            IconButton(
-                                                onClick = {
-                                                    val gmmIntentUri = android.net.Uri.parse("google.navigation:q=${report.lat},${report.lng}")
-                                                    val mapIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, gmmIntentUri)
-                                                    mapIntent.setPackage("com.google.android.apps.maps")
-                                                    context.startActivity(mapIntent)
-                                                },
-                                                modifier = Modifier.size(32.dp)
+                                            Icon(
+                                                imageVector = Icons.Default.LocationOn,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.secondary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = report.direccion.uppercase(),
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.secondary
+                                            )
+                                        }
+                                    }
+
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = report.estado,
+                                            fontSize = 22.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                        Text(
+                                            text = "ESTADO",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Text(
+                                    text = "DESCRIPCIÓN",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    letterSpacing = 0.5.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Text(
+                                    text = report.descripcion,
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    lineHeight = 24.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(32.dp))
+
+                                Text(
+                                    text = "UBICACIÓN DEL INCIDENTE",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    letterSpacing = 0.5.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Small Map View
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                                ) {
+                                    Box(modifier = Modifier.fillMaxSize()) {
+                                        val position = LatLng(report.lat, report.lng)
+                                        val cameraPositionState = rememberCameraPositionState {
+                                            this.position =
+                                                CameraPosition.fromLatLngZoom(position, 16f)
+                                        }
+
+                                        GoogleMap(
+                                            modifier = Modifier.fillMaxSize(),
+                                            cameraPositionState = cameraPositionState,
+                                            uiSettings = MapUiSettings(
+                                                zoomControlsEnabled = false,
+                                                myLocationButtonEnabled = false,
+                                                scrollGesturesEnabled = false,
+                                                zoomGesturesEnabled = false,
+                                                tiltGesturesEnabled = false,
+                                                rotationGesturesEnabled = false,
+                                                mapToolbarEnabled = false
+                                            )
+                                        ) {
+                                            Marker(
+                                                state = MarkerState(position = position),
+                                                title = report.barrio
+                                            )
+                                        }
+
+                                        // Botones de acción (Simulando el toolbar de Google Maps)
+                                        Surface(
+                                            modifier = Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(8.dp),
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = Color.White,
+                                            shadowElevation = 2.dp
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Directions,
-                                                    contentDescription = "Cómo llegar",
-                                                    tint = Color(0xFF4285F4),
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-
-                                            VerticalDivider(modifier = Modifier.height(24.dp).align(Alignment.CenterVertically))
-
-                                            IconButton(
-                                                onClick = {
-                                                    navController.navigate(
-                                                        Routes.Map.route
-                                                            .replace("{ciudadId}", report.ciudadId)
-                                                            .replace("{reportId}", report.id)
+                                                IconButton(
+                                                    onClick = {
+                                                        val gmmIntentUri =
+                                                            android.net.Uri.parse("google.navigation:q=${report.lat},${report.lng}")
+                                                        val mapIntent = android.content.Intent(
+                                                            android.content.Intent.ACTION_VIEW,
+                                                            gmmIntentUri
+                                                        )
+                                                        mapIntent.setPackage("com.google.android.apps.maps")
+                                                        context.startActivity(mapIntent)
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Directions,
+                                                        contentDescription = "Cómo llegar",
+                                                        tint = Color(0xFF4285F4),
+                                                        modifier = Modifier.size(20.dp)
                                                     )
-                                                },
-                                                modifier = Modifier.size(32.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Map,
-                                                    contentDescription = "Ver en mapa de la app",
-                                                    tint = Color(0xFF34A853),
-                                                    modifier = Modifier.size(20.dp)
+                                                }
+
+                                                VerticalDivider(
+                                                    modifier = Modifier.height(24.dp)
+                                                        .align(Alignment.CenterVertically)
                                                 )
+
+                                                IconButton(
+                                                    onClick = {
+                                                        navController.navigate(
+                                                            Routes.Map.route
+                                                                .replace(
+                                                                    "{ciudadId}",
+                                                                    report.ciudadId
+                                                                )
+                                                                .replace("{reportId}", report.id)
+                                                        )
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Map,
+                                                        contentDescription = "Ver en mapa de la app",
+                                                        tint = Color(0xFF34A853),
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
+
+                                Spacer(modifier = Modifier.height(40.dp))
                             }
-                            
-                            Spacer(modifier = Modifier.height(40.dp))
                         }
                     }
                 }
@@ -311,7 +342,6 @@ fun ReportDetailScreen(
         }
     }
 }
-
 @Composable
 private fun DetailTag(text: String, backgroundColor: Color) {
     Surface(

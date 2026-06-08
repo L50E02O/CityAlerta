@@ -20,6 +20,12 @@ import ec.cityalerta.app.theme.LocaleManager
 import ec.cityalerta.app.theme.ThemeManager
 import androidx.compose.runtime.LaunchedEffect
 
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import ec.cityalerta.app.view.utils.CityAlertaNavigationType
+
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context) {
@@ -48,8 +54,18 @@ class MainActivity : ComponentActivity() {
                         MapsInitializer.initialize(this@MainActivity, MapsInitializer.Renderer.LATEST) { }
                     }
                 }
+                
+                val windowSize = calculateWindowSizeClass(this@MainActivity)
+                val navigationType = when (windowSize.widthSizeClass) {
+                    WindowWidthSizeClass.Compact -> CityAlertaNavigationType.BOTTOM_NAVIGATION
+                    WindowWidthSizeClass.Medium -> CityAlertaNavigationType.NAVIGATION_RAIL
+                    WindowWidthSizeClass.Expanded -> CityAlertaNavigationType.PERMANENT_NAVIGATION_DRAWER
+                    else -> CityAlertaNavigationType.BOTTOM_NAVIGATION
+                }
+
                 AppNavigation(
-                    authInfoMessage = null
+                    authInfoMessage = null,
+                    navigationType = navigationType
                 )
             }
         }

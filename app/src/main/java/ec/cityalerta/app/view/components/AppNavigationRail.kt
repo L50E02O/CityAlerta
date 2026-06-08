@@ -2,8 +2,8 @@ package ec.cityalerta.app.view.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -12,9 +12,9 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,23 +32,22 @@ import ec.cityalerta.app.theme.DarkOnSurface
 import ec.cityalerta.app.theme.DarkSurface
 
 @Composable
-fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") {
-    val navigation = rememberAppNavigationContext(navController, AppNavigationRoutes.primary)
+fun AppNavigationRail(navController: NavController, ciudadId: String = "Sin ciudad") {
+    val navigation = rememberAppNavigationContext(navController, AppNavigationRoutes.extended)
     if (navigation != null) {
         val currentRoute = navigation.currentRoute
         val startDestinationId = navigation.startDestinationId
         Surface(
             color = DarkSurface,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxHeight(),
             tonalElevation = 0.dp
         ) {
-            NavigationBar(
-                modifier = Modifier.height(84.dp),
+            NavigationRail(
                 containerColor = Color.Transparent,
                 contentColor = DarkOnSurface,
-                tonalElevation = 0.dp
+                modifier = Modifier.padding(top = 16.dp)
             ) {
-                NavigationBarItem(
+                NavigationRailItem(
                     selected = currentRoute == Routes.Explore.route || currentRoute == Routes.Home.route,
                     onClick = {
                         navController.navigate(Routes.Explore.route) {
@@ -61,11 +60,10 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                         Icon(
                             Icons.Default.Explore,
                             contentDescription = "EXPLORE",
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     },
-                    label = { Text(stringResource(R.string.nav_explore), fontSize = 9.sp) },
-                    colors = NavigationBarItemDefaults.colors(
+                    colors = NavigationRailItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
                         selectedTextColor = MaterialTheme.colorScheme.primary,
                         unselectedIconColor = DarkOnSurface.copy(alpha = 0.6f),
@@ -73,7 +71,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                         indicatorColor = Color.Transparent
                     )
                 )
-                NavigationBarItem(
+                NavigationRailItem(
                     selected = currentRoute == Routes.Post.route,
                     onClick = {
                         navController.navigate(Routes.Post.route) {
@@ -83,23 +81,13 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                         }
                     },
                     icon = {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = "REPORT",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "REPORT",
+                            modifier = Modifier.size(24.dp)
+                        )
                     },
-                    label = { Text(stringResource(R.string.nav_report), fontSize = 9.sp) },
-                    colors = NavigationBarItemDefaults.colors(
+                    colors = NavigationRailItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
                         selectedTextColor = MaterialTheme.colorScheme.primary,
                         unselectedIconColor = DarkOnSurface.copy(alpha = 0.6f),
@@ -107,7 +95,7 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                         indicatorColor = Color.Transparent
                     )
                 )
-                NavigationBarItem(
+                NavigationRailItem(
                     selected = currentRoute?.startsWith("map") == true,
                     onClick = {
                         navController.navigate("map/Sin ciudad") {
@@ -120,11 +108,10 @@ fun AppBottomBar(navController: NavController, ciudadId: String = "Sin ciudad") 
                         Icon(
                             Icons.Default.Map,
                             contentDescription = "MAP",
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     },
-                    label = { Text(stringResource(R.string.nav_map), fontSize = 9.sp) },
-                    colors = NavigationBarItemDefaults.colors(
+                    colors = NavigationRailItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
                         selectedTextColor = MaterialTheme.colorScheme.primary,
                         unselectedIconColor = DarkOnSurface.copy(alpha = 0.6f),
