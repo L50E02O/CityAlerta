@@ -1,5 +1,7 @@
 package ec.cityalerta.app.viewmodel
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.remote.service.PushSubscriptionAuthRequiredException
 import ec.cityalerta.app.model.remote.service.PushSubscriptionDisabledException
@@ -8,16 +10,21 @@ import ec.cityalerta.app.model.remote.service.PushSubscriptionTokenMissingExcept
 import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import ec.cityalerta.app.model.utils.MappedAuthError
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+sealed class RegisterPhase {
+    data object Form : RegisterPhase()
+    data class EmailVerificationPending(val email: String) : RegisterPhase()
+}
 
-data class AuthState(
+data class AuthUiState(
     val email: String = "",
     val password: String = "",
     val ciudadNombre: String = "",
@@ -26,43 +33,55 @@ data class AuthState(
     val isLoading: Boolean = false,
     val isEmailUnconfirmed: Boolean = false,
     val errorMessage: String? = null,
-    val infoMessage: String? = null
+    val infoMessage: String? = null,
+    val registerPhase: RegisterPhase = RegisterPhase.Form
 )
 
+sealed class AuthUiEvent {
+    data object NavigateToHome : AuthUiEvent()
+    data object NavigateToLogin : AuthUiEvent()
+    data class ShowSnackbar(val message: String) : AuthUiEvent()
+}
+
+// No domain layer: auth flows map 1:1 to repository calls without shared business logic.
 class AuthViewModel(
     private val repository: AuthRepositoryContract,
     private val pushRegistrar: PushSubscriptionRegistrar? = null
 ) : ViewModel() {
-    var uiState by mutableStateOf(AuthState())
-        private set
+
+    private val _uiState = MutableStateFlow(AuthUiState())
+    val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<AuthUiEvent>()
+    val events: SharedFlow<AuthUiEvent> = _events.asSharedFlow()
 
     init {
         val enabled = pushRegistrar?.isNotificationsEnabled() ?: false
-        uiState = uiState.copy(notificationsEnabled = enabled)
+        _uiState.value = _uiState.value.copy(notificationsEnabled = enabled)
     }
 
-    fun onEmailChange(email: String){
-        uiState = uiState.copy(
+    fun onEmailChange(email: String) {
+        _uiState.value = _uiState.value.copy(
             email = email.trim(),
             isEmailUnconfirmed = false,
             errorMessage = null
         )
     }
 
-    fun onPasswordChange(password: String){
-        uiState = uiState.copy(password = password)
+    fun onPasswordChange(password: String) {
+        _uiState.value = _uiState.value.copy(password = password)
     }
 
     fun onCiudadChange(nombre: String) {
-        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = "")
+        _uiState.value = _uiState.value.copy(ciudadNombre = nombre, ciudadId = "")
     }
 
     fun onCiudadSelected(nombre: String, id: String) {
-        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = id)
+        _uiState.value = _uiState.value.copy(ciudadNombre = nombre, ciudadId = id)
     }
 
     fun setAuthInfoMessage(message: String) {
-        uiState = uiState.copy(
+        _uiState.value = _uiState.value.copy(
             infoMessage = message,
             errorMessage = null,
             isEmailUnconfirmed = false
@@ -70,26 +89,31 @@ class AuthViewModel(
     }
 
     fun clearInfoMessage() {
-        uiState = uiState.copy(infoMessage = null)
+        _uiState.value = _uiState.value.copy(infoMessage = null)
     }
 
-    fun onLoginClick(onSuccess: () -> Unit) {
-        if (uiState.email.isEmpty() || uiState.password.isEmpty()){
-            uiState = uiState.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
+    fun onLoginClick() {
+        val state = _uiState.value
+        if (state.email.isEmpty() || state.password.isEmpty()) {
+            _uiState.value = state.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true)
+        if (state.isLoading) return
+        _uiState.value = state.copy(isLoading = true)
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false)
+            _uiState.value = _uiState.value.copy(
+                errorMessage = null,
+                infoMessage = null,
+                isEmailUnconfirmed = false
+            )
 
             try {
-                repository.signIn(uiState.email, uiState.password).fold(
+                repository.signIn(_uiState.value.email, _uiState.value.password).fold(
                     onSuccess = {
                         registerPushSubscriptionIfPossible()
-                        onSuccess()
+                        _events.emit(AuthUiEvent.NavigateToHome)
                     },
                     onFailure = { error -> applyAuthFailure(error) }
                 )
@@ -97,41 +121,44 @@ class AuthViewModel(
                 if (e is CancellationException) throw e
                 applyAuthFailure(e)
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
 
-    fun onRegisterClick(onSuccess: () -> Unit) {
-        if (uiState.email.isEmpty() || uiState.password.isEmpty()) {
-            uiState = uiState.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
+    fun onRegisterClick() {
+        val state = _uiState.value
+        if (state.email.isEmpty() || state.password.isEmpty()) {
+            _uiState.value = state.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
             return
         }
 
-        if (uiState.ciudadId.isEmpty()){
-            uiState = uiState.copy(errorMessage = "Selecciona tu ciudad")
+        if (state.ciudadId.isEmpty()) {
+            _uiState.value = state.copy(errorMessage = "Selecciona tu ciudad")
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true)
+        if (state.isLoading) return
+        _uiState.value = state.copy(isLoading = true)
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false)
+            _uiState.value = _uiState.value.copy(
+                errorMessage = null,
+                infoMessage = null,
+                isEmailUnconfirmed = false
+            )
 
             try {
-                repository.signUp(uiState.email, uiState.password, uiState.ciudadId).fold(
+                repository.signUp(_uiState.value.email, _uiState.value.password, _uiState.value.ciudadId).fold(
                     onSuccess = {
                         val hasSession = repository.getUserId().isSuccess
                         if (hasSession) {
                             registerPushSubscriptionIfPossible()
-                            onSuccess()
+                            _events.emit(AuthUiEvent.NavigateToHome)
                         } else {
-                            uiState = uiState.copy(
-                                infoMessage = "Registro exitoso. Te enviamos un correo de activacion. " +
-                                    "Abre el enlace en este celular (debe abrir CityAlerta, no el navegador web) y luego inicia sesion."
+                            _uiState.value = _uiState.value.copy(
+                                registerPhase = RegisterPhase.EmailVerificationPending(_uiState.value.email)
                             )
-                            onSuccess()
                         }
                     },
                     onFailure = { error -> applyAuthFailure(error) }
@@ -140,27 +167,63 @@ class AuthViewModel(
                 if (e is CancellationException) throw e
                 applyAuthFailure(e)
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    fun checkEmailVerified() {
+        if (_uiState.value.isLoading) return
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+
+        viewModelScope.launch {
+            try {
+                repository.checkEmailVerified().fold(
+                    onSuccess = { verified ->
+                        if (verified) {
+                            registerPushSubscriptionIfPossible()
+                            _events.emit(AuthUiEvent.NavigateToHome)
+                        } else {
+                            _events.emit(
+                                AuthUiEvent.ShowSnackbar(
+                                    "Aun no hemos detectado la verificacion. Abre el enlace del correo en este celular."
+                                )
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        _events.emit(
+                            AuthUiEvent.ShowSnackbar(
+                                error.message ?: "No se pudo verificar el correo"
+                            )
+                        )
+                    }
+                )
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _events.emit(AuthUiEvent.ShowSnackbar(e.message ?: "Error al verificar el correo"))
+            } finally {
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
 
     fun resendActivationEmail() {
-        if (uiState.email.isBlank()) {
-            uiState = uiState.copy(errorMessage = "Ingresa tu correo para reenviar la activacion")
+        if (_uiState.value.email.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Ingresa tu correo para reenviar la activacion")
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true)
+        if (_uiState.value.isLoading) return
+        _uiState.value = _uiState.value.copy(isLoading = true)
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null)
+            _uiState.value = _uiState.value.copy(errorMessage = null)
 
             try {
-                repository.resendSignupConfirmation(uiState.email).fold(
+                repository.resendSignupConfirmation(_uiState.value.email).fold(
                     onSuccess = {
-                        uiState = uiState.copy(
+                        _uiState.value = _uiState.value.copy(
                             infoMessage = "Te reenviamos el correo de activacion. Revisa tu bandeja y spam.",
                             isEmailUnconfirmed = false
                         )
@@ -171,7 +234,7 @@ class AuthViewModel(
                 if (e is CancellationException) throw e
                 applyAuthFailure(e)
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
@@ -184,7 +247,7 @@ class AuthViewModel(
             )
             else -> AuthErrorMapper.map(error)
         }
-        uiState = uiState.copy(
+        _uiState.value = _uiState.value.copy(
             errorMessage = mapped.message,
             isEmailUnconfirmed = mapped.isEmailUnconfirmed
         )
@@ -193,23 +256,22 @@ class AuthViewModel(
     fun onNotificationsPermissionGranted() {
         val registrar = pushRegistrar ?: return
         registrar.setNotificationsEnabled(true)
-        uiState = uiState.copy(notificationsEnabled = true)
+        _uiState.value = _uiState.value.copy(notificationsEnabled = true)
         registerPushSubscriptionIfPossible()
     }
 
     fun onNotificationsPermissionDenied() {
         val registrar = pushRegistrar ?: return
         registrar.setNotificationsEnabled(false)
-        uiState = uiState.copy(notificationsEnabled = false)
+        _uiState.value = _uiState.value.copy(notificationsEnabled = false)
     }
 
     fun onNotificationsDisabledByUser() {
         val registrar = pushRegistrar ?: return
         registrar.setNotificationsEnabled(false)
-        uiState = uiState.copy(notificationsEnabled = false)
+        _uiState.value = _uiState.value.copy(notificationsEnabled = false)
         viewModelScope.launch {
-            registrar.unregisterToken().onFailure { error ->
-            }
+            registrar.unregisterToken().onFailure { }
         }
     }
 
@@ -226,8 +288,5 @@ class AuthViewModel(
                 }
             }
         }
-    }
-
-    companion object {
     }
 }
