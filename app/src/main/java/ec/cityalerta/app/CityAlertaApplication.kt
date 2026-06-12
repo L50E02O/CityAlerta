@@ -1,15 +1,21 @@
 package ec.cityalerta.app
 
 import android.app.Application
+import android.content.Context
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import ec.cityalerta.app.di.AppContainer
 
 class CityAlertaApplication : Application(), ImageLoaderFactory {
 
+    lateinit var container: AppContainer
+        private set
+
     override fun onCreate() {
         super.onCreate()
+        container = AppContainer(this)
         ec.cityalerta.app.theme.LocaleManager.applyStoredLocale(this)
     }
 
@@ -28,5 +34,10 @@ class CityAlertaApplication : Application(), ImageLoaderFactory {
             }
             .crossfade(true)
             .build()
+    }
+
+    companion object {
+        fun container(context: Context): AppContainer =
+            (context.applicationContext as CityAlertaApplication).container
     }
 }

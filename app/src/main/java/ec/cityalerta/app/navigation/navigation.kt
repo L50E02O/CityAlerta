@@ -1,6 +1,6 @@
 package ec.cityalerta.app.navigation
 
-import ec.cityalerta.app.model.repository.AuthRepository
+import ec.cityalerta.app.CityAlertaApplication
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.session.SessionManager
 import ec.cityalerta.app.model.session.SessionState
@@ -49,8 +49,10 @@ import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
-import androidx.compose.runtime.collectAsState
+import ec.cityalerta.app.viewmodel.SplashViewModel
+import ec.cityalerta.app.viewmodel.SplashUiEvent
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.launch
 
@@ -70,13 +72,20 @@ fun AppNavigation(
 ) {
 
     val navController = rememberNavController()
-    val authRepository = remember { AuthRepository() }
     val context = LocalContext.current
+    val appContainer = remember { CityAlertaApplication.container(context) }
+    val authRepository = remember { appContainer.authRepository }
     val activity = context as? Activity
     val currentIntent = activity?.intent
-    val factory = remember { AppViewModelFactory(authRepository, context) }
+    val factory = remember {
+        AppViewModelFactory(
+            authRepository,
+            appContainer.sessionRepository,
+            context
+        )
+    }
     val sessionManager = remember { SessionManager(SupabaseProvider.client.auth) }
-    val sessionState by sessionManager.state.collectAsState()
+    val sessionState by sessionManager.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
 
@@ -102,6 +111,9 @@ fun AppNavigation(
         factory = factory
     )
     val searchReportViewModel: SearchReportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+        factory = factory
+    )
+    val splashViewModel: SplashViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         factory = factory
     )
 
@@ -130,7 +142,7 @@ fun AppNavigation(
         }
     }
 
-    val profileState = profileViewModel.state.collectAsState().value
+    val profileState = profileViewModel.state.collectAsStateWithLifecycle().value
 
     val reportIdFromIntent = remember(currentIntent) {
         currentIntent?.getStringExtra("reporte_id")
@@ -156,24 +168,31 @@ fun AppNavigation(
             modifier = Modifier.padding(top = innerPadding.calculateTopPadding()).fillMaxSize()
         ) {
             composable(Routes.Splash.route) {
-                SplashScreen(
-                    onTimeout = {
-                        val hasSession = sessionState is SessionState.Authenticated
+                LaunchedEffect(splashViewModel) {
+                    splashViewModel.events.collect { event ->
                         val linkType = AuthDeepLinkParser.parseType(currentIntent)
                         val isDeepLink = AuthDeepLinkParser.isAppAuthDeepLink(currentIntent)
-                        val nextRoute = if (!isDeepLink) {
-                            if (hasSession) Routes.Home.route else Routes.Login.route
-                        } else {
-                            when {
-                                linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY -> Routes.RecoverPassword.route
-                                hasSession -> Routes.Home.route
-                                else -> Routes.Login.route
+                        val nextRoute = when (event) {
+                            SplashUiEvent.NavigateToHome -> Routes.Home.route
+                            SplashUiEvent.NavigateToLogin -> {
+                                if (!isDeepLink) {
+                                    Routes.Login.route
+                                } else {
+                                    when {
+                                        linkType == AuthDeepLinkParser.AuthLinkType.RECOVERY -> Routes.RecoverPassword.route
+                                        else -> Routes.Login.route
+                                    }
+                                }
                             }
                         }
                         navController.navigate(nextRoute) {
                             popUpTo(Routes.Splash.route) { inclusive = true }
                         }
                     }
+                }
+
+                SplashScreen(
+                    onTimeout = { splashViewModel.restoreSession() }
                 )
             }
             composable(Routes.Login.route) {
