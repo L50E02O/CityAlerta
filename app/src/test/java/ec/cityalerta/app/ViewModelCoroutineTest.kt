@@ -22,6 +22,7 @@ import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.test.TestScope
@@ -71,7 +72,7 @@ class ViewModelCoroutineTest {
     private suspend fun TestScope.awaitMapLoad(viewModel: MapViewModel) {
         withContext(Dispatchers.Default.limitedParallelism(1)) {
             withTimeout(5_000) {
-                while (viewModel.uiState.isLoading) {
+                while (viewModel.uiState.value.isLoading) {
                     advanceUntilIdle()
                     mainDispatcherRule.dispatcher.scheduler.advanceUntilIdle()
                     delay(20)
@@ -119,13 +120,15 @@ class ViewModelCoroutineTest {
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
 
-        var success = false
-        viewModel.onLoginClick { success = true }
+        val events = mutableListOf<AuthUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+        viewModel.onLoginClick()
         advanceUntilIdle()
+        job.cancel()
 
-        assertTrue(success)
-        assertFalse(viewModel.uiState.isLoading)
-        assertNull(viewModel.uiState.errorMessage)
+        assertTrue(events.any { it is AuthUiEvent.NavigateToHome })
+        assertFalse(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -138,15 +141,15 @@ class ViewModelCoroutineTest {
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
 
-        viewModel.onLoginClick { }
+        viewModel.onLoginClick()
         advanceUntilIdle()
 
-        assertEquals("Correo o contrasena incorrectos", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isEmailUnconfirmed)
+        assertEquals("Correo o contrasena incorrectos", viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isEmailUnconfirmed)
     }
 
     @Test
-    fun authViewModel_onRegisterClick_withoutSession_showsInfo() = runTest {
+    fun authViewModel_onRegisterClick_withoutSession_showsVerificationPending() = runTest {
         whenever(authRepository.signUp(any(), any(), any())).thenReturn(Result.success(Unit))
         whenever(authRepository.getUserId()).thenReturn(Result.failure(Exception("no session")))
 
@@ -155,13 +158,10 @@ class ViewModelCoroutineTest {
         viewModel.onPasswordChange("password123")
         viewModel.onCiudadSelected("Manta", ciudadId)
 
-        var success = false
-        viewModel.onRegisterClick { success = true }
+        viewModel.onRegisterClick()
         advanceUntilIdle()
 
-        assertTrue(success)
-        assertNotNull(viewModel.uiState.infoMessage)
-        assertTrue(viewModel.uiState.infoMessage!!.contains("activacion"))
+        assertTrue(viewModel.uiState.value.registerPhase is ec.cityalerta.app.viewmodel.RegisterPhase.EmailVerificationPending)
     }
 
     @Test
@@ -173,8 +173,8 @@ class ViewModelCoroutineTest {
         viewModel.resendActivationEmail()
         advanceUntilIdle()
 
-        assertNotNull(viewModel.uiState.infoMessage)
-        assertTrue(viewModel.uiState.infoMessage!!.contains("reenviamos"))
+        assertNotNull(viewModel.uiState.value.infoMessage)
+        assertTrue(viewModel.uiState.value.infoMessage!!.contains("reenviamos"))
     }
 
     @Test
@@ -186,8 +186,8 @@ class ViewModelCoroutineTest {
         viewModel.verifyEmail()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.isEmailVerified)
-        assertNotNull(viewModel.uiState.successMessage)
+        assertTrue(viewModel.uiState.value.isEmailVerified)
+        assertNotNull(viewModel.uiState.value.successMessage)
     }
 
     @Test
@@ -199,8 +199,8 @@ class ViewModelCoroutineTest {
         viewModel.verifyEmail()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.isEmailVerified)
-        assertNotNull(viewModel.uiState.errorMessage)
+        assertFalse(viewModel.uiState.value.isEmailVerified)
+        assertNotNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -217,11 +217,19 @@ class ViewModelCoroutineTest {
         viewModel.onConfirmPasswordChange("NewPass123")
 
         var success = false
-        viewModel.resetPassword { success = true }
+        val job = launch {
+            viewModel.events.collect { event ->
+                if (event is ec.cityalerta.app.viewmodel.PasswordRecoveryUiEvent.NavigateToLogin) {
+                    success = true
+                }
+            }
+        }
+        viewModel.resetPassword()
         advanceUntilIdle()
+        job.cancel()
 
         assertTrue(success)
-        assertEquals("Contrasena actualizada correctamente", viewModel.uiState.successMessage)
+        assertEquals("Contrasena actualizada correctamente", viewModel.uiState.value.successMessage)
     }
 
     @Test
@@ -250,10 +258,10 @@ class ViewModelCoroutineTest {
         viewModel.loadCiudad(ciudadId)
         awaitMapLoad(viewModel)
 
-        assertNotNull(viewModel.uiState.ciudad)
-        assertEquals(1, viewModel.uiState.reportMarkers.size)
-        assertEquals(1, viewModel.uiState.reports.size)
-        assertFalse(viewModel.uiState.isLoading)
+        assertNotNull(viewModel.uiState.value.ciudad)
+        assertEquals(1, viewModel.uiState.value.reportMarkers.size)
+        assertEquals(1, viewModel.uiState.value.reports.size)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -271,8 +279,8 @@ class ViewModelCoroutineTest {
         viewModel.loadCiudad(ciudadId)
         advanceUntilIdle()
 
-        assertNull(viewModel.uiState.ciudad)
-        assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.errorMessage)
+        assertNull(viewModel.uiState.value.ciudad)
+        assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -294,8 +302,8 @@ class ViewModelCoroutineTest {
         viewModel.loadCiudad("Manta")
         awaitMapLoad(viewModel)
 
-        assertNotNull(viewModel.uiState.ciudad)
-        assertEquals("Manta", viewModel.uiState.ciudad?.nombre)
+        assertNotNull(viewModel.uiState.value.ciudad)
+        assertEquals("Manta", viewModel.uiState.value.ciudad?.nombre)
     }
 
     @Test

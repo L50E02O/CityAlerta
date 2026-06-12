@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.kapt)
     id("com.google.gms.google-services")
+    id("org.jetbrains.kotlinx.kover") version "0.7.6"
     jacoco
 }
 
@@ -163,6 +164,27 @@ kapt{
     correctErrorTypes = true
 }
 
+koverReport {
+    filters {
+        excludes {
+            classes(
+                "**/BuildConfig.*",
+                "**/R.class",
+                "**/*_Factory*",
+                "**/*_HiltModules*",
+                "**/*Hilt_*",
+                "**/di/**",
+                "**/navigation/**"
+            )
+        }
+    }
+    verify {
+        rule {
+            minBound(90)
+        }
+    }
+}
+
 tasks.register<JacocoReport>("jacocoTestReport") {
     dependsOn("testDebugUnitTest")
     group = "verification"
@@ -225,6 +247,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

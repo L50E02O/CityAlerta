@@ -50,7 +50,7 @@ class MapViewModelLoadCiudadCoverageTest {
     private suspend fun TestScope.awaitMapLoad() {
         withContext(Dispatchers.Default.limitedParallelism(1)) {
             withTimeout(5_000) {
-                while (viewModel.uiState.isLoading) {
+                while (viewModel.uiState.value.isLoading) {
                     advanceUntilIdle()
                     testDispatcher.scheduler.advanceUntilIdle()
                     delay(20)
@@ -110,8 +110,8 @@ class MapViewModelLoadCiudadCoverageTest {
         viewModel.loadCiudad("Manta")
         awaitMapLoad()
         assertEquals("Manta", authRepository.lastCiudadNombre)
-        assertEquals(ciudad, viewModel.uiState.ciudad)
-        assertTrue(viewModel.uiState.reportMarkers.isEmpty())
+        assertEquals(ciudad, viewModel.uiState.value.ciudad)
+        assertTrue(viewModel.uiState.value.reportMarkers.isEmpty())
     }
 
     @Test
@@ -132,8 +132,8 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad("Manta")
         awaitMapLoad()
-        assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
+        assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -150,8 +150,8 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad(CIUDAD_UUID)
         awaitMapLoad()
-        assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.errorMessage)
-        assertNull(viewModel.uiState.ciudad)
+        assertEquals("Ciudad no encontrada en el sistema", viewModel.uiState.value.errorMessage)
+        assertNull(viewModel.uiState.value.ciudad)
     }
 
     @Test
@@ -169,9 +169,9 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad(CIUDAD_UUID)
         awaitMapLoad()
-        assertEquals(ciudad, viewModel.uiState.ciudad)
-        assertEquals("Error al obtener datos de la base de datos", viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.reportMarkers.isEmpty())
+        assertEquals(ciudad, viewModel.uiState.value.ciudad)
+        assertEquals("Error al obtener datos de la base de datos", viewModel.uiState.value.errorMessage)
+        assertTrue(viewModel.uiState.value.reportMarkers.isEmpty())
     }
 
     @Test
@@ -189,7 +189,7 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad(CIUDAD_UUID)
         awaitMapLoad()
-        assertEquals("Error al obtener datos de la base de datos", viewModel.uiState.errorMessage)
+        assertEquals("Error al obtener datos de la base de datos", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -206,7 +206,7 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad(CIUDAD_UUID)
         awaitMapLoad()
-        assertEquals("Error cargando ciudad: fallo red", viewModel.uiState.errorMessage)
+        assertEquals("Error cargando ciudad: fallo red", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -231,8 +231,8 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad(CIUDAD_UUID)
         awaitMapLoad()
-        assertEquals(2, viewModel.uiState.reports.size)
-        assertEquals(1, viewModel.uiState.reportMarkers.size)
+        assertEquals(2, viewModel.uiState.value.reports.size)
+        assertEquals(1, viewModel.uiState.value.reportMarkers.size)
     }
 
     @Test
@@ -253,8 +253,8 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad(CIUDAD_UUID)
         awaitMapLoad()
-        assertEquals(1, viewModel.uiState.reports.size)
-        assertEquals("r1", viewModel.uiState.reports.first().id)
+        assertEquals(1, viewModel.uiState.value.reports.size)
+        assertEquals("r1", viewModel.uiState.value.reports.first().id)
     }
 
     @Test
@@ -276,8 +276,8 @@ class MapViewModelLoadCiudadCoverageTest {
         awaitMapLoad()
         viewModel.onReportClicked("reporte-1")
 
-        assertNotNull(viewModel.uiState.selectedReport)
-        assertEquals("reporte-1", viewModel.uiState.selectedReport?.id)
+        assertNotNull(viewModel.uiState.value.selectedReport)
+        assertEquals("reporte-1", viewModel.uiState.value.selectedReport?.id)
     }
 
     @Test
@@ -294,7 +294,7 @@ class MapViewModelLoadCiudadCoverageTest {
 
         viewModel.loadCiudad(CIUDAD_UUID)
 
-        assertTrue(viewModel.uiState.isLoading)
-        assertNull(viewModel.uiState.errorMessage)
+        assertTrue(viewModel.uiState.value.isLoading)
+        assertNull(viewModel.uiState.value.errorMessage)
     }
 }

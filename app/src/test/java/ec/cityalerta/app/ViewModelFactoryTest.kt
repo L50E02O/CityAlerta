@@ -1,7 +1,7 @@
 package ec.cityalerta.app
 
 import android.content.Context
-import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.session.SessionRepositoryContract
 import ec.cityalerta.app.viewmodel.AppViewModelFactory
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
@@ -9,7 +9,7 @@ import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
 import ec.cityalerta.app.viewmodel.ReporteViewModel
-import ec.cityalerta.app.viewmodel.SearchReportViewModel
+import ec.cityalerta.app.viewmodel.SplashViewModel
 import androidx.lifecycle.ViewModel
 import org.junit.Before
 import org.junit.Test
@@ -32,6 +32,9 @@ class ViewModelFactoryTest {
     private lateinit var mockAuthRepository: AuthRepositoryContract
 
     @Mock
+    private lateinit var mockSessionRepository: SessionRepositoryContract
+
+    @Mock
     private lateinit var mockContext: Context
 
     private lateinit var factory: AppViewModelFactory
@@ -40,13 +43,13 @@ class ViewModelFactoryTest {
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
-        factory = AppViewModelFactory(mockAuthRepository, context)
+        factory = AppViewModelFactory(mockAuthRepository, mockSessionRepository, context)
     }
 
     @Test
     fun testViewModelFactoryCreation() {
         val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
-        val viewModelFactory = AppViewModelFactory(mockAuthRepository, context)
+        val viewModelFactory = AppViewModelFactory(mockAuthRepository, mockSessionRepository, context)
         assertNotNull(viewModelFactory)
     }
 
@@ -105,8 +108,8 @@ class ViewModelFactoryTest {
     @Test
     fun testViewModelFactoryWithDifferentContexts() {
         val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
-        val factory1 = AppViewModelFactory(mockAuthRepository, context)
-        val factory2 = AppViewModelFactory(mockAuthRepository, context)
+        val factory1 = AppViewModelFactory(mockAuthRepository, mockSessionRepository, context)
+        val factory2 = AppViewModelFactory(mockAuthRepository, mockSessionRepository, context)
 
         // Assert
         assertNotNull(factory1)
@@ -118,7 +121,7 @@ class ViewModelFactoryTest {
     @Test
     fun testViewModelFactoryInitializesLazyRepositories() {
         val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
-        val factory = AppViewModelFactory(mockAuthRepository, context)
+        val factory = AppViewModelFactory(mockAuthRepository, mockSessionRepository, context)
 
         // Assert - verify factory is properly initialized
         assertNotNull(factory)
@@ -161,7 +164,7 @@ class ViewModelFactoryTest {
     fun testViewModelFactoryAcceptsAuthRepositoryContract() {
         val repository = mockAuthRepository
         val context = mock<Context>(defaultAnswer = Answers.RETURNS_DEEP_STUBS)
-        val factory = AppViewModelFactory(repository, context)
+        val factory = AppViewModelFactory(repository, mockSessionRepository, context)
 
         // Assert
         assertNotNull(factory)

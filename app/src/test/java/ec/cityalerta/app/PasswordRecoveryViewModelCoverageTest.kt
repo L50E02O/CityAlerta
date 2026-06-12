@@ -47,10 +47,10 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.verifyEmail()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.isEmailVerified)
-        assertEquals("Correo verificado. Ya puedes escribir la nueva contrasena.", viewModel.uiState.successMessage)
-        assertNull(viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
+        assertTrue(viewModel.uiState.value.isEmailVerified)
+        assertEquals("Correo verificado. Ya puedes escribir la nueva contrasena.", viewModel.uiState.value.successMessage)
+        assertNull(viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isLoading)
         assertEquals("usuario@example.com", authRepository.lastVerifyEmail)
     }
 
@@ -62,11 +62,11 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.verifyEmail()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.isEmailVerified)
-        assertNull(viewModel.uiState.successMessage)
+        assertFalse(viewModel.uiState.value.isEmailVerified)
+        assertNull(viewModel.uiState.value.successMessage)
         assertEquals(
             "No encontramos una cuenta con ese correo. Revisa que este bien escrito.",
-            viewModel.uiState.errorMessage
+            viewModel.uiState.value.errorMessage
         )
     }
 
@@ -78,8 +78,8 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.verifyEmail()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.isEmailVerified)
-        assertEquals("Servicio caido", viewModel.uiState.errorMessage)
+        assertFalse(viewModel.uiState.value.isEmailVerified)
+        assertEquals("Servicio caido", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -90,7 +90,7 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.verifyEmail()
         advanceUntilIdle()
 
-        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
+        assertEquals("Error desconocido", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -108,11 +108,11 @@ class PasswordRecoveryViewModelCoverageTest {
     fun resetPassword_contrasenasVacias() = runTest {
         prepararCorreoVerificado()
 
-        viewModel.resetPassword { }
+        viewModel.resetPassword()
         advanceUntilIdle()
 
-        assertEquals("Completa la nueva contrasena", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isLoading)
+        assertEquals("Completa la nueva contrasena", viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -121,10 +121,10 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.onNewPasswordChange("abc")
         viewModel.onConfirmPasswordChange("abc")
 
-        viewModel.resetPassword { }
+        viewModel.resetPassword()
         advanceUntilIdle()
 
-        assertEquals("La contrasena debe tener al menos 8 caracteres", viewModel.uiState.errorMessage)
+        assertEquals("La contrasena debe tener al menos 8 caracteres", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -133,10 +133,10 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.onNewPasswordChange("Password123")
         viewModel.onConfirmPasswordChange("Password456")
 
-        viewModel.resetPassword { }
+        viewModel.resetPassword()
         advanceUntilIdle()
 
-        assertEquals("Las contrasenas no coinciden", viewModel.uiState.errorMessage)
+        assertEquals("Las contrasenas no coinciden", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -146,14 +146,14 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.onConfirmPasswordChange("NuevaPass123")
         var callbackInvocado = false
 
-        viewModel.resetPassword { callbackInvocado = true }
+        viewModel.resetPassword()
         advanceUntilIdle()
 
         assertTrue(callbackInvocado)
-        assertEquals("Contrasena actualizada correctamente", viewModel.uiState.successMessage)
-        assertEquals("", viewModel.uiState.newPassword)
-        assertEquals("", viewModel.uiState.confirmPassword)
-        assertFalse(viewModel.uiState.isEmailVerified)
+        assertEquals("Contrasena actualizada correctamente", viewModel.uiState.value.successMessage)
+        assertEquals("", viewModel.uiState.value.newPassword)
+        assertEquals("", viewModel.uiState.value.confirmPassword)
+        assertFalse(viewModel.uiState.value.isEmailVerified)
         assertEquals("usuario@example.com", authRepository.lastResetEmail)
         assertEquals("NuevaPass123", authRepository.lastResetPassword)
     }
@@ -165,10 +165,10 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.onConfirmPasswordChange("NuevaPass123")
         authRepository.resetPasswordByEmailResult = Result.failure(RuntimeException("No autorizado"))
 
-        viewModel.resetPassword { }
+        viewModel.resetPassword()
         advanceUntilIdle()
 
-        assertEquals("No autorizado", viewModel.uiState.errorMessage)
+        assertEquals("No autorizado", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -178,10 +178,10 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.onConfirmPasswordChange("NuevaPass123")
         authRepository.resetPasswordByEmailResult = Result.failure(RuntimeException())
 
-        viewModel.resetPassword { }
+        viewModel.resetPassword()
         advanceUntilIdle()
 
-        assertEquals("Error desconocido", viewModel.uiState.errorMessage)
+        assertEquals("Error desconocido", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -191,8 +191,8 @@ class PasswordRecoveryViewModelCoverageTest {
         viewModel.onConfirmPasswordChange("NuevaPass123")
         authRepository.resetPasswordByEmailResult = Result.success(Unit)
 
-        viewModel.resetPassword { }
-        viewModel.resetPassword { }
+        viewModel.resetPassword()
+        viewModel.resetPassword()
         advanceUntilIdle()
 
         assertEquals("NuevaPass123", authRepository.lastResetPassword)
@@ -209,7 +209,7 @@ class PasswordRecoveryViewModelCoverageTest {
         advanceUntilIdle()
 
         assertTrue(callbackInvocado)
-        assertEquals("Contrasena actualizada correctamente", viewModel.uiState.successMessage)
+        assertEquals("Contrasena actualizada correctamente", viewModel.uiState.value.successMessage)
     }
 
     private fun prepararCorreoVerificado() {

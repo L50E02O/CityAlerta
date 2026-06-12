@@ -74,10 +74,10 @@ class PasswordRecoveryViewModelTest {
         viewModel.onEmailChange(email)
 
         // Assert
-        assertEquals(email, viewModel.uiState.email)
-        assertFalse(viewModel.uiState.isEmailVerified)
-        assertNull(viewModel.uiState.successMessage)
-        assertNull(viewModel.uiState.errorMessage)
+        assertEquals(email, viewModel.uiState.value.email)
+        assertFalse(viewModel.uiState.value.isEmailVerified)
+        assertNull(viewModel.uiState.value.successMessage)
+        assertNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -89,7 +89,7 @@ class PasswordRecoveryViewModelTest {
         viewModel.onNewPasswordChange(password)
 
         // Assert
-        assertEquals(password, viewModel.uiState.newPassword)
+        assertEquals(password, viewModel.uiState.value.newPassword)
     }
 
     @Test
@@ -101,7 +101,7 @@ class PasswordRecoveryViewModelTest {
         viewModel.onConfirmPasswordChange(password)
 
         // Assert
-        assertEquals(password, viewModel.uiState.confirmPassword)
+        assertEquals(password, viewModel.uiState.value.confirmPassword)
     }
 
     @Test
@@ -111,9 +111,9 @@ class PasswordRecoveryViewModelTest {
         viewModel.onConfirmPasswordChange("NewPass123")
 
         // Assert
-        assertEquals("NewPass123", viewModel.uiState.newPassword)
-        assertEquals("NewPass123", viewModel.uiState.confirmPassword)
-        assertEquals(viewModel.uiState.newPassword, viewModel.uiState.confirmPassword)
+        assertEquals("NewPass123", viewModel.uiState.value.newPassword)
+        assertEquals("NewPass123", viewModel.uiState.value.confirmPassword)
+        assertEquals(viewModel.uiState.value.newPassword, viewModel.uiState.value.confirmPassword)
     }
 
     @Test
@@ -122,9 +122,9 @@ class PasswordRecoveryViewModelTest {
         viewModel.verifyEmail()
 
         // Assert
-        assertEquals("Ingresa tu correo electronico", viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isEmailVerified)
-        assertFalse(viewModel.uiState.isLoading)
+        assertEquals("Ingresa tu correo electronico", viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isEmailVerified)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -207,9 +207,9 @@ class PasswordRecoveryViewModelTest {
         viewModel.onConfirmPasswordChange(password2)
 
         // Assert
-        assertEquals(password1, viewModel.uiState.newPassword)
-        assertEquals(password2, viewModel.uiState.confirmPassword)
-        assertTrue(viewModel.uiState.newPassword != viewModel.uiState.confirmPassword)
+        assertEquals(password1, viewModel.uiState.value.newPassword)
+        assertEquals(password2, viewModel.uiState.value.confirmPassword)
+        assertTrue(viewModel.uiState.value.newPassword != viewModel.uiState.value.confirmPassword)
     }
 
     @Test
@@ -221,8 +221,8 @@ class PasswordRecoveryViewModelTest {
         viewModel.onEmailChange(validEmail)
 
         // Assert
-        assertEquals(validEmail, viewModel.uiState.email)
-        assertTrue(viewModel.uiState.email.contains("@"))
+        assertEquals(validEmail, viewModel.uiState.value.email)
+        assertTrue(viewModel.uiState.value.email.contains("@"))
     }
 
     @Test
@@ -256,7 +256,7 @@ class PasswordRecoveryViewModelTest {
         // Act & Assert
         emails.forEach { email ->
             viewModel.onEmailChange(email)
-            assertEquals(email, viewModel.uiState.email)
+            assertEquals(email, viewModel.uiState.value.email)
         }
     }
 
@@ -271,7 +271,7 @@ class PasswordRecoveryViewModelTest {
 
         // Assert
         assertEquals("", originalEmail)
-        assertEquals("newuser@example.com", viewModel.uiState.email)
+        assertEquals("newuser@example.com", viewModel.uiState.value.email)
     }
 
     @Test
@@ -280,11 +280,11 @@ class PasswordRecoveryViewModelTest {
         var callbackCalled = false
 
         // Act
-        viewModel.resetPassword { callbackCalled = true }
+        viewModel.resetPassword()
 
         // Assert
         assertFalse(callbackCalled)
-        assertEquals("Ingresa tu correo electronico", viewModel.uiState.errorMessage)
+        assertEquals("Ingresa tu correo electronico", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -294,11 +294,11 @@ class PasswordRecoveryViewModelTest {
         viewModel.onEmailChange("usuario@example.com")
 
         // Act
-        viewModel.resetPassword { callbackCalled = true }
+        viewModel.resetPassword()
 
         // Assert
         assertFalse(callbackCalled)
-        assertEquals("Primero verifica que el correo exista", viewModel.uiState.errorMessage)
+        assertEquals("Primero verifica que el correo exista", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -308,7 +308,7 @@ class PasswordRecoveryViewModelTest {
         viewModel.onConfirmPasswordChange("")
 
         // Assert
-        assertEquals("", viewModel.uiState.newPassword)
-        assertEquals("", viewModel.uiState.confirmPassword)
+        assertEquals("", viewModel.uiState.value.newPassword)
+        assertEquals("", viewModel.uiState.value.confirmPassword)
     }
 }

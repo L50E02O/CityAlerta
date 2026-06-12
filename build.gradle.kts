@@ -26,7 +26,7 @@ project(":app") {
       property("sonar.androidLint.reportPaths", "build/reports/lint-results-debug.xml")
       property(
         "sonar.coverage.jacoco.xmlReportPaths",
-        "build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+        "build/reports/kover/report.xml"
       )
       property(
         "sonar.coverage.exclusions",
@@ -52,5 +52,5 @@ project(":app") {
 
 tasks.named("sonar") {
   dependsOn(":app:lintDebug")
-  dependsOn(":app:jacocoTestReport")
+  dependsOn(":app:koverXmlReport")
 }

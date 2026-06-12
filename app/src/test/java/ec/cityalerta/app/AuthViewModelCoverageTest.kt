@@ -8,8 +8,10 @@ import ec.cityalerta.app.model.remote.service.PushSubscriptionTokenMissingExcept
 import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.testdoubles.FakeAuthRepository
 import ec.cityalerta.app.util.MainDispatcherRule
+import ec.cityalerta.app.viewmodel.AuthUiEvent
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -51,7 +53,7 @@ class AuthViewModelCoverageTest {
 
         val viewModel = AuthViewModel(authRepository, mockPushRegistrar)
 
-        assertTrue(viewModel.uiState.notificationsEnabled)
+        assertTrue(viewModel.uiState.value.notificationsEnabled)
     }
 
     @Test
@@ -63,12 +65,14 @@ class AuthViewModelCoverageTest {
         viewModel.onPasswordChange("password123")
         viewModel.onCiudadSelected("Manta", "ciudad-1")
 
-        var success = false
-        viewModel.onRegisterClick { success = true }
+        val events = mutableListOf<AuthUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+        viewModel.onRegisterClick()
         advanceUntilIdle()
+        job.cancel()
 
-        assertTrue(success)
-        assertNull(viewModel.uiState.infoMessage)
+        assertTrue(events.any { it is AuthUiEvent.NavigateToHome })
+        assertNull(viewModel.uiState.value.infoMessage)
         verify(mockPushRegistrar).registerTokenIfAllowed()
     }
 
@@ -79,7 +83,7 @@ class AuthViewModelCoverageTest {
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
 
-        viewModel.onLoginClick { }
+        viewModel.onLoginClick()
         advanceUntilIdle()
 
         verify(mockPushRegistrar).registerTokenIfAllowed()
@@ -93,7 +97,7 @@ class AuthViewModelCoverageTest {
         viewModel.onNotificationsPermissionGranted()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.notificationsEnabled)
+        assertTrue(viewModel.uiState.value.notificationsEnabled)
         verify(mockPushRegistrar).setNotificationsEnabled(true)
         verify(mockPushRegistrar).registerTokenIfAllowed()
     }
@@ -106,7 +110,7 @@ class AuthViewModelCoverageTest {
         viewModel.onNotificationsDisabledByUser()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.notificationsEnabled)
+        assertFalse(viewModel.uiState.value.notificationsEnabled)
         verify(mockPushRegistrar).setNotificationsEnabled(false)
         verify(mockPushRegistrar).unregisterToken()
     }
@@ -117,12 +121,12 @@ class AuthViewModelCoverageTest {
         val viewModel = AuthViewModel(authRepository)
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
-        viewModel.onLoginClick { }
-        viewModel.onLoginClick { }
+        viewModel.onLoginClick()
+        viewModel.onLoginClick()
 
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.isLoading)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -131,12 +135,12 @@ class AuthViewModelCoverageTest {
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
         viewModel.onCiudadSelected("Manta", "ciudad-1")
-        viewModel.onRegisterClick { }
-        viewModel.onRegisterClick { }
+        viewModel.onRegisterClick()
+        viewModel.onRegisterClick()
 
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.isLoading)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -150,8 +154,8 @@ class AuthViewModelCoverageTest {
         viewModel.resendActivationEmail()
         advanceUntilIdle()
 
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.isEmailUnconfirmed)
+        assertNotNull(viewModel.uiState.value.errorMessage)
+        assertTrue(viewModel.uiState.value.isEmailUnconfirmed)
     }
 
     @Test
@@ -162,10 +166,10 @@ class AuthViewModelCoverageTest {
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
 
-        viewModel.onLoginClick { }
+        viewModel.onLoginClick()
         advanceUntilIdle()
 
-        assertEquals("red caida", viewModel.uiState.errorMessage)
+        assertEquals("red caida", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -176,6 +180,6 @@ class AuthViewModelCoverageTest {
         viewModel.onNotificationsDisabledByUser()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.notificationsEnabled)
+        assertFalse(viewModel.uiState.value.notificationsEnabled)
     }
 }

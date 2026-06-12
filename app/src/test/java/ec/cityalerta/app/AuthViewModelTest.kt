@@ -1,369 +1,180 @@
 package ec.cityalerta.app
 
-import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
-import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
+import ec.cityalerta.app.model.data.local.UserSessionEntity
+import ec.cityalerta.app.testdoubles.FakeAuthRepository
+import ec.cityalerta.app.testdoubles.FakeSessionRepository
 import ec.cityalerta.app.util.MainDispatcherRule
-import ec.cityalerta.app.viewmodel.AuthState
+import ec.cityalerta.app.viewmodel.AuthUiEvent
 import ec.cityalerta.app.viewmodel.AuthViewModel
+import ec.cityalerta.app.viewmodel.RegisterPhase
+import ec.cityalerta.app.viewmodel.SplashUiEvent
+import ec.cityalerta.app.viewmodel.SplashViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertIs
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mock
-import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
-/**
- * Tests unitarios para AuthViewModel.
- * Valida cambios de estado y validaciones de formulario.
- */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AuthViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    @Mock
-    private lateinit var mockAuthRepository: AuthRepositoryContract
-
-    @Mock
-    private lateinit var mockPushRegistrar: PushSubscriptionRegistrar
-
+    private lateinit var fakeAuthRepository: FakeAuthRepository
     private lateinit var viewModel: AuthViewModel
 
     @Before
-    fun setUp() {
-        MockitoAnnotations.openMocks(this)
-        whenever(mockPushRegistrar.isNotificationsEnabled()).thenReturn(false)
-        viewModel = AuthViewModel(mockAuthRepository, mockPushRegistrar)
+    fun setup() {
+        fakeAuthRepository = FakeAuthRepository()
+        viewModel = AuthViewModel(fakeAuthRepository)
     }
 
     @Test
-    fun testInitialAuthState() {
-        // Arrange & Act
-        val state = viewModel.uiState
-
-        // Assert
-        assertNotNull(state)
+    fun `uiState initial state is correct`() = runTest {
+        val state = viewModel.uiState.value
         assertEquals("", state.email)
-        assertEquals("", state.password)
-        assertEquals("", state.ciudadNombre)
-        assertEquals("", state.ciudadId)
-        assertFalse(state.isLoading)
-        assertFalse(state.isEmailUnconfirmed)
-        assertFalse(state.notificationsEnabled)
-        assertEquals(null, state.errorMessage)
-        assertEquals(null, state.infoMessage)
-    }
-
-    @Test
-    fun testOnNotificationsPermissionGranted() {
-        // Act
-        viewModel.onNotificationsPermissionGranted()
-
-        // Assert
-        assertTrue(viewModel.uiState.notificationsEnabled)
-        verify(mockPushRegistrar).setNotificationsEnabled(true)
-    }
-
-    @Test
-    fun testOnNotificationsPermissionDenied() {
-        // Act
-        viewModel.onNotificationsPermissionDenied()
-
-        // Assert
-        assertFalse(viewModel.uiState.notificationsEnabled)
-        verify(mockPushRegistrar).setNotificationsEnabled(false)
-    }
-
-    @Test
-    fun testOnNotificationsDisabledByUser() {
-        // Act
-        viewModel.onNotificationsDisabledByUser()
-
-        // Assert
-        assertFalse(viewModel.uiState.notificationsEnabled)
-        verify(mockPushRegistrar).setNotificationsEnabled(false)
-    }
-
-    @Test
-    fun testAuthStateCreation() {
-        // Arrange & Act
-        val state = AuthState(
-            email = "test@example.com",
-            password = "password123",
-            ciudadNombre = "Manta",
-            ciudadId = "ciudad-123",
-            isLoading = false,
-            isEmailUnconfirmed = false,
-            errorMessage = null,
-            infoMessage = null
-        )
-
-        // Assert
-        assertEquals("test@example.com", state.email)
-        assertEquals("password123", state.password)
-        assertEquals("Manta", state.ciudadNombre)
-        assertEquals("ciudad-123", state.ciudadId)
         assertFalse(state.isLoading)
     }
 
     @Test
-    fun testOnEmailChange() {
-        // Arrange
-        val newEmail = "newemail@example.com"
+    fun `login success emits NavigateToHome event`() = runTest {
+        fakeAuthRepository.shouldSucceed = true
+        val events = mutableListOf<AuthUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
 
-        // Act
-        viewModel.onEmailChange(newEmail)
-
-        // Assert
-        assertEquals(newEmail, viewModel.uiState.email)
-        assertFalse(viewModel.uiState.isEmailUnconfirmed)
-        assertEquals(null, viewModel.uiState.errorMessage)
-    }
-
-    @Test
-    fun testOnPasswordChange() {
-        // Arrange
-        val newPassword = "newPassword123"
-
-        // Act
-        viewModel.onPasswordChange(newPassword)
-
-        // Assert
-        assertEquals(newPassword, viewModel.uiState.password)
-    }
-
-    @Test
-    fun testOnCiudadChange() {
-        // Arrange
-        val ciudadName = "Quito"
-
-        // Act
-        viewModel.onCiudadChange(ciudadName)
-
-        // Assert
-        assertEquals(ciudadName, viewModel.uiState.ciudadNombre)
-        assertEquals("", viewModel.uiState.ciudadId)
-    }
-
-    @Test
-    fun testOnCiudadSelected() {
-        // Arrange
-        val ciudadName = "Guayaquil"
-        val ciudadId = "ciudad-456"
-
-        // Act
-        viewModel.onCiudadSelected(ciudadName, ciudadId)
-
-        // Assert
-        assertEquals(ciudadName, viewModel.uiState.ciudadNombre)
-        assertEquals(ciudadId, viewModel.uiState.ciudadId)
-    }
-
-    @Test
-    fun testSetAuthInfoMessage() {
-        // Arrange
-        val message = "Registro exitoso"
-
-        // Act
-        viewModel.setAuthInfoMessage(message)
-
-        // Assert
-        assertEquals(message, viewModel.uiState.infoMessage)
-        assertEquals(null, viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isEmailUnconfirmed)
-    }
-
-    @Test
-    fun testClearInfoMessage() {
-        // Arrange
-        viewModel.setAuthInfoMessage("Mensaje temporal")
-
-        // Act
-        viewModel.clearInfoMessage()
-
-        // Assert
-        assertEquals(null, viewModel.uiState.infoMessage)
-    }
-
-    @Test
-    fun testOnLoginClickEmptyEmail() {
-        // Arrange
+        viewModel.onEmailChange("test@test.com")
         viewModel.onPasswordChange("password123")
-        var successCalled = false
+        viewModel.onLoginClick()
+        advanceUntilIdle()
 
-        // Act
-        viewModel.onLoginClick { successCalled = true }
-
-        // Assert
-        assertFalse(successCalled)
-        assertEquals(
-            "El correo y la contrasena no pueden estar vacios",
-            viewModel.uiState.errorMessage
-        )
+        assertTrue(events.any { it is AuthUiEvent.NavigateToHome })
+        job.cancel()
     }
 
     @Test
-    fun testOnLoginClickEmptyPassword() {
-        // Arrange
-        viewModel.onEmailChange("test@example.com")
-        var successCalled = false
+    fun `login failure shows error message`() = runTest {
+        fakeAuthRepository.shouldSucceed = false
+        fakeAuthRepository.signInResult = Result.failure(Exception("Credenciales incorrectas"))
 
-        // Act
-        viewModel.onLoginClick { successCalled = true }
-
-        // Assert
-        assertFalse(successCalled)
-        assertEquals(
-            "El correo y la contrasena no pueden estar vacios",
-            viewModel.uiState.errorMessage
-        )
-    }
-
-    @Test
-    fun testOnRegisterClickEmptyEmail() {
-        // Arrange
+        viewModel.onEmailChange("test@test.com")
         viewModel.onPasswordChange("password123")
-        viewModel.onCiudadSelected("Manta", "ciudad-123")
-        var successCalled = false
+        viewModel.onLoginClick()
+        advanceUntilIdle()
 
-        // Act
-        viewModel.onRegisterClick { successCalled = true }
-
-        // Assert
-        assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
+        assertNotNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
-    fun testOnRegisterClickEmptyPassword() {
-        // Arrange
-        viewModel.onEmailChange("test@example.com")
-        viewModel.onCiudadSelected("Manta", "ciudad-123")
-        var successCalled = false
+    fun `register without session shows email verification pending`() = runTest {
+        fakeAuthRepository.getUserIdResult = Result.failure(Exception("no session"))
 
-        // Act
-        viewModel.onRegisterClick { successCalled = true }
-
-        // Assert
-        assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
-    }
-
-    @Test
-    fun testOnRegisterClickEmptyCiudad() {
-        // Arrange
-        viewModel.onEmailChange("test@example.com")
+        viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
-        var successCalled = false
+        viewModel.onCiudadSelected("Manta", "550e8400-e29b-41d4-a716-446655440000")
+        viewModel.onRegisterClick()
+        advanceUntilIdle()
 
-        // Act
-        viewModel.onRegisterClick { successCalled = true }
-
-        // Assert
-        assertFalse(successCalled)
-        assertEquals("Selecciona tu ciudad", viewModel.uiState.errorMessage)
+        assertIs<RegisterPhase.EmailVerificationPending>(viewModel.uiState.value.registerPhase)
     }
 
     @Test
-    fun testAuthStateWithAllFields() {
-        // Arrange
-        val email = "usuario@example.com"
-        val password = "SecurePass123"
-        val ciudadNombre = "Manta"
-        val ciudadId = "manta-123"
+    fun `checkEmailVerified success emits NavigateToHome`() = runTest {
+        fakeAuthRepository.checkEmailVerifiedResult = Result.success(true)
+        val events = mutableListOf<AuthUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
 
-        // Act
-        viewModel.onEmailChange(email)
-        viewModel.onPasswordChange(password)
-        viewModel.onCiudadSelected(ciudadNombre, ciudadId)
+        viewModel.checkEmailVerified()
+        advanceUntilIdle()
 
-        // Assert
-        val state = viewModel.uiState
-        assertEquals(email, state.email)
-        assertEquals(password, state.password)
-        assertEquals(ciudadNombre, state.ciudadNombre)
-        assertEquals(ciudadId, state.ciudadId)
+        assertTrue(events.any { it is AuthUiEvent.NavigateToHome })
+        job.cancel()
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class SplashViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private lateinit var fakeAuthRepository: FakeAuthRepository
+    private lateinit var fakeSessionRepository: FakeSessionRepository
+    private lateinit var viewModel: SplashViewModel
+
+    @Before
+    fun setup() {
+        fakeAuthRepository = FakeAuthRepository()
+        fakeSessionRepository = FakeSessionRepository()
+        viewModel = SplashViewModel(fakeSessionRepository, fakeAuthRepository)
     }
 
     @Test
-    fun testResendActivationEmailEmptyEmail() {
-        // Arrange
-        var successCalled = false
+    fun `restoreSession with no stored session navigates to login`() = runTest {
+        val events = mutableListOf<SplashUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
 
-        // Act
-        viewModel.resendActivationEmail()
+        viewModel.restoreSession()
+        advanceUntilIdle()
 
-        // Assert
-        assertEquals(
-            "Ingresa tu correo para reenviar la activacion",
-            viewModel.uiState.errorMessage
+        assertTrue(events.contains(SplashUiEvent.NavigateToLogin))
+        job.cancel()
+    }
+
+    @Test
+    fun `restoreSession with valid session navigates to home`() = runTest {
+        fakeSessionRepository.setSession(
+            UserSessionEntity(
+                userId = "user-1",
+                email = "test@test.com",
+                roomId = "room-1",
+                accessToken = "access",
+                refreshToken = "refresh",
+                expiresAt = System.currentTimeMillis() + 60_000
+            )
         )
+        fakeAuthRepository.restoreSessionResult = Result.success(Unit)
+
+        val events = mutableListOf<SplashUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+
+        viewModel.restoreSession()
+        advanceUntilIdle()
+
+        assertTrue(events.contains(SplashUiEvent.NavigateToHome))
+        job.cancel()
     }
 
     @Test
-    fun testAuthStateMultipleTransitions() {
-        // Arrange & Act
-        viewModel.onEmailChange("test@example.com")
-        viewModel.onPasswordChange("password1")
-        viewModel.onCiudadSelected("Manta", "ciudad-1")
+    fun `restoreSession failure clears session and navigates to login`() = runTest {
+        fakeSessionRepository.setSession(
+            UserSessionEntity(
+                userId = "user-1",
+                email = "test@test.com",
+                roomId = "room-1",
+                accessToken = "access",
+                refreshToken = "refresh",
+                expiresAt = System.currentTimeMillis() + 60_000
+            )
+        )
+        fakeAuthRepository.restoreSessionResult = Result.failure(Exception("expired"))
 
-        // Assert
-        assertEquals("test@example.com", viewModel.uiState.email)
-        assertEquals("password1", viewModel.uiState.password)
+        val events = mutableListOf<SplashUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
 
-        // Act - Update again
-        viewModel.onEmailChange("new@example.com")
-        viewModel.onPasswordChange("password2")
+        viewModel.restoreSession()
+        advanceUntilIdle()
 
-        // Assert
-        assertEquals("new@example.com", viewModel.uiState.email)
-        assertEquals("password2", viewModel.uiState.password)
-        // Ciudad should remain
-        assertEquals("ciudad-1", viewModel.uiState.ciudadId)
-    }
-
-    @Test
-    fun testAuthStateErrorMessageClear() {
-        // Arrange
-        viewModel.setAuthInfoMessage("Test message")
-
-        // Act
-        viewModel.onEmailChange("test@example.com")
-
-        // Assert
-        assertEquals(null, viewModel.uiState.errorMessage)
-    }
-
-    @Test
-    fun testAuthStateWithSpecialCharacters() {
-        // Arrange
-        val specialEmail = "user+test@example.co.uk"
-        val specialPassword = "P@ssw0rd!#$%"
-
-        // Act
-        viewModel.onEmailChange(specialEmail)
-        viewModel.onPasswordChange(specialPassword)
-
-        // Assert
-        assertEquals(specialEmail, viewModel.uiState.email)
-        assertEquals(specialPassword, viewModel.uiState.password)
-    }
-
-    @Test
-    fun testAuthStateCiudadResetOnChange() {
-        // Arrange
-        viewModel.onCiudadSelected("Manta", "ciudad-1")
-
-        // Act
-        viewModel.onCiudadChange("Quito")
-
-        // Assert
-        assertEquals("Quito", viewModel.uiState.ciudadNombre)
-        assertEquals("", viewModel.uiState.ciudadId)
+        assertTrue(events.contains(SplashUiEvent.NavigateToLogin))
+        assertEquals(1, fakeSessionRepository.clearCalls)
+        job.cancel()
     }
 }

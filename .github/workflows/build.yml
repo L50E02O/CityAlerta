@@ -52,6 +52,5 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           chmod +x gradlew
-          ./gradlew clean assembleDebug lintDebug testDebugUnitTest :app:jacocoTestReport sonar --info --no-build-cache
-          test -f app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
-          grep -nE "authViewModel.kt|ViewModelFactory.kt" app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          ./gradlew clean assembleDebug lintDebug testDebugUnitTest koverXmlReport sonar --info --no-build-cache
+          test -f app/build/reports/kover/report.xml
