@@ -3,7 +3,9 @@ package ec.cityalerta.app.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import android.content.Context
+import ec.cityalerta.app.di.AppContainer
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.session.SessionRepositoryContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.repository.MapRepository
 import ec.cityalerta.app.model.repository.LocationRepository
@@ -22,6 +24,7 @@ import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
 
 class AppViewModelFactory(
     private val authRepository: AuthRepositoryContract,
+    private val sessionRepository: SessionRepositoryContract,
     private val appContext: Context
 ) : ViewModelProvider.Factory {
 
@@ -153,6 +156,10 @@ class AppViewModelFactory(
             modelClass.isAssignableFrom(PasswordRecoveryViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
                 PasswordRecoveryViewModel(authRepository) as T
+            }
+            modelClass.isAssignableFrom(SplashViewModel::class.java) -> {
+                @Suppress("UNCHECKED_CAST")
+                SplashViewModel(sessionRepository, authRepository) as T
             }
             modelClass.isAssignableFrom(ReportDetailViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")

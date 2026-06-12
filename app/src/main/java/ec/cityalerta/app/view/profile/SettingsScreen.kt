@@ -11,7 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -41,8 +41,8 @@ fun SettingsScreen(
     viewModel: ProfileViewModel,
     authViewModel: AuthViewModel
 ) {
-    val state by viewModel.state.collectAsState()
-    val authState = authViewModel.uiState
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val authState by authViewModel.uiState.collectAsStateWithLifecycle()
     val localeManager = LocalLocaleManager.current
     val context = LocalContext.current
     val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU

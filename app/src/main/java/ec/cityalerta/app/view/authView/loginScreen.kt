@@ -1,20 +1,13 @@
 package ec.cityalerta.app.view.authView
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import ec.cityalerta.app.navigation.Routes
+import ec.cityalerta.app.viewmodel.AuthUiEvent
 import ec.cityalerta.app.viewmodel.AuthViewModel
-import ec.cityalerta.app.R
-
 
 @Composable
 fun LoginScreen(
@@ -22,27 +15,49 @@ fun LoginScreen(
     viewModel: AuthViewModel,
     authInfoMessage: String? = null
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     LaunchedEffect(authInfoMessage) {
         if (!authInfoMessage.isNullOrBlank()) {
             viewModel.setAuthInfoMessage(authInfoMessage)
         }
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                AuthUiEvent.NavigateToHome -> {
+                    navController.navigate(Routes.Home.route) {
+                        popUpTo(Routes.Login.route) { inclusive = true }
+                    }
+                }
+                AuthUiEvent.NavigateToLogin -> Unit
+                is AuthUiEvent.ShowSnackbar -> Unit
+            }
+        }
+    }
+
     AuthScreenScaffold(
-        viewModel = viewModel,
+        email = uiState.email,
+        password = uiState.password,
+        ciudadNombre = uiState.ciudadNombre,
+        ciudadId = uiState.ciudadId,
+        isLoading = uiState.isLoading,
+        infoMessage = uiState.infoMessage,
+        errorMessage = uiState.errorMessage,
+        isEmailUnconfirmed = uiState.isEmailUnconfirmed,
+        onEmailChange = viewModel::onEmailChange,
+        onPasswordChange = viewModel::onPasswordChange,
+        onCiudadChange = viewModel::onCiudadChange,
+        onCiudadSelected = viewModel::onCiudadSelected,
+        onResendActivationEmail = viewModel::resendActivationEmail,
         config = AuthScreenConfig(
             title = "Bienvenido de vuelta!",
             subtitle = "Ingrese sus credenciales para acceder al sistema.",
             isLogin = true,
             primaryButtonText = "Login",
             secondaryActionText = "¿Olvidaste tu contraseña?",
-            onPrimaryAction = {
-                viewModel.onLoginClick {
-                    navController.navigate(Routes.Home.route) {
-                        popUpTo(Routes.Login.route) { inclusive = true }
-                    }
-                }
-            },
+            onPrimaryAction = viewModel::onLoginClick,
             onSecondaryAction = {
                 navController.navigate(Routes.RecoverPassword.route)
             },

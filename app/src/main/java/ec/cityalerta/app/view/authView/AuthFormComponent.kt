@@ -26,25 +26,29 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import ec.cityalerta.app.theme.SuccessGreen
 import ec.cityalerta.app.R
-import ec.cityalerta.app.viewmodel.AuthViewModel
+import ec.cityalerta.app.theme.SuccessGreen
 
 @Composable
 fun AuthFormComponent(
-    viewModel: AuthViewModel,
+    email: String,
+    password: String,
+    isLoading: Boolean,
+    infoMessage: String?,
+    errorMessage: String?,
+    isEmailUnconfirmed: Boolean,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onResendActivationEmail: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
-    val email = viewModel.uiState.email
-    val password = viewModel.uiState.password
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
     val isPasswordValid = password.isNotEmpty() && password.length >= 8
 
@@ -59,7 +63,7 @@ fun AuthFormComponent(
         EmailField(
             email = email,
             isEmailValid = isEmailValid,
-            onEmailChange = viewModel::onEmailChange
+            onEmailChange = onEmailChange
         )
 
         if (email.isNotEmpty() && !isEmailValid) {
@@ -83,7 +87,7 @@ fun AuthFormComponent(
         PasswordField(
             password = password,
             passwordVisible = passwordVisible,
-            onPasswordChange = viewModel::onPasswordChange,
+            onPasswordChange = onPasswordChange,
             onToggleVisibility = { passwordVisible = !passwordVisible }
         )
 
@@ -98,28 +102,28 @@ fun AuthFormComponent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (viewModel.uiState.infoMessage != null) {
+        if (infoMessage != null) {
             Text(
-                text = viewModel.uiState.infoMessage!!,
-                color = SuccessGreen, // Standard Material Success Green
+                text = infoMessage,
+                color = SuccessGreen,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
 
-        if (viewModel.uiState.errorMessage != null) {
+        if (errorMessage != null) {
             Text(
-                text = viewModel.uiState.errorMessage!!,
+                text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
 
-        if (viewModel.uiState.isEmailUnconfirmed) {
+        if (isEmailUnconfirmed) {
             TextButton(
-                onClick = viewModel::resendActivationEmail,
-                enabled = !viewModel.uiState.isLoading,
+                onClick = onResendActivationEmail,
+                enabled = !isLoading,
                 modifier = Modifier.padding(top = 4.dp)
             ) {
                 Text(stringResource(R.string.auth_resend_activation))

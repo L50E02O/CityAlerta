@@ -41,7 +41,7 @@ import ec.cityalerta.app.view.map.components.ReportMarkerDot
 import ec.cityalerta.app.viewmodel.MapUiState
 import ec.cityalerta.app.viewmodel.MapViewModel
 import ec.cityalerta.app.viewmodel.ProfileViewModel
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import kotlin.math.*
@@ -55,8 +55,8 @@ fun MapScreen(
     viewModel: MapViewModel,
     profileViewModel: ProfileViewModel
 ) {
-    val uiState = viewModel.uiState
-    val profileState = profileViewModel.state.collectAsState().value
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -85,7 +85,7 @@ fun MapScreen(
                 hasAutoSelected = true
                 viewModel.onReportClicked(reportId)
                 // Animamos la cámara hacia el reporte seleccionado
-                viewModel.uiState.reportMarkers.find { it.id == reportId }?.let { marker ->
+                uiState.reportMarkers.find { it.id == reportId }?.let { marker ->
                     cameraPositionState.animate(
                         CameraUpdateFactory.newLatLngZoom(
                             LatLng(marker.latitude, marker.longitude),

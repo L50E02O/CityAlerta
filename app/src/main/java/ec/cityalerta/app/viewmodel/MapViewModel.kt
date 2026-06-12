@@ -1,27 +1,27 @@
 package ec.cityalerta.app.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
-import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.data.MapMarker
+import ec.cityalerta.app.model.data.ciudad.Ciudad
+import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
+import ec.cityalerta.app.model.data.map.BarrioRiskState
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
 import ec.cityalerta.app.model.repository.ReporteUbicacionRepository
-import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
-import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
-import ec.cityalerta.app.model.data.map.BarrioRiskState
+import ec.cityalerta.app.model.utils.ExponentialRiskColorProvider
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import ec.cityalerta.app.model.utils.IRiskZoneDetector
 import ec.cityalerta.app.model.utils.RadialRiskZoneDetector
-import ec.cityalerta.app.model.utils.ExponentialRiskColorProvider
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -40,6 +40,7 @@ data class MapUiState(
     val isLoading: Boolean = false
 )
 
+// No domain layer: map screen orchestrates repository reads without shared business rules.
 class MapViewModel(
     private val repository: MapRepositoryContract,
     private val reporteRepository: ReporteRepository,
@@ -49,13 +50,13 @@ class MapViewModel(
     private val riskDetector: IRiskZoneDetector = RadialRiskZoneDetector(ExponentialRiskColorProvider())
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(MapUiState())
-        private set
+    private val _uiState = MutableStateFlow(MapUiState())
+    val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
     private var polygonPoints: List<LatLng> = emptyList()
 
     fun loadCiudad(ciudadId: String) {
-        uiState = uiState.copy(isLoading = true, errorMessage = null)
+        _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
         viewModelScope.launch {
             try {
@@ -68,9 +69,9 @@ class MapViewModel(
                     }
                     else -> ciudadId
                 }
-                
+
                 if (realCiudadId.isEmpty()) {
-                    uiState = uiState.copy(
+                    _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = "No se pudo determinar la ciudad actual"
                     )
@@ -108,7 +109,7 @@ class MapViewModel(
                             }
                         }.distinctBy { it.id }
 
-                        uiState = uiState.copy(
+                        _uiState.value = _uiState.value.copy(
                             ciudad = ciudad,
                             isLoading = false,
                             reportMarkers = markers,
@@ -116,20 +117,20 @@ class MapViewModel(
                             reports = filteredReports
                         )
                     } else {
-                        uiState = uiState.copy(
+                        _uiState.value = _uiState.value.copy(
                             ciudad = ciudad,
                             isLoading = false,
                             errorMessage = "Error al obtener datos de la base de datos"
                         )
                     }
                 } else {
-                    uiState = uiState.copy(
+                    _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = "Ciudad no encontrada en el sistema"
                     )
                 }
             } catch (e: Exception) {
-                uiState = uiState.copy(
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "Error cargando ciudad: ${e.message}"
                 )
@@ -138,12 +139,13 @@ class MapViewModel(
     }
 
     fun updateCameraZoom(zoom: Float) {
-        uiState = uiState.copy(cameraZoom = zoom)
+        _uiState.value = _uiState.value.copy(cameraZoom = zoom)
     }
 
     fun onCategorySelected(category: ReportType) {
-        val newCategory = if (uiState.selectedCategory == category) null else category
-        uiState = uiState.copy(
+        val current = _uiState.value
+        val newCategory = if (current.selectedCategory == category) null else category
+        _uiState.value = current.copy(
             selectedCategory = newCategory,
             selectedReport = null,
             isMultiReport = false,
@@ -152,8 +154,8 @@ class MapViewModel(
     }
 
     fun onReportClicked(reportId: String) {
-        val report = uiState.reports.firstOrNull { it.id == reportId }
-        uiState = uiState.copy(
+        val report = _uiState.value.reports.firstOrNull { it.id == reportId }
+        _uiState.value = _uiState.value.copy(
             selectedReport = report,
             isMultiReport = false,
             reportCount = 1
@@ -172,14 +174,18 @@ class MapViewModel(
             categoria = reportType,
             barrio_id = ""
         )
-        uiState = uiState.copy(
+        _uiState.value = _uiState.value.copy(
             selectedReport = dummyReport,
             isMultiReport = true,
             reportCount = count
         )
     }
 
-    fun onDismissReport(){
-        uiState = uiState.copy(selectedReport = null, isMultiReport = false, reportCount = 0)
+    fun onDismissReport() {
+        _uiState.value = _uiState.value.copy(
+            selectedReport = null,
+            isMultiReport = false,
+            reportCount = 0
+        )
     }
 }

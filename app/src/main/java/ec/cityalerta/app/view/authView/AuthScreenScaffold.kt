@@ -29,8 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import ec.cityalerta.app.model.data.ciudad.Ciudad
-import ec.cityalerta.app.viewmodel.AuthViewModel
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -71,14 +69,25 @@ data class AuthScreenConfig(
 
 @Composable
 fun AuthScreenScaffold(
-    viewModel: AuthViewModel,
+    email: String,
+    password: String,
+    ciudadNombre: String,
+    ciudadId: String,
+    isLoading: Boolean,
+    infoMessage: String?,
+    errorMessage: String?,
+    isEmailUnconfirmed: Boolean,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onCiudadChange: (String) -> Unit,
+    onCiudadSelected: (String, String) -> Unit,
+    onResendActivationEmail: () -> Unit,
     config: AuthScreenConfig
 ) {
-    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
-    val isPasswordValid =
-        viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
+    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    val isPasswordValid = password.isNotEmpty() && password.length >= 8
     val isCiudadValid = !config.showCitySection ||
-            (config.fixedCity != null || (config.ciudades.isNotEmpty() && viewModel.uiState.ciudadId.isNotEmpty()))
+            (config.fixedCity != null || (config.ciudades.isNotEmpty() && ciudadId.isNotEmpty()))
     val isFormValid = isEmailValid && isPasswordValid && isCiudadValid
 
     Box(
@@ -163,14 +172,25 @@ fun AuthScreenScaffold(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 AuthFormComponent(
-                    viewModel = viewModel,
+                    email = email,
+                    password = password,
+                    isLoading = isLoading,
+                    infoMessage = infoMessage,
+                    errorMessage = errorMessage,
+                    isEmailUnconfirmed = isEmailUnconfirmed,
+                    onEmailChange = onEmailChange,
+                    onPasswordChange = onPasswordChange,
+                    onResendActivationEmail = onResendActivationEmail,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 if (config.showCitySection) {
                     AuthCitySection(
                         config = config,
-                        viewModel = viewModel
+                        ciudadNombre = ciudadNombre,
+                        ciudadId = ciudadId,
+                        onCiudadChange = onCiudadChange,
+                        onCiudadSelected = onCiudadSelected
                     )
                 }
 
@@ -181,7 +201,7 @@ fun AuthScreenScaffold(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = isFormValid && !viewModel.uiState.isLoading,
+                    enabled = isFormValid && !isLoading,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -189,7 +209,7 @@ fun AuthScreenScaffold(
                     )
                 ) {
                     Text(
-                        text = if (viewModel.uiState.isLoading) "Cargando..." else "${config.primaryButtonText} →",
+                        text = if (isLoading) "Cargando..." else "${config.primaryButtonText} →",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -250,7 +270,10 @@ fun AuthTab(
 @Composable
 private fun AuthCitySection(
     config: AuthScreenConfig,
-    viewModel: AuthViewModel
+    ciudadNombre: String,
+    ciudadId: String,
+    onCiudadChange: (String) -> Unit,
+    onCiudadSelected: (String, String) -> Unit
 ) {
     Spacer(modifier = Modifier.height(16.dp))
     Text(
@@ -265,11 +288,11 @@ private fun AuthCitySection(
         config.fixedCity != null -> FixedCityField(city = config.fixedCity)
         config.ciudades.isNotEmpty() -> CiudadPickerField(
             ciudades = config.ciudades,
-            query = viewModel.uiState.ciudadNombre,
-            selectedId = viewModel.uiState.ciudadId,
-            onQueryChange = viewModel::onCiudadChange,
+            query = ciudadNombre,
+            selectedId = ciudadId,
+            onQueryChange = onCiudadChange,
             onSelected = { ciudad ->
-                viewModel.onCiudadSelected(ciudad.nombre, ciudad.id)
+                onCiudadSelected(ciudad.nombre, ciudad.id)
             }
         )
         else -> OutlinedTextField(

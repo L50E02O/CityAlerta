@@ -1,12 +1,15 @@
 package ec.cityalerta.app.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class PasswordRecoveryState(
@@ -19,17 +22,25 @@ data class PasswordRecoveryState(
     val errorMessage: String? = null
 )
 
+sealed class PasswordRecoveryUiEvent {
+    data object NavigateToLogin : PasswordRecoveryUiEvent()
+}
+
 private const val RECOVERY_ERROR_MESSAGE = "Error desconocido"
 
+// No domain layer: recovery maps directly to auth repository calls.
 class PasswordRecoveryViewModel(
     private val repository: AuthRepositoryContract
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(PasswordRecoveryState())
-        private set
+    private val _uiState = MutableStateFlow(PasswordRecoveryState())
+    val uiState: StateFlow<PasswordRecoveryState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<PasswordRecoveryUiEvent>()
+    val events: SharedFlow<PasswordRecoveryUiEvent> = _events.asSharedFlow()
 
     fun onEmailChange(email: String) {
-        uiState = uiState.copy(
+        _uiState.value = _uiState.value.copy(
             email = email,
             isEmailVerified = false,
             successMessage = null,
@@ -38,11 +49,11 @@ class PasswordRecoveryViewModel(
     }
 
     fun onNewPasswordChange(password: String) {
-        uiState = uiState.copy(newPassword = password)
+        _uiState.value = _uiState.value.copy(newPassword = password)
     }
 
     fun onConfirmPasswordChange(password: String) {
-        uiState = uiState.copy(confirmPassword = password)
+        _uiState.value = _uiState.value.copy(confirmPassword = password)
     }
 
     fun refreshSessionState() {
@@ -50,19 +61,20 @@ class PasswordRecoveryViewModel(
     }
 
     fun verifyEmail() {
-        if (uiState.email.isBlank()) {
-            uiState = uiState.copy(errorMessage = "Ingresa tu correo electronico")
+        val state = _uiState.value
+        if (state.email.isBlank()) {
+            _uiState.value = state.copy(errorMessage = "Ingresa tu correo electronico")
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true, errorMessage = null, successMessage = null)
+        if (state.isLoading) return
+        _uiState.value = state.copy(isLoading = true, errorMessage = null, successMessage = null)
 
         viewModelScope.launch {
             try {
-                repository.verifyRecoveryEmail(uiState.email).fold(
+                repository.verifyRecoveryEmail(_uiState.value.email).fold(
                     onSuccess = { exists ->
-                        uiState = uiState.copy(
+                        _uiState.value = _uiState.value.copy(
                             isEmailVerified = exists,
                             successMessage = if (exists) {
                                 "Correo verificado. Ya puedes escribir la nueva contrasena."
@@ -73,7 +85,7 @@ class PasswordRecoveryViewModel(
                         )
                     },
                     onFailure = { error ->
-                        uiState = uiState.copy(
+                        _uiState.value = _uiState.value.copy(
                             isEmailVerified = false,
                             errorMessage = error.message ?: RECOVERY_ERROR_MESSAGE
                         )
@@ -81,73 +93,77 @@ class PasswordRecoveryViewModel(
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                uiState = uiState.copy(isEmailVerified = false, errorMessage = e.message ?: RECOVERY_ERROR_MESSAGE)
+                _uiState.value = _uiState.value.copy(
+                    isEmailVerified = false,
+                    errorMessage = e.message ?: RECOVERY_ERROR_MESSAGE
+                )
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
 
-    fun resetPassword(onSuccess: () -> Unit) {
-        if (uiState.email.isBlank()) {
-            uiState = uiState.copy(errorMessage = "Ingresa tu correo electronico")
+    fun resetPassword() {
+        val state = _uiState.value
+        if (state.email.isBlank()) {
+            _uiState.value = state.copy(errorMessage = "Ingresa tu correo electronico")
             return
         }
 
-        if (!uiState.isEmailVerified) {
-            uiState = uiState.copy(errorMessage = "Primero verifica que el correo exista")
+        if (!state.isEmailVerified) {
+            _uiState.value = state.copy(errorMessage = "Primero verifica que el correo exista")
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true)
+        if (state.isLoading) return
+        _uiState.value = state.copy(isLoading = true)
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null, successMessage = null)
+            _uiState.value = _uiState.value.copy(errorMessage = null, successMessage = null)
 
-            if (uiState.newPassword.isBlank() || uiState.confirmPassword.isBlank()) {
-                uiState = uiState.copy(errorMessage = "Completa la nueva contrasena")
-                uiState = uiState.copy(isLoading = false)
+            if (_uiState.value.newPassword.isBlank() || _uiState.value.confirmPassword.isBlank()) {
+                _uiState.value = _uiState.value.copy(errorMessage = "Completa la nueva contrasena", isLoading = false)
                 return@launch
             }
 
-            if (uiState.newPassword.length < 8) {
-                uiState = uiState.copy(errorMessage = "La contrasena debe tener al menos 8 caracteres")
-                uiState = uiState.copy(isLoading = false)
+            if (_uiState.value.newPassword.length < 8) {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "La contrasena debe tener al menos 8 caracteres",
+                    isLoading = false
+                )
                 return@launch
             }
 
-            if (uiState.newPassword != uiState.confirmPassword) {
-                uiState = uiState.copy(errorMessage = "Las contrasenas no coinciden")
-                uiState = uiState.copy(isLoading = false)
+            if (_uiState.value.newPassword != _uiState.value.confirmPassword) {
+                _uiState.value = _uiState.value.copy(errorMessage = "Las contrasenas no coinciden", isLoading = false)
                 return@launch
             }
 
             try {
-                repository.resetPasswordByEmail(uiState.email, uiState.newPassword).fold(
+                repository.resetPasswordByEmail(_uiState.value.email, _uiState.value.newPassword).fold(
                     onSuccess = {
-                        uiState = uiState.copy(
+                        _uiState.value = _uiState.value.copy(
                             successMessage = "Contrasena actualizada correctamente",
                             newPassword = "",
                             confirmPassword = "",
                             isEmailVerified = false
                         )
-                        onSuccess()
+                        _events.emit(PasswordRecoveryUiEvent.NavigateToLogin)
                     },
                     onFailure = { error ->
-                        uiState = uiState.copy(errorMessage = error.message ?: RECOVERY_ERROR_MESSAGE)
+                        _uiState.value = _uiState.value.copy(errorMessage = error.message ?: RECOVERY_ERROR_MESSAGE)
                     }
                 )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                uiState = uiState.copy(errorMessage = e.message ?: RECOVERY_ERROR_MESSAGE)
+                _uiState.value = _uiState.value.copy(errorMessage = e.message ?: RECOVERY_ERROR_MESSAGE)
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.value = _uiState.value.copy(isLoading = false)
             }
         }
     }
 
-    fun updatePassword(onSuccess: () -> Unit) {
-        resetPassword(onSuccess)
+    fun updatePassword() {
+        resetPassword()
     }
 }

@@ -49,11 +49,13 @@ import androidx.compose.ui.unit.dp
 import ec.cityalerta.app.theme.SuccessGreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
-import ec.cityalerta.app.viewmodel.PasswordRecoveryState
+import ec.cityalerta.app.viewmodel.PasswordRecoveryUiEvent
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 
 @Composable
@@ -61,8 +63,20 @@ fun RecoverPasswordScreen(
     navController: NavController,
     viewModel: PasswordRecoveryViewModel
 ) {
-    val state = viewModel.uiState
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                PasswordRecoveryUiEvent.NavigateToLogin -> {
+                    navController.navigate(Routes.Login.route) {
+                        popUpTo(Routes.RecoverPassword.route) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -111,11 +125,7 @@ fun RecoverPasswordScreen(
                 onNewPasswordChange = viewModel::onNewPasswordChange,
                 onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
                 onResetPassword = {
-                    viewModel.resetPassword {
-                        navController.navigate(Routes.Login.route) {
-                            popUpTo(Routes.RecoverPassword.route) { inclusive = true }
-                        }
-                    }
+                    viewModel.resetPassword()
                 }
             )
 
