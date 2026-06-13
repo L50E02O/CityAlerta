@@ -17,17 +17,22 @@ import ec.cityalerta.app.R
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
     var ciudades by remember { mutableStateOf<List<Ciudad>>(emptyList()) }
+    var mantaCiudad by remember { mutableStateOf<Ciudad?>(null) }
     var ciudadError by remember { mutableStateOf<String?>(null) }
     val cityLoadErrorMessage = stringResource(R.string.auth_city_load_error)
 
     LaunchedEffect(Unit) {
         val repo = CiudadRepository()
-        // Limpiamos selección previa si existe para forzar elección manual
-        viewModel.onCiudadSelected("", "")
         
         repo.getAllByCountry("Ecuador").fold(
             onSuccess = { result ->
                 ciudades = result
+                // Buscar y establecer Uleam como ciudad por defecto
+                val uleam = result.find { it.nombre.equals("Uleam", ignoreCase = true) }
+                mantaCiudad = uleam
+                if (uleam != null) {
+                    viewModel.onCiudadSelected(uleam.nombre, uleam.id)
+                }
             },
             onFailure = { error ->
                 ciudadError = error.message ?: cityLoadErrorMessage
@@ -44,7 +49,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
             secondaryActionText = "¿Ya tienes cuenta? Inicia sesión",
             showCitySection = true,
             ciudades = ciudades,
-            fixedCity = null, // Cambiado de mantaCiudad a null para habilitar el dropdown
+            fixedCity = mantaCiudad, // Uleam como ciudad fija no editable
             cityLoadError = ciudadError,
             onPrimaryAction = {
                 viewModel.onRegisterClick {
