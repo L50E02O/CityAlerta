@@ -1,10 +1,10 @@
 // Top-level build file where you can add configuration options common to all subproject/modules.
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.android) apply false
-    alias(libs.plugins.kotlin.compose) apply false
-    alias(libs.plugins.kotlin.kapt) apply false
-    id("org.sonarqube") version "7.3.0.8198"
+    id("com.android.application") version "8.7.3" apply false
+    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.0" apply false
+    id("org.jetbrains.kotlin.kapt") version "2.1.0" apply false
+    id("org.sonarqube") version "7.3.1.8318"
     id("com.google.gms.google-services") version "4.4.4" apply false
 }
 
