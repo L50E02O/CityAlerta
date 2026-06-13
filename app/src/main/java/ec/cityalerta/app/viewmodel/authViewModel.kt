@@ -1,11 +1,13 @@
 package ec.cityalerta.app.viewmodel
 
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.remote.service.PushSubscriptionAuthRequiredException
 import ec.cityalerta.app.model.remote.service.PushSubscriptionDisabledException
 import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
 import ec.cityalerta.app.model.remote.service.PushSubscriptionTokenMissingException
 import ec.cityalerta.app.model.repository.AuthMappedException
+import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import ec.cityalerta.app.model.utils.MappedAuthError
 import androidx.compose.runtime.getValue
@@ -14,6 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 
@@ -31,14 +35,35 @@ data class AuthState(
 
 class AuthViewModel(
     private val repository: AuthRepositoryContract,
+    private val ciudadRepository: CiudadRepository,
     private val pushRegistrar: PushSubscriptionRegistrar? = null
 ) : ViewModel() {
     var uiState by mutableStateOf(AuthState())
         private set
 
+    private val _ciudades = MutableStateFlow<List<Ciudad>>(emptyList())
+    val ciudades: StateFlow<List<Ciudad>> = _ciudades
+
+    private val _ciudadLoadError = MutableStateFlow<String?>(null)
+    val ciudadLoadError: StateFlow<String?> = _ciudadLoadError
+
     init {
         val enabled = pushRegistrar?.isNotificationsEnabled() ?: false
         uiState = uiState.copy(notificationsEnabled = enabled)
+    }
+
+    fun loadCiudades(country: String = "Ecuador") {
+        viewModelScope.launch {
+            ciudadRepository.getAllByCountry(country).fold(
+                onSuccess = { ciudades ->
+                    _ciudades.value = ciudades
+                    _ciudadLoadError.value = null
+                },
+                onFailure = { error ->
+                    _ciudadLoadError.value = error.message ?: "No se pudo cargar las ciudades"
+                }
+            )
+        }
     }
 
     fun onEmailChange(email: String){
