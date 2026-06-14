@@ -5,15 +5,15 @@ import ec.cityalerta.app.viewmodel.AuthViewModel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
 import ec.cityalerta.app.R
 
 @Composable
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
-    val ciudades by viewModel.ciudades.collectAsState()
-    val ciudadError by viewModel.ciudadLoadError.collectAsState()
+    val ciudades by viewModel.ciudades.collectAsStateWithLifecycle()
+    val ciudadError by viewModel.ciudadLoadError.collectAsStateWithLifecycle()
     val mantaCiudad = ciudades.find { it.nombre.equals("Uleam", ignoreCase = true) }
 
     LaunchedEffect(Unit) {
@@ -36,7 +36,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
             showCitySection = true,
             ciudades = ciudades,
             fixedCity = mantaCiudad, // Uleam como ciudad fija no editable
-            cityLoadError = ciudadError ?: cityLoadErrorMessage,
+            cityLoadError = ciudadError ?: stringResource(R.string.auth_city_load_error),
             onPrimaryAction = {
                 viewModel.onRegisterClick {
                     navController.navigate(Routes.Login.route) {

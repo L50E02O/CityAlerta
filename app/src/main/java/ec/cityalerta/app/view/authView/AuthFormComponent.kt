@@ -26,13 +26,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ec.cityalerta.app.theme.SuccessGreen
 import ec.cityalerta.app.R
 import ec.cityalerta.app.viewmodel.AuthViewModel
@@ -43,8 +43,9 @@ fun AuthFormComponent(
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
-    val email = viewModel.uiState.email
-    val password = viewModel.uiState.password
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val email = uiState.email
+    val password = uiState.password
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(email).matches()
     val isPasswordValid = password.isNotEmpty() && password.length >= 8
 
@@ -98,28 +99,28 @@ fun AuthFormComponent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (viewModel.uiState.infoMessage != null) {
+        if (uiState.infoMessage != null) {
             Text(
-                text = viewModel.uiState.infoMessage!!,
-                color = SuccessGreen, // Standard Material Success Green
+                text = uiState.infoMessage!!,
+                color = SuccessGreen,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
 
-        if (viewModel.uiState.errorMessage != null) {
+        if (uiState.errorMessage != null) {
             Text(
-                text = viewModel.uiState.errorMessage!!,
+                text = uiState.errorMessage!!,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(vertical = 8.dp)
             )
         }
 
-        if (viewModel.uiState.isEmailUnconfirmed) {
+        if (uiState.isEmailUnconfirmed) {
             TextButton(
                 onClick = viewModel::resendActivationEmail,
-                enabled = !viewModel.uiState.isLoading,
+                enabled = !uiState.isLoading,
                 modifier = Modifier.padding(top = 4.dp)
             ) {
                 Text(stringResource(R.string.auth_resend_activation))

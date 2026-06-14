@@ -50,6 +50,7 @@ import ec.cityalerta.app.theme.SuccessGreen
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.view.style.ReportUiColors
 import ec.cityalerta.app.viewmodel.PasswordRecoveryViewModel
@@ -61,7 +62,7 @@ fun RecoverPasswordScreen(
     navController: NavController,
     viewModel: PasswordRecoveryViewModel
 ) {
-    val state = viewModel.uiState
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {

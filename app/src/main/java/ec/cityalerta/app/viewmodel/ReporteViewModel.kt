@@ -8,7 +8,6 @@ import ec.cityalerta.app.model.data.reporte.ReporteCreateDto
 import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.model.data.reporteimagen.ReporteImagenCreateDto
 import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionCreateDto
-import ec.cityalerta.app.model.data.reporteubicacion.ReporteUbicacionUpdateDto
 import ec.cityalerta.app.model.data.location.UserLocation
 import ec.cityalerta.app.model.repository.ReporteImagenRepository
 import ec.cityalerta.app.model.repository.ReporteRepository
@@ -22,9 +21,23 @@ import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
+
+data class ReporteUiState(
+    val descripcion: String = "",
+    val categoria: ReportType? = null,
+    val imagenURL: String? = null,
+    val imagenBytes: ByteArray? = null,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    val currentLocation: UserLocation? = null,
+    val errorMessage: String? = null,
+    val isSubmitting: Boolean = false
+)
 
 class ReporteViewModel(
     private val reporteRepository: ReporteRepository,
@@ -36,122 +49,103 @@ class ReporteViewModel(
     private val mapRepository: MapRepositoryContract,
     private val barrioRepository: BarrioRepository,
     private val geocodingRepository: GeocodingRepositoryContract
-): ViewModel(){
+): ViewModel() {
 
-    private val _descripcion = MutableStateFlow("")
-    val descripcion: StateFlow<String> = _descripcion
+    private val _uiState = MutableStateFlow(ReporteUiState())
+    val uiState: StateFlow<ReporteUiState> = _uiState.asStateFlow()
 
-    private val _categoria = MutableStateFlow<ReportType?>(null)
-    val categoria: StateFlow<ReportType?> = _categoria
+    // Helpers para compatibilidad con las pantallas mientras migran
+    val descripcion: StateFlow<String> get() = MutableStateFlow(_uiState.value.descripcion)
+    val categoria: StateFlow<ReportType?> get() = MutableStateFlow(_uiState.value.categoria)
+    val currentLocation: StateFlow<UserLocation?> get() = MutableStateFlow(_uiState.value.currentLocation)
+    val errorMessage: StateFlow<String?> get() = MutableStateFlow(_uiState.value.errorMessage)
+    val isSubmitting: StateFlow<Boolean> get() = MutableStateFlow(_uiState.value.isSubmitting)
 
-    private val _imagenURL = MutableStateFlow<String?>(null)
-    val imagenURL: StateFlow<String?> = _imagenURL
-    private val _imagenBytes = MutableStateFlow<ByteArray?>(null)
-    private val _lat = MutableStateFlow<Double?>(null)
-    private val _lng = MutableStateFlow<Double?>(null)
-    private val _currentLocation = MutableStateFlow<UserLocation?>(null)
-    val currentLocation: StateFlow<UserLocation?> = _currentLocation
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
-    private val _isSubmitting = MutableStateFlow(false)
-    val isSubmitting: StateFlow<Boolean> = _isSubmitting
-
-
-    fun onDescriptionChange(value: String){
-        _descripcion.value = value
+    fun onDescriptionChange(value: String) {
+        _uiState.update { it.copy(descripcion = value) }
     }
 
-    fun onCategoriaChange(value: ReportType){
-        _categoria.value = value
+    fun onCategoriaChange(value: ReportType) {
+        _uiState.update { it.copy(categoria = value) }
     }
 
     fun setImagen(uri: String) {
-        _imagenURL.value = uri
+        _uiState.update { it.copy(imagenURL = uri) }
     }
 
     fun setImagenData(bytes: ByteArray) {
-        _imagenBytes.value = bytes
+        _uiState.update { it.copy(imagenBytes = bytes) }
     }
 
     fun setUbicacion(lat: Double, lng: Double) {
-        _lat.value = lat
-        _lng.value = lng
-        _currentLocation.value = UserLocation(lat, lng)
+        _uiState.update { it.copy(lat = lat, lng = lng, currentLocation = UserLocation(lat, lng)) }
     }
 
     fun requestCurrentLocation() {
         viewModelScope.launch {
             val result = locationProvider.getCurrentLocation()
             result.onSuccess { location ->
-                _currentLocation.value = location
                 setUbicacion(location.latitude, location.longitude)
             }.onFailure { error ->
-                _errorMessage.value = error.message ?: "Error al obtener ubicacion"
+                _uiState.update { it.copy(errorMessage = error.message ?: "Error al obtener ubicación") }
             }
         }
     }
 
     fun sendReport(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
-            if (_isSubmitting.value) return@launch
-            _isSubmitting.value = true
+            if (_uiState.value.isSubmitting) return@launch
+            _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
+            
             val validationError = validateReportForm()
-            try {
-                if (validationError != null) {
-                    _errorMessage.value = validationError
-                    return@launch
-                }
+            if (validationError != null) {
+                _uiState.update { it.copy(errorMessage = validationError, isSubmitting = false) }
+                return@launch
+            }
 
+            try {
                 val usuarioID = authRepository.getUserId().getOrNull().orEmpty()
                 val ciudadID = authRepository.getCiudadId().getOrNull().orEmpty()
-                val lat = _lat.value!!
-                val lng = _lng.value!!
+                val lat = _uiState.value.lat!!
+                val lng = _uiState.value.lng!!
 
                 if (!isLocationInsideCity(lat, lng, ciudadID)) {
-                    _errorMessage.value = "Ubicación fuera de los límites permitidos de la ciudad"
+                    _uiState.update { it.copy(errorMessage = "Ubicación fuera de los límites permitidos de la ciudad", isSubmitting = false) }
                     return@launch
                 }
 
-                submitReport(usuarioID, ciudadID, _descripcion.value, _categoria.value!!, _imagenBytes.value!!, lat, lng)
+                submitReport(usuarioID, ciudadID, _uiState.value.descripcion, _uiState.value.categoria!!, _uiState.value.imagenBytes!!, lat, lng)
                     .onSuccess {
                         resetForm()
                         onSuccess()
                     }
                     .onFailure { error ->
-                        _errorMessage.value = error.message ?: "Error al guardar el reporte"
+                        _uiState.update { it.copy(errorMessage = error.message ?: "Error al guardar el reporte", isSubmitting = false) }
                     }
             } catch (e: Exception) {
-                _errorMessage.value = e.message ?: "Error al enviar reporte"
+                _uiState.update { it.copy(errorMessage = e.message ?: "Error al enviar reporte", isSubmitting = false) }
             } finally {
-                _isSubmitting.value = false
+                _uiState.update { it.copy(isSubmitting = false) }
             }
         }
     }
 
     private suspend fun isLocationInsideCity(lat: Double, lng: Double, ciudadId: String): Boolean {
-        val ciudad = mapRepository.getCiudadById(ciudadId)
-        if (ciudad == null) return false
-
+        val ciudad = mapRepository.getCiudadById(ciudadId) ?: return false
         val polygonPoints = GeoJsonConverter.extractPolygonPoints(ciudad.geojson)
         return GeoJsonConverter.pointInPolygon(LatLng(lat, lng), polygonPoints)
     }
 
     private suspend fun validateReportForm(): String? {
-        val usuarioResult = authRepository.getUserId()
-        if (usuarioResult.isFailure) {
-            return usuarioResult.exceptionOrNull()?.message ?: "Error al obtener usuario"
-        }
-
-        val ciudadResult = authRepository.getCiudadId()
-        if (ciudadResult.isFailure) {
-            return ciudadResult.exceptionOrNull()?.message ?: "Error al obtener ciudad"
-        }
+        val state = _uiState.value
+        if (authRepository.getUserId().isFailure) return "Error al obtener usuario"
+        if (authRepository.getCiudadId().isFailure) return "Error al obtener ciudad"
 
         return when {
-            _categoria.value == null -> "Categoria no seleccionada"
-            _descripcion.value.isBlank() -> "Falta descripcion"
-            _imagenURL.value == null || _imagenBytes.value == null -> "Falta imagen"
-            _lat.value == null || _lng.value == null -> "Falta ubicacion"
+            state.categoria == null -> "Categoría no seleccionada"
+            state.descripcion.isBlank() -> "Falta descripción"
+            state.imagenURL == null || state.imagenBytes == null -> "Falta imagen"
+            state.lat == null || state.lng == null -> "Falta ubicación"
             else -> null
         }
     }
@@ -165,49 +159,30 @@ class ReporteViewModel(
         lat: Double,
         lng: Double
     ): Result<Unit> = runCatching {
-        _errorMessage.value = null
-
         val barrioResult = barrioRepository.getByPoint(ciudadID, lat, lng)
         var barrio = barrioResult.getOrNull()
 
         if (barrio == null) {
-            // Si no hay coincidencia exacta, buscamos el barrio más cercano
-            // dentro de la ciudad actual para mantener la integridad del reporte.
-            val allBarriosResult = barrioRepository.getAll()
-            val cityBarrios = allBarriosResult.getOrNull()?.filter { it.ciudadId == ciudadID } ?: emptyList()
-            
+            val cityBarrios = barrioRepository.getAll().getOrNull()?.filter { it.ciudadId == ciudadID } ?: emptyList()
             barrio = cityBarrios.minByOrNull { b ->
                 val firstPoint = b.perimetro.coordinates.firstOrNull()?.firstOrNull()
                 if (firstPoint != null && firstPoint.size >= 2) {
-                    // Cálculo de distancia euclidiana aproximada para encontrar la cercanía
                     val dLat = lat - firstPoint[1]
                     val dLng = lng - firstPoint[0]
                     dLat * dLat + dLng * dLng
-                } else {
-                    Double.MAX_VALUE
-                }
+                } else Double.MAX_VALUE
             }
         }
 
-        if (barrio == null) {
-            throw Exception("Esta ciudad aún no cuenta con zonas de cobertura registradas para procesar reportes.")
-        }
+        if (barrio == null) throw Exception("Esta ciudad aún no cuenta con zonas de cobertura registradas.")
 
         val direccion = resolveDireccion(lat, lng)
         val ubicacion = reporteUbicacionRepository.create(
-            ReporteUbicacionCreateDto(
-                lat = lat,
-                lng = lng,
-                direccion_aproximada = direccion
-            )
+            ReporteUbicacionCreateDto(lat = lat, lng = lng, direccion_aproximada = direccion)
         ).getOrThrow()
 
         val storageUuid = UUID.randomUUID().toString()
-        val storagePath = reporteStorageRepository.uploadReportImage(
-            bytes = imgBytes,
-            objectName = storageUuid
-        ).getOrThrow()
-
+        val storagePath = reporteStorageRepository.uploadReportImage(imgBytes, storageUuid).getOrThrow()
 
         val reporte = reporteRepository.create(
             ReporteCreateDto(
@@ -222,36 +197,20 @@ class ReporteViewModel(
             )
         ).getOrThrow()
 
-
         reporteImagenRepository.create(
-            ReporteImagenCreateDto(
-                reporte_id = reporte.id,
-                storage_uuid = storageUuid,
-                url_path = storagePath
-            )
-        )
+            ReporteImagenCreateDto(reporte_id = reporte.id, storage_uuid = storageUuid, url_path = storagePath)
+        ).getOrThrow()
     }
 
-    private fun resetForm(){
-        _descripcion.value = ""
-        _categoria.value = null
-        _imagenURL.value = null
-        _imagenBytes.value = null
-        _lat.value = null
-        _lng.value = null
-        _currentLocation.value = null
-        _errorMessage.value = null
+    private fun resetForm() {
+        _uiState.value = ReporteUiState()
     }
 
     private suspend fun resolveDireccion(lat: Double, lng: Double): String {
-        return geocodingRepository.reverseGeocode(lat, lng)
-            .getOrNull()
-            ?.takeIf { it.isNotBlank() }
-            ?: "Direccion no disponible"
+        return geocodingRepository.reverseGeocode(lat, lng).getOrNull() ?: "Dirección no disponible"
     }
 
     suspend fun getCityCenter(ciudadId: String): LatLng? {
-        val ciudad = mapRepository.getCiudadById(ciudadId)
-        return ciudad?.let { LatLng(it.centroLat, it.centroLng) }
+        return mapRepository.getCiudadById(ciudadId)?.let { LatLng(it.centroLat, it.centroLng) }
     }
 }

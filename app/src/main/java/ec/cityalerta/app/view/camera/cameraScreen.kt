@@ -36,7 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -83,7 +83,7 @@ fun PhotoScreen(
             ) == PackageManager.PERMISSION_GRANTED
         )
     }
-    val profileState = profileViewModel.state.collectAsState().value
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         profileViewModel.loadSummaryIfNeeded()

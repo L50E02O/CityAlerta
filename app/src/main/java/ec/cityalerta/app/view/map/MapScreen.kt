@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -55,8 +56,8 @@ fun MapScreen(
     viewModel: MapViewModel,
     profileViewModel: ProfileViewModel
 ) {
-    val uiState = viewModel.uiState
-    val profileState = profileViewModel.state.collectAsState().value
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -85,7 +86,7 @@ fun MapScreen(
                 hasAutoSelected = true
                 viewModel.onReportClicked(reportId)
                 // Animamos la cámara hacia el reporte seleccionado
-                viewModel.uiState.reportMarkers.find { it.id == reportId }?.let { marker ->
+                uiState.reportMarkers.find { it.id == reportId }?.let { marker ->
                     cameraPositionState.animate(
                         CameraUpdateFactory.newLatLngZoom(
                             LatLng(marker.latitude, marker.longitude),
@@ -113,9 +114,9 @@ fun MapScreen(
     }
 
     LaunchedEffect(uiState.errorMessage) {
-        if (uiState.errorMessage != null) {
+        uiState.errorMessage?.let { message ->
             snackbarHostState.showSnackbar(
-                message = uiState.errorMessage,
+                message = message,
                 duration = SnackbarDuration.Short
             )
         }
@@ -429,7 +430,7 @@ private fun MapCityContent(
 
         if (uiState.selectedReport != null) {
             ReportDetailCard(
-                report = uiState.selectedReport,
+                report = uiState.selectedReport!!,
                 isMultiReport = uiState.isMultiReport,
                 onDetailClick = { reporte ->
                     if (!uiState.isMultiReport) {

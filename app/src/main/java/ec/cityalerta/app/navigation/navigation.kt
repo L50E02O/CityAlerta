@@ -49,7 +49,7 @@ import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.launch
@@ -76,7 +76,7 @@ fun AppNavigation(
     val currentIntent = activity?.intent
     val factory = remember { AppViewModelFactory(authRepository, context) }
     val sessionManager = remember { SessionManager(SupabaseProvider.client.auth) }
-    val sessionState by sessionManager.state.collectAsState()
+    val sessionState by sessionManager.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
 
@@ -130,7 +130,7 @@ fun AppNavigation(
         }
     }
 
-    val profileState = profileViewModel.state.collectAsState().value
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
 
     val reportIdFromIntent = remember(currentIntent) {
         currentIntent?.getStringExtra("reporte_id")

@@ -23,7 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,8 +50,8 @@ fun ExploreScreen(
     viewModel: ExploreViewModel = viewModel(),
     profileViewModel: ProfileViewModel = viewModel()
 ) {
-    val state by viewModel.state.collectAsState()
-    val profileState by profileViewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
 
     rememberNotificationPermission(
         onGranted = { authViewModel.onNotificationsPermissionGranted() },
@@ -175,7 +175,3 @@ private fun rememberNotificationPermission(
 
     return isGranted
 }
-
-
-
-

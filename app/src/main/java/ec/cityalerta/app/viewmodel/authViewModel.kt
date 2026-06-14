@@ -10,14 +10,13 @@ import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import ec.cityalerta.app.model.utils.MappedAuthError
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
@@ -38,8 +37,9 @@ class AuthViewModel(
     private val ciudadRepository: CiudadRepository,
     private val pushRegistrar: PushSubscriptionRegistrar? = null
 ) : ViewModel() {
-    var uiState by mutableStateOf(AuthState())
-        private set
+    
+    private val _uiState = MutableStateFlow(AuthState())
+    val uiState: StateFlow<AuthState> = _uiState.asStateFlow()
 
     private val _ciudades = MutableStateFlow<List<Ciudad>>(emptyList())
     val ciudades: StateFlow<List<Ciudad>> = _ciudades
@@ -49,7 +49,7 @@ class AuthViewModel(
 
     init {
         val enabled = pushRegistrar?.isNotificationsEnabled() ?: false
-        uiState = uiState.copy(notificationsEnabled = enabled)
+        _uiState.update { it.copy(notificationsEnabled = enabled) }
     }
 
     fun loadCiudades(country: String = "Ecuador") {
@@ -67,51 +67,56 @@ class AuthViewModel(
     }
 
     fun onEmailChange(email: String){
-        uiState = uiState.copy(
-            email = email.trim(),
-            isEmailUnconfirmed = false,
-            errorMessage = null
-        )
+        _uiState.update { 
+            it.copy(
+                email = email.trim(),
+                isEmailUnconfirmed = false,
+                errorMessage = null
+            )
+        }
     }
 
     fun onPasswordChange(password: String){
-        uiState = uiState.copy(password = password)
+        _uiState.update { it.copy(password = password) }
     }
 
     fun onCiudadChange(nombre: String) {
-        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = "")
+        _uiState.update { it.copy(ciudadNombre = nombre, ciudadId = "") }
     }
 
     fun onCiudadSelected(nombre: String, id: String) {
-        uiState = uiState.copy(ciudadNombre = nombre, ciudadId = id)
+        _uiState.update { it.copy(ciudadNombre = nombre, ciudadId = id) }
     }
 
     fun setAuthInfoMessage(message: String) {
-        uiState = uiState.copy(
-            infoMessage = message,
-            errorMessage = null,
-            isEmailUnconfirmed = false
-        )
+        _uiState.update { 
+            it.copy(
+                infoMessage = message,
+                errorMessage = null,
+                isEmailUnconfirmed = false
+            )
+        }
     }
 
     fun clearInfoMessage() {
-        uiState = uiState.copy(infoMessage = null)
+        _uiState.update { it.copy(infoMessage = null) }
     }
 
     fun onLoginClick(onSuccess: () -> Unit) {
-        if (uiState.email.isEmpty() || uiState.password.isEmpty()){
-            uiState = uiState.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
+        val currentState = _uiState.value
+        if (currentState.email.isEmpty() || currentState.password.isEmpty()){
+            _uiState.update { it.copy(errorMessage = "El correo y la contrasena no pueden estar vacios") }
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true)
+        if (currentState.isLoading) return
+        _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false)
+            _uiState.update { it.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false) }
 
             try {
-                repository.signIn(uiState.email, uiState.password).fold(
+                repository.signIn(currentState.email, currentState.password).fold(
                     onSuccess = {
                         registerPushSubscriptionIfPossible()
                         onSuccess()
@@ -122,40 +127,43 @@ class AuthViewModel(
                 if (e is CancellationException) throw e
                 applyAuthFailure(e)
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
 
     fun onRegisterClick(onSuccess: () -> Unit) {
-        if (uiState.email.isEmpty() || uiState.password.isEmpty()) {
-            uiState = uiState.copy(errorMessage = "El correo y la contrasena no pueden estar vacios")
+        val currentState = _uiState.value
+        if (currentState.email.isEmpty() || currentState.password.isEmpty()) {
+            _uiState.update { it.copy(errorMessage = "El correo y la contrasena no pueden estar vacios") }
             return
         }
 
-        if (uiState.ciudadId.isEmpty()){
-            uiState = uiState.copy(errorMessage = "Selecciona tu ciudad")
+        if (currentState.ciudadId.isEmpty()){
+            _uiState.update { it.copy(errorMessage = "Selecciona tu ciudad") }
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true)
+        if (currentState.isLoading) return
+        _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false)
+            _uiState.update { it.copy(errorMessage = null, infoMessage = null, isEmailUnconfirmed = false) }
 
             try {
-                repository.signUp(uiState.email, uiState.password, uiState.ciudadId).fold(
+                repository.signUp(currentState.email, currentState.password, currentState.ciudadId).fold(
                     onSuccess = {
                         val hasSession = repository.getUserId().isSuccess
                         if (hasSession) {
                             registerPushSubscriptionIfPossible()
                             onSuccess()
                         } else {
-                            uiState = uiState.copy(
-                                infoMessage = "Registro exitoso. Te enviamos un correo de activacion. " +
-                                    "Abre el enlace en este celular (debe abrir CityAlerta, no el navegador web) y luego inicia sesion."
-                            )
+                            _uiState.update { 
+                                it.copy(
+                                    infoMessage = "Registro exitoso. Te enviamos un correo de activacion. " +
+                                        "Abre el enlace en este celular (debe abrir CityAlerta, no el navegador web) y luego inicia sesion."
+                                )
+                            }
                             onSuccess()
                         }
                     },
@@ -165,30 +173,33 @@ class AuthViewModel(
                 if (e is CancellationException) throw e
                 applyAuthFailure(e)
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
 
     fun resendActivationEmail() {
-        if (uiState.email.isBlank()) {
-            uiState = uiState.copy(errorMessage = "Ingresa tu correo para reenviar la activacion")
+        val currentState = _uiState.value
+        if (currentState.email.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Ingresa tu correo para reenviar la activacion") }
             return
         }
 
-        if (uiState.isLoading) return
-        uiState = uiState.copy(isLoading = true)
+        if (currentState.isLoading) return
+        _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            uiState = uiState.copy(errorMessage = null)
+            _uiState.update { it.copy(errorMessage = null) }
 
             try {
-                repository.resendSignupConfirmation(uiState.email).fold(
+                repository.resendSignupConfirmation(currentState.email).fold(
                     onSuccess = {
-                        uiState = uiState.copy(
-                            infoMessage = "Te reenviamos el correo de activacion. Revisa tu bandeja y spam.",
-                            isEmailUnconfirmed = false
-                        )
+                        _uiState.update { 
+                            it.copy(
+                                infoMessage = "Te reenviamos el correo de activacion. Revisa tu bandeja y spam.",
+                                isEmailUnconfirmed = false
+                            )
+                        }
                     },
                     onFailure = { error -> applyAuthFailure(error) }
                 )
@@ -196,7 +207,7 @@ class AuthViewModel(
                 if (e is CancellationException) throw e
                 applyAuthFailure(e)
             } finally {
-                uiState = uiState.copy(isLoading = false)
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
@@ -209,29 +220,31 @@ class AuthViewModel(
             )
             else -> AuthErrorMapper.map(error)
         }
-        uiState = uiState.copy(
-            errorMessage = mapped.message,
-            isEmailUnconfirmed = mapped.isEmailUnconfirmed
-        )
+        _uiState.update { 
+            it.copy(
+                errorMessage = mapped.message,
+                isEmailUnconfirmed = mapped.isEmailUnconfirmed
+            )
+        }
     }
 
     fun onNotificationsPermissionGranted() {
         val registrar = pushRegistrar ?: return
         registrar.setNotificationsEnabled(true)
-        uiState = uiState.copy(notificationsEnabled = true)
+        _uiState.update { it.copy(notificationsEnabled = true) }
         registerPushSubscriptionIfPossible()
     }
 
     fun onNotificationsPermissionDenied() {
         val registrar = pushRegistrar ?: return
         registrar.setNotificationsEnabled(false)
-        uiState = uiState.copy(notificationsEnabled = false)
+        _uiState.update { it.copy(notificationsEnabled = false) }
     }
 
     fun onNotificationsDisabledByUser() {
         val registrar = pushRegistrar ?: return
         registrar.setNotificationsEnabled(false)
-        uiState = uiState.copy(notificationsEnabled = false)
+        _uiState.update { it.copy(notificationsEnabled = false) }
         viewModelScope.launch {
             registrar.unregisterToken().onFailure { error ->
             }
