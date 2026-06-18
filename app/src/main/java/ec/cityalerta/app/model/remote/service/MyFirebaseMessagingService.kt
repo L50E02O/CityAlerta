@@ -23,11 +23,11 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 		super.onMessageReceived(message)
 
 		message.notification?.let {
-			notificationHandler.showNotification(it.title ?: "CityAlerta", it.body ?: "", message.data)
+			notificationHandler.showNotification(it.title ?: "Nuevo reporte", it.body ?: "", message.data)
 		} ?: run {
 			if (message.data.isNotEmpty()) {
-				val title = message.data["title"] ?: "CityAlerta"
-				val body = message.data["body"] ?: "Nuevo reporte recibido"
+				val title = message.data["title"] ?: "Nuevo reporte"
+				val body = message.data["body"] ?: "Se ha detectado una nueva alerta en tu ciudad"
 				notificationHandler.showNotification(title, body, message.data)
 			}
 		}

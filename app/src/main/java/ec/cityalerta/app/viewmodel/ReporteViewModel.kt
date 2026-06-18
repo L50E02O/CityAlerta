@@ -1,5 +1,6 @@
 package ec.cityalerta.app.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
@@ -22,6 +23,9 @@ import ec.cityalerta.app.model.utils.GeoJsonConverter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -35,6 +39,7 @@ data class ReporteUiState(
     val lat: Double? = null,
     val lng: Double? = null,
     val currentLocation: UserLocation? = null,
+    val infoMessage: String? = null,
     val errorMessage: String? = null,
     val isSubmitting: Boolean = false
 )
@@ -51,15 +56,32 @@ class ReporteViewModel(
     private val geocodingRepository: GeocodingRepositoryContract
 ): ViewModel() {
 
+    init {
+        Log.d("ReporteViewModel", "[VM-${hashCode()}] Instancia creada")
+    }
+
     private val _uiState = MutableStateFlow(ReporteUiState())
     val uiState: StateFlow<ReporteUiState> = _uiState.asStateFlow()
 
     // Helpers para compatibilidad con las pantallas mientras migran
-    val descripcion: StateFlow<String> get() = MutableStateFlow(_uiState.value.descripcion)
-    val categoria: StateFlow<ReportType?> get() = MutableStateFlow(_uiState.value.categoria)
-    val currentLocation: StateFlow<UserLocation?> get() = MutableStateFlow(_uiState.value.currentLocation)
-    val errorMessage: StateFlow<String?> get() = MutableStateFlow(_uiState.value.errorMessage)
-    val isSubmitting: StateFlow<Boolean> get() = MutableStateFlow(_uiState.value.isSubmitting)
+    // Se corrigió la implementación para que sean reactivos al _uiState
+    val descripcion = _uiState.map { it.descripcion }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), _uiState.value.descripcion)
+    
+    val categoria = _uiState.map { it.categoria }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), _uiState.value.categoria)
+    
+    val currentLocation = _uiState.map { it.currentLocation }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), _uiState.value.currentLocation)
+    
+    val errorMessage = _uiState.map { it.errorMessage }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), _uiState.value.errorMessage)
+
+    val infoMessage = _uiState.map { it.infoMessage }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), _uiState.value.infoMessage)
+
+    val isSubmitting = _uiState.map { it.isSubmitting }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), _uiState.value.isSubmitting)
 
     fun onDescriptionChange(value: String) {
         _uiState.update { it.copy(descripcion = value) }
@@ -92,6 +114,11 @@ class ReporteViewModel(
         }
     }
 
+    fun clearInfoMessage() {
+        Log.d("ReporteViewModel", "[VM-${hashCode()}] clearInfoMessage llamado")
+        _uiState.update { it.copy(infoMessage = null) }
+    }
+
     fun sendReport(onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             if (_uiState.value.isSubmitting) return@launch
@@ -116,7 +143,10 @@ class ReporteViewModel(
 
                 submitReport(usuarioID, ciudadID, _uiState.value.descripcion, _uiState.value.categoria!!, _uiState.value.imagenBytes!!, lat, lng)
                     .onSuccess {
+                        Log.d("ReporteViewModel", "[VM-${hashCode()}] Éxito en submitReport")
                         resetForm()
+                        _uiState.update { it.copy(infoMessage = "Reporte enviado con éxito") }
+                        Log.d("ReporteViewModel", "[VM-${hashCode()}] infoMessage seteado a: ${_uiState.value.infoMessage}")
                         onSuccess()
                     }
                     .onFailure { error ->

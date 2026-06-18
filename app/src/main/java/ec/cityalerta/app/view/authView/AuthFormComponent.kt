@@ -40,6 +40,7 @@ import ec.cityalerta.app.viewmodel.AuthViewModel
 @Composable
 fun AuthFormComponent(
     viewModel: AuthViewModel,
+    isLogin: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -88,7 +89,7 @@ fun AuthFormComponent(
             onToggleVisibility = { passwordVisible = !passwordVisible }
         )
 
-        if (password.isNotEmpty() && !isPasswordValid) {
+        if (!isLogin && password.isNotEmpty() && !isPasswordValid) {
             Text(
                 text = stringResource(R.string.auth_password_min_length),
                 color = MaterialTheme.colorScheme.error,

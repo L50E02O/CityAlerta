@@ -191,12 +191,12 @@ fun AppNavigation(
             }
             composable(Routes.Home.route) {
                 RequireAuth(navController, sessionState) {
-                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
+                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel, reporteViewModel)
                 }
             }
             composable(Routes.Explore.route){
                 RequireAuth(navController, sessionState) {
-                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
+                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel, reporteViewModel)
                 }
             }
 

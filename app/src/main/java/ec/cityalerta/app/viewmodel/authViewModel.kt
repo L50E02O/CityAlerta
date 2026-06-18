@@ -77,7 +77,7 @@ class AuthViewModel(
     }
 
     fun onPasswordChange(password: String){
-        _uiState.update { it.copy(password = password) }
+        _uiState.update { it.copy(password = password, errorMessage = null) }
     }
 
     fun onCiudadChange(nombre: String) {

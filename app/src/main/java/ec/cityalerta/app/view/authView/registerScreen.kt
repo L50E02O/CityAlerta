@@ -14,17 +14,11 @@ import ec.cityalerta.app.R
 fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
     val ciudades by viewModel.ciudades.collectAsStateWithLifecycle()
     val ciudadError by viewModel.ciudadLoadError.collectAsStateWithLifecycle()
-    val mantaCiudad = ciudades.find { it.nombre.equals("Uleam", ignoreCase = true) }
 
     LaunchedEffect(Unit) {
         viewModel.loadCiudades()
     }
 
-    LaunchedEffect(ciudades) {
-        if (mantaCiudad != null) {
-            viewModel.onCiudadSelected(mantaCiudad.nombre, mantaCiudad.id)
-        }
-    }
     AuthScreenScaffold(
         viewModel = viewModel,
         config = AuthScreenConfig(
@@ -35,8 +29,8 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel){
             secondaryActionText = "¿Ya tienes cuenta? Inicia sesión",
             showCitySection = true,
             ciudades = ciudades,
-            fixedCity = mantaCiudad, // Uleam como ciudad fija no editable
-            cityLoadError = ciudadError ?: stringResource(R.string.auth_city_load_error),
+            fixedCity = null,
+            cityLoadError = ciudadError,
             onPrimaryAction = {
                 viewModel.onRegisterClick {
                     navController.navigate(Routes.Login.route) {

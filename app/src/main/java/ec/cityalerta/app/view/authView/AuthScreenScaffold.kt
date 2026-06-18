@@ -46,9 +46,13 @@ fun AuthScreenScaffold(
     config: AuthScreenConfig
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
+
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()
-    val isPasswordValid = uiState.password.isNotEmpty() && uiState.password.length >= 8
+    val isPasswordValid = if (config.isLogin) {
+        uiState.password.isNotEmpty()
+    } else {
+        uiState.password.isNotEmpty() && uiState.password.length >= 8
+    }
     val isCiudadValid = !config.showCitySection ||
             (config.fixedCity != null || (config.ciudades.isNotEmpty() && uiState.ciudadId.isNotEmpty()))
     val isFormValid = isEmailValid && isPasswordValid && isCiudadValid
@@ -136,6 +140,7 @@ fun AuthScreenScaffold(
 
                 AuthFormComponent(
                     viewModel = viewModel,
+                    isLogin = config.isLogin,
                     modifier = Modifier.fillMaxWidth()
                 )
 
