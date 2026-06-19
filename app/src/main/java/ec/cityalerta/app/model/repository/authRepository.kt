@@ -26,11 +26,13 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
 class AuthRepository : AuthRepositoryContract {
-    override suspend fun signUp(email: String, password: String, ciudadId: String): Result<Unit> {
-        return try {
+    override suspend fun signUp(email: String, password: String, ciudadId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             SupabaseAuthHttp.signUp(email, password, ciudadId).fold(
                 onSuccess = {
                     if (SupabaseProvider.client.auth.currentSessionOrNull() != null) {
@@ -47,8 +49,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun signIn(email: String, password: String): Result<Unit> {
-        return try {
+    override suspend fun signIn(email: String, password: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             SupabaseProvider.client.auth.signInWith(Email) {
                 this.email = email
                 this.password = password
@@ -61,8 +63,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun logOut(): Result<Unit> {
-        return try {
+    override suspend fun logOut(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             SupabaseProvider.client.auth.signOut()
             Result.success(Unit)
         } catch (e: CancellationException) {
@@ -72,8 +74,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun verifyRecoveryEmail(email: String): Result<Boolean> {
-        return try {
+    override suspend fun verifyRecoveryEmail(email: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
             val httpClient = HttpClient(Android)
             try {
                 val response: HttpResponse = httpClient.post("${BuildConfig.SUPABASE_URL.trimEnd('/')}/functions/v1/reset-password-by-email") {
@@ -95,18 +97,18 @@ class AuthRepository : AuthRepositoryContract {
                             ?.jsonPrimitive
                             ?.content
                     }.getOrNull().orEmpty().ifBlank { body }
-                    return Result.failure(Exception(message))
+                    Result.failure(Exception(message))
+                } else {
+                    val emailExists = runCatching {
+                        Json.parseToJsonElement(body)
+                            .jsonObject["emailExists"]
+                            ?.jsonPrimitive
+                            ?.booleanOrNull
+                            ?: false
+                    }.getOrDefault(false)
+
+                    Result.success(emailExists)
                 }
-
-                val emailExists = runCatching {
-                    Json.parseToJsonElement(body)
-                        .jsonObject["emailExists"]
-                        ?.jsonPrimitive
-                        ?.booleanOrNull
-                        ?: false
-                }.getOrDefault(false)
-
-                Result.success(emailExists)
             } finally {
                 httpClient.close()
             }
@@ -117,8 +119,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun resetPasswordByEmail(email: String, newPassword: String): Result<Unit> {
-        return try {
+    override suspend fun resetPasswordByEmail(email: String, newPassword: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             val httpClient = HttpClient(Android)
             try {
                 val response: HttpResponse = httpClient.post("${BuildConfig.SUPABASE_URL.trimEnd('/')}/functions/v1/reset-password-by-email") {
@@ -142,13 +144,13 @@ class AuthRepository : AuthRepositoryContract {
                     }.getOrNull().orEmpty().ifBlank {
                         "No se pudo actualizar la contrasena: ${response.status.value} $body"
                     }
-                    return Result.failure(Exception(message))
+                    Result.failure(Exception(message))
+                } else {
+                    Result.success(Unit)
                 }
             } finally {
                 httpClient.close()
             }
-
-            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -156,8 +158,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun resendSignupConfirmation(email: String): Result<Unit> {
-        return try {
+    override suspend fun resendSignupConfirmation(email: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             SupabaseAuthHttp.resendSignupConfirmation(email).fold(
                 onSuccess = { Result.success(Unit) },
                 onFailure = { error ->
@@ -171,27 +173,23 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun updateEmail(newEmail: String): Result<Unit> {
-        return postManageAccount(
-            body = buildJsonObject {
-                put("mode", "update_email")
-                put("email", newEmail.trim())
-            }
-        )
-    }
+    override suspend fun updateEmail(newEmail: String): Result<Unit> = postManageAccount(
+        body = buildJsonObject {
+            put("mode", "update_email")
+            put("email", newEmail.trim())
+        }
+    )
 
-    override suspend fun deleteAccount(): Result<Unit> {
-        return postManageAccount(
-            body = buildJsonObject {
-                put("mode", "delete_account")
-            }
-        )
-    }
+    override suspend fun deleteAccount(): Result<Unit> = postManageAccount(
+        body = buildJsonObject {
+            put("mode", "delete_account")
+        }
+    )
 
-    private suspend fun postManageAccount(body: JsonObject): Result<Unit> {
-        return try {
+    private suspend fun postManageAccount(body: JsonObject): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             val session = SupabaseProvider.client.auth.currentSessionOrNull()
-                ?: return Result.failure(Exception("No hay sesion activa"))
+                ?: return@withContext Result.failure(Exception("No hay sesion activa"))
 
             val accessToken = session.accessToken
             val httpClient = HttpClient(Android)
@@ -207,21 +205,20 @@ class AuthRepository : AuthRepositoryContract {
 
                 if (resp.status.value !in 200..299) {
                     val responseBody = resp.bodyAsText()
-                    return Result.failure(
+                    Result.failure(
                         mapAuthException(
                             Exception(AuthApiResponseParser.parseErrorMessage(responseBody, resp.status.value))
                         )
                     )
+                } else {
+                    if (body["mode"]?.jsonPrimitive?.content == "update_email") {
+                        runCatching { SupabaseProvider.client.auth.refreshCurrentSession() }
+                    }
+                    Result.success(Unit)
                 }
             } finally {
                 httpClient.close()
             }
-
-            if (body["mode"]?.jsonPrimitive?.content == "update_email") {
-                runCatching { SupabaseProvider.client.auth.refreshCurrentSession() }
-            }
-
-            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -229,10 +226,10 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun updatePassword(newPassword: String): Result<Unit> {
-        return try {
+    override suspend fun updatePassword(newPassword: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             val session = SupabaseProvider.client.auth.currentSessionOrNull()
-                ?: return Result.failure(Exception("Abre el enlace del correo antes de actualizar la contrasena"))
+                ?: return@withContext Result.failure(Exception("Abre el enlace del correo antes de actualizar la contrasena"))
 
             val accessToken = session.accessToken
             val httpClient = HttpClient(Android)
@@ -245,14 +242,14 @@ class AuthRepository : AuthRepositoryContract {
 
                 if (resp.status.value !in 200..299) {
                     val body = resp.bodyAsText()
-                    return Result.failure(Exception("No se pudo actualizar la contrasena: ${resp.status.value} $body"))
+                    Result.failure(Exception("No se pudo actualizar la contrasena: ${resp.status.value} $body"))
+                } else {
+                    SupabaseProvider.client.auth.signOut()
+                    Result.success(Unit)
                 }
             } finally {
                 httpClient.close()
             }
-
-            SupabaseProvider.client.auth.signOut()
-            Result.success(Unit)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -260,8 +257,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun getUserEmail(): Result<String> {
-        return try {
+    override suspend fun getUserEmail(): Result<String> = withContext(Dispatchers.IO) {
+        try {
             val email = SupabaseProvider.client.auth.currentSessionOrNull()?.user?.email
             if (email.isNullOrBlank()) {
                 Result.failure(Exception("No hay correo asociado a la sesion"))
@@ -273,8 +270,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun getUserId(): Result<String> {
-        return try {
+    override suspend fun getUserId(): Result<String> = withContext(Dispatchers.IO) {
+        try {
             val session = SupabaseProvider.client.auth.currentSessionOrNull()
             val user = session?.user
 
@@ -288,10 +285,10 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun getCiudadId(): Result<String> {
-        return try {
+    override suspend fun getCiudadId(): Result<String> = withContext(Dispatchers.IO) {
+        try {
             val user = SupabaseProvider.client.auth.currentSessionOrNull()?.user
-                ?: return Result.failure(Exception("No hay usuario logueado"))
+                ?: return@withContext Result.failure(Exception("No hay usuario logueado"))
 
             val perfil = SupabaseProvider.client.from("perfil")
                 .select { filter { eq("id", user.id) } }
@@ -313,8 +310,8 @@ class AuthRepository : AuthRepositoryContract {
         }
     }
 
-    override suspend fun buscarCiudadPorNombre(nombre: String): Result<String?> {
-        return try {
+    override suspend fun buscarCiudadPorNombre(nombre: String): Result<String?> = withContext(Dispatchers.IO) {
+        try {
             val ciudad = SupabaseProvider.client.from("ciudad")
                 .select { filter { ilike("nombre", nombre) } }
                 .decodeList<JsonObject>()
