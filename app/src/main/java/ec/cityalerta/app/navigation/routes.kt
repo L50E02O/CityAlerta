@@ -10,6 +10,7 @@ sealed class Routes(val route: String, val authRequired: Boolean = false) {
     object Search : Routes("search", authRequired = true)
     object Post : Routes("post", authRequired = true)
     object ReporteForm : Routes("reporte_form", authRequired = true)
+
     object Map : Routes("map/{ciudadId}?reportId={reportId}")
     object Profile : Routes("profile", authRequired = true)
     object MyReports : Routes("my_reports", authRequired = true)
@@ -17,4 +18,6 @@ sealed class Routes(val route: String, val authRequired: Boolean = false) {
     object Settings : Routes("settings", authRequired = true)
     object Appearance : Routes("appearance", authRequired = true)
     object Accessibility : Routes("accessibility", authRequired = true)
+    object Help : Routes("help", authRequired = true)
+
 }

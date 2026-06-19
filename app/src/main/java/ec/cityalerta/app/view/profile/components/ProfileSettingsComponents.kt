@@ -42,8 +42,6 @@ import ec.cityalerta.app.theme.LightSurfaceVariant
 import ec.cityalerta.app.theme.White
 import ec.cityalerta.app.view.components.AppTopBar
 
-// Using theme colors instead of hardcoded AccentBlue
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileSettingsScaffold(

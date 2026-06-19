@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -70,6 +71,7 @@ internal fun SettingsMainContent(
     onEditEmail: () -> Unit,
     onEditLocation: () -> Unit,
     onOpenLanguage: () -> Unit,
+    onOpenHelp: () -> Unit,
     onOpenDelete: () -> Unit,
     onToggleNotifications: (Boolean) -> Unit
 ) {
@@ -141,6 +143,15 @@ internal fun SettingsMainContent(
             title = stringResource(R.string.settings_language_title),
             subtitle = languageSubtitle,
             onClick = onOpenLanguage
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        SettingsNavigationRow(
+            icon = Icons.Default.HelpOutline,
+            title = stringResource(R.string.help_title),
+            subtitle = stringResource(R.string.profile_settings_help_sub),
+            onClick = onOpenHelp
         )
 
         Spacer(modifier = Modifier.height(24.dp))

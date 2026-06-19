@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.unit.dp
 import ec.cityalerta.app.R
+import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.theme.AppLanguage
 import ec.cityalerta.app.theme.LocalLocaleManager
 import ec.cityalerta.app.view.components.CityPickerSheet
@@ -138,6 +139,9 @@ fun SettingsScreen(
                     onOpenLanguage = {
                         viewModel.clearSettingsMessages()
                         showLanguageDialog = true
+                    },
+                    onOpenHelp = {
+                        navController.navigate(Routes.Help.route)
                     },
                     onOpenDelete = { showDeleteDialog = true },
                     onToggleNotifications = { enabled ->

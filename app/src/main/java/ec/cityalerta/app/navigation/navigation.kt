@@ -61,6 +61,7 @@ import ec.cityalerta.app.view.components.AppNavigationRail
 import ec.cityalerta.app.view.components.AppNavigationDrawer
 import ec.cityalerta.app.view.utils.CityAlertaNavigationType
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.view.profile.HelpScreen
 
 @Composable
 fun AppNavigation(
@@ -286,6 +287,11 @@ fun AppNavigation(
             composable(Routes.Accessibility.route) {
                 RequireAuth(navController, sessionState) {
                     AccessibilityScreen(navController)
+                }
+            }
+            composable(Routes.Help.route) {
+                RequireAuth(navController, sessionState) {
+                    HelpScreen(navController)
                 }
             }
         }

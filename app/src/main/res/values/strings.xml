@@ -39,6 +39,8 @@
     <string name="profile_settings_appearance_sub">Tema claro u oscuro</string>
     <string name="profile_settings_accessibility">Accesibilidad</string>
     <string name="profile_settings_accessibility_sub">Texto y contraste</string>
+    <string name="profile_settings_help">Ayuda</string>
+    <string name="profile_settings_help_sub">Video y tutoriales</string>
 
     <!-- Configuracion -->
     <string name="settings_title">Configuracion</string>
@@ -98,6 +100,14 @@
     <string name="accessibility_section_assist">Asistencia</string>
     <string name="accessibility_high_contrast">Alto contraste</string>
     <string name="accessibility_high_contrast_desc">Mejora la legibilidad con colores mas definidos.</string>
+
+    <!-- Ayuda -->
+    <string name="help_title">Ayuda</string>
+    <string name="help_section_visual">Tutoriales</string>
+    <string name="help_transcription_title">Transcripción de audio</string>
+    <string name="help_show_transcription">Ver transcripción</string>
+    <string name="help_hide_transcription">Ocultar transcripción</string>
+    <string name="help_tutorial_transcription">Bienvenido a CityAlerta!\nHoy veremos \"cómo subir un reporte\";\nEl primer paso es dirigirse a la sección de reporte.\nLuego, sacamos nuestra foto dando click al botón rojo de la cámara.\nLo siguiente será rellenar la categoría y la descripción.\nPor último, daremos click en \"Enviar Reporte\".\n\n¡Y listo!\nAsí de fácil es enviar un reporte;\nSi le damos click, podremos visualizar información mas detallada.\n\npor ejemplo, si aplastamos este botón veremos la ubicación exacta del hecho en el mapa.</string>
 
     <!-- Explorar -->
     <string name="explore_location_label">UBICACION</string>

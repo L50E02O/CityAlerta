@@ -36,6 +36,8 @@
     <string name="profile_settings_appearance_sub">Light or dark theme</string>
     <string name="profile_settings_accessibility">Accessibility</string>
     <string name="profile_settings_accessibility_sub">Text and contrast</string>
+    <string name="profile_settings_help">Help</string>
+    <string name="profile_settings_help_sub">Videos and tutorials</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_subtitle">Manage your profile and account security preferences.</string>
@@ -85,6 +87,7 @@
     <string name="appearance_system">System Default</string>
     <string name="appearance_system_desc">Automatically match your device system theme.</string>
 
+    <!-- Accesibilidad -->
     <string name="accessibility_title">Accessibility</string>
     <string name="accessibility_section_visual">Display</string>
     <string name="accessibility_text_size">Text size</string>
@@ -92,6 +95,14 @@
     <string name="accessibility_section_assist">Assistance</string>
     <string name="accessibility_high_contrast">High contrast</string>
     <string name="accessibility_high_contrast_desc">Improves readability with stronger colors.</string>
+
+    <!-- Ayuda -->
+    <string name="help_title">Help</string>
+    <string name="help_section_visual">Tutorials</string>
+    <string name="help_transcription_title">Audio transcription</string>
+    <string name="help_show_transcription">Show transcription</string>
+    <string name="help_hide_transcription">Hide transcription</string>
+    <string name="help_tutorial_transcription">Welcome to CityAlerta!\nToday we will see \"how to upload a report\";\nThe first step is to go to the report section.\nThen, we take our photo by clicking the red camera button.\nThe next thing will be to fill in the category and description.\nFinally, we will click on \"Send Report\".\n\nAnd done!\nThat\'s how easy it is to send a report;\nIf we click on it, we will be able to view more detailed information.\n\nfor example, if we press this button we will see the exact location of the event on the map.</string>
 
     <string name="explore_location_label">LOCATION</string>
     <string name="explore_title">Explore</string>
