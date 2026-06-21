@@ -13,7 +13,7 @@ sealed class Routes(val route: String, val authRequired: Boolean = false) {
 
     object Map : Routes("map/{ciudadId}?reportId={reportId}")
     object Profile : Routes("profile", authRequired = true)
-    object MyReports : Routes("my_reports", authRequired = true)
+    object MyReports : Routes("my_reports?resolved={resolved}", authRequired = true)
     object ReportDetail : Routes("report_detail/{reportId}")
     object Settings : Routes("settings", authRequired = true)
     object Appearance : Routes("appearance", authRequired = true)

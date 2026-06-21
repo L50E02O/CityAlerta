@@ -257,9 +257,19 @@ fun AppNavigation(
                     ProfileDashboardScreen(navController, profileViewModel)
                 }
             }
-            composable(Routes.MyReports.route) {
+            composable(
+                route = Routes.MyReports.route,
+                arguments = listOf(
+                    navArgument("resolved") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val resolved = backStackEntry.arguments?.getString("resolved") == "true"
                 RequireAuth(navController, sessionState) {
-                    MyReportsScreen(navController, profileViewModel)
+                    MyReportsScreen(navController, profileViewModel, filterResolved = resolved)
                 }
             }
             composable(

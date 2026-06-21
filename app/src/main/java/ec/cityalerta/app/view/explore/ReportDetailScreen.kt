@@ -189,11 +189,17 @@ fun ReportDetailScreen(
                                     }
 
                                     Column(horizontalAlignment = Alignment.End) {
+                                        val statusColor = when (report.estado) {
+                                            "Resuelto" -> SuccessGreen
+                                            "Pendiente" -> MaterialTheme.colorScheme.primary
+                                            "En Proceso" -> ActionBlue
+                                            else -> MaterialTheme.colorScheme.primary
+                                        }
                                         Text(
                                             text = report.estado,
                                             fontSize = 22.sp,
                                             fontWeight = FontWeight.ExtraBold,
-                                            color = MaterialTheme.colorScheme.primary
+                                            color = statusColor
                                         )
                                         Text(
                                             text = "ESTADO",
