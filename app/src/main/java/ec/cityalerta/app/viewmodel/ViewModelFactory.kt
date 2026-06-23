@@ -90,6 +90,10 @@ class AppViewModelFactory(
         LocationRepository(appContext)
     }
 
+    private val imageModerationRepository by lazy {
+        ec.cityalerta.app.model.repository.GeminiImageModerationRepository()
+    }
+
     private val pushRegistrar by lazy {
         PushSubscriptionRegistrar.createDefault(appContext)
     }
@@ -151,7 +155,8 @@ class AppViewModelFactory(
                     authRepository,
                     mapRepository,
                     barrioRepository,
-                    geocodingRepository
+                    geocodingRepository,
+                    imageModerationRepository
                 ) as T
             }
             modelClass.isAssignableFrom(SearchReportViewModel::class.java) -> {

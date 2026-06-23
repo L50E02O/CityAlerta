@@ -19,6 +19,8 @@ import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.data.contracts.geocoding.GeocodingRepositoryContract
 import ec.cityalerta.app.model.data.contracts.location.LocationProviderContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
+import ec.cityalerta.app.model.data.contracts.moderation.ImageModerationContract
+import ec.cityalerta.app.model.data.contracts.moderation.ModerationResult
 import ec.cityalerta.app.model.utils.GeoJsonConverter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +43,8 @@ data class ReporteUiState(
     val currentLocation: UserLocation? = null,
     val infoMessage: String? = null,
     val errorMessage: String? = null,
-    val isSubmitting: Boolean = false
+    val isSubmitting: Boolean = false,
+    val isAnalyzingImage: Boolean = false
 )
 
 class ReporteViewModel(
@@ -53,7 +56,8 @@ class ReporteViewModel(
     private val authRepository: AuthRepositoryContract,
     private val mapRepository: MapRepositoryContract,
     private val barrioRepository: BarrioRepository,
-    private val geocodingRepository: GeocodingRepositoryContract
+    private val geocodingRepository: GeocodingRepositoryContract,
+    private val imageModerationRepository: ImageModerationContract
 ): ViewModel() {
 
     init {
@@ -131,6 +135,43 @@ class ReporteViewModel(
             }
 
             try {
+                // Validación de IA para contenido explícito (Imagen + Descripción)
+                Log.d("ReporteViewModel", "Iniciando validación de contenido con IA")
+                _uiState.update { it.copy(isAnalyzingImage = true) }
+                
+                val currentDescription = _uiState.value.descripcion
+                val currentImageBytes = _uiState.value.imagenBytes!!
+                
+                val analysisResult = imageModerationRepository.analyzeContent(currentImageBytes, currentDescription)
+                val moderation = analysisResult.getOrElse { 
+                    Log.e("ReporteViewModel", "Error en moderación de IA: ${analysisResult.exceptionOrNull()?.message}")
+                    // Bloqueamos por seguridad si la IA falla técnicamente
+                    ModerationResult(isSafe = false)
+                }
+                
+                _uiState.update { it.copy(isAnalyzingImage = false) }
+                Log.d("ReporteViewModel", "Validación IA finalizada. ¿Es seguro?: ${moderation.isSafe}")
+
+                if (!moderation.isSafe) {
+                    val errorMsg = when {
+                        moderation.imageFlagged && moderation.descriptionFlagged -> 
+                            "La imagen y la descripción infringen las normas de conducta."
+                        moderation.imageFlagged -> 
+                            "La imagen infringe las normas de conducta (posible contenido explícito)."
+                        moderation.descriptionFlagged -> 
+                            "La descripción contiene lenguaje no permitido o enlaces sospechosos."
+                        else -> "El contenido no cumple con las normas de la aplicación."
+                    }
+                    
+                    Log.w("ReporteViewModel", "Contenido rechazado por la IA: $errorMsg")
+                    _uiState.update { it.copy(
+                        errorMessage = errorMsg,
+                        isSubmitting = false 
+                    ) }
+                    return@launch
+                }
+
+                Log.d("ReporteViewModel", "Contenido aprobado. Procediendo con el envío a Supabase")
                 val usuarioID = authRepository.getUserId().getOrNull().orEmpty()
                 val ciudadID = authRepository.getCiudadId().getOrNull().orEmpty()
                 val lat = _uiState.value.lat!!

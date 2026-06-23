@@ -61,6 +61,10 @@ android {
             .orElse(properties.getProperty("PASSWORD_RESET_SECRET") ?: "")
             .getOrElse("")
 
+        val geminiApiKey = providers.gradleProperty("GEMINI_API_KEY")
+            .orElse(properties.getProperty("GEMINI_API_KEY") ?: "")
+            .getOrElse("")
+
         if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
             project.logger.warn("WARNING: Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties. Build tasks that require Supabase will fail.")
         }
@@ -78,6 +82,7 @@ android {
         buildConfigField("String", "STORAGE_BASE_URL", "\"$storageBaseUrl\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsApiKey\"")
         buildConfigField("String", "PASSWORD_RESET_SECRET", "\"$passwordResetSecret\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
 
         // Inyectar API Key al manifest
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
@@ -296,4 +301,7 @@ dependencies {
     // Media3 for Video Player
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+
+    // Gemini AI
+    implementation(libs.google.generativeai)
 }
