@@ -48,6 +48,17 @@ import ec.cityalerta.app.viewmodel.ProfileViewModel
 import ec.cityalerta.app.viewmodel.ReporteViewModel
 import androidx.core.content.ContextCompat
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+
 @Composable
 fun ExploreScreen(
     navController: NavController,
@@ -74,7 +85,7 @@ fun ExploreScreen(
     )
 
     LaunchedEffect(Unit) {
-        viewModel.loadData(force = true)
+        viewModel.loadData()
         profileViewModel.loadSummaryIfNeeded()
     }
 
@@ -123,34 +134,122 @@ fun ExploreScreen(
                     modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
                 )
 
-                if (state.isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
-                    }
-                } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                        contentPadding = PaddingValues(bottom = 100.dp)
-                    ) {
-                        items(
-                            items = state.reportes,
-                            key = { it.id }
-                        ) { reporte ->
-                            ReporteCard(
-                                reporte = reporte,
-                                onClick = { id ->
-                                    navController.navigate(
-                                        Routes.ReportDetail.route.replace(
-                                            "{reportId}",
-                                            id
-                                        )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (state.reportes.isEmpty() && state.isLoading) {
+                        // 1. Carga inicial: No hay nada en Room y estamos pidiendo a Supabase
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    } else if (state.reportes.isEmpty() && !state.isLoading) {
+                        // 2. Estado vacío: Ni en Room ni en Supabase hay nada
+                        Column(
+                            modifier = Modifier.align(Alignment.Center),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "No hay reportes en esta zona",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        // 3. Mostrar la lista (tenga o no carga en fondo)
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            LazyColumn(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(20.dp),
+                                contentPadding = PaddingValues(bottom = 20.dp)
+                            ) {
+                                items(
+                                    items = state.reportes,
+                                    key = { it.id }
+                                ) { reporte ->
+                                    ReporteCard(
+                                        reporte = reporte,
+                                        onClick = { id ->
+                                            navController.navigate(
+                                                Routes.ReportDetail.route.replace(
+                                                    "{reportId}",
+                                                    id
+                                                )
+                                            )
+                                        }
                                     )
                                 }
+                            }
+
+                            // Controles de Paginación siempre visibles al final si hay páginas
+                            if (state.reportes.isNotEmpty() || state.currentPage > 1) {
+                                PaginationControls(
+                                    currentPage = state.currentPage,
+                                    hasNextPage = state.hasNextPage,
+                                    onNext = { viewModel.nextPage() },
+                                    onPrevious = { viewModel.previousPage() }
+                                )
+                                Spacer(modifier = Modifier.height(80.dp))
+                            }
+                        }
+                        
+                        // 4. Indicador sutil de actualización en la parte superior
+                        if (state.isSyncing) {
+                            androidx.compose.material3.LinearProgressIndicator(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.TopCenter),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
                             )
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun PaginationControls(
+    currentPage: Int,
+    hasNextPage: Boolean,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedButton(
+            onClick = onPrevious,
+            enabled = currentPage > 1,
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+            Spacer(Modifier.widthIn(8.dp))
+            Text("Anterior")
+        }
+
+        Text(
+            text = "Página $currentPage",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Button(
+            onClick = onNext,
+            enabled = hasNextPage,
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Text("Siguiente")
+            Spacer(Modifier.widthIn(8.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
         }
     }
 }

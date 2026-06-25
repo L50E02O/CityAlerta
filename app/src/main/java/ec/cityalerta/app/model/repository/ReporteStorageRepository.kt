@@ -1,5 +1,6 @@
 package ec.cityalerta.app.model.repository
 
+import android.util.LruCache
 import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.remote.SupabaseProvider
 import ec.cityalerta.app.model.utils.safeSupabaseCall
@@ -15,25 +16,35 @@ class ReporteStorageRepository {
     private val bucketName = "report_imagen"
     private val expirationDuration: Duration = 2.days
 
+    // Cache temporal para evitar peticiones N+1 de URLs firmadas en una misma sesión
+    private val urlCache = LruCache<String, String>(100)
+
     suspend fun uploadReportImage(
         bytes: ByteArray,
         objectName: String
     ): Result<String> = safeSupabaseCall {
         SupabaseProvider.client.storage[bucketName]
             .upload(objectName, bytes)
+        // Limpiar cache si se sobreescribe
+        urlCache.remove(objectName)
         objectName
     }
 
     /**
      * Genera una URL firmada lista para usar en Coil.
-     * Supabase ya devuelve la URL absoluta (https://...); no requiere STORAGE_BASE_URL.
+     * Utiliza cache local si la URL ya fue generada previamente.
      */
     suspend fun generateSignedImageUrl(
         objectPath: String
     ): Result<String> = safeSupabaseCall {
+        urlCache.get(objectPath)?.let { return@safeSupabaseCall it }
+
         val signedUrl = SupabaseProvider.client.storage[bucketName]
             .createSignedUrl(objectPath, expirationDuration)
-        normalizeSignedUrl(signedUrl)
+        val normalized = normalizeSignedUrl(signedUrl)
+        
+        urlCache.put(objectPath, normalized)
+        normalized
     }
 
     suspend fun generateSignedImageUrls(objectPaths: List<String>): Result<Map<String, String>> =

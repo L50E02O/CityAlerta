@@ -254,6 +254,7 @@ dependencies {
     implementation(libs.supabase.core)
     implementation(libs.supabase.postgrest)
     implementation(libs.supabase.storage)
+    implementation(libs.supabase.realtime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
     implementation(platform(libs.kotlinx.coroutines.bom))

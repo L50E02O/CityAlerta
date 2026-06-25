@@ -144,9 +144,9 @@ class ReporteViewModel(
                 
                 val analysisResult = imageModerationRepository.analyzeContent(currentImageBytes, currentDescription)
                 val moderation = analysisResult.getOrElse { 
-                    Log.e("ReporteViewModel", "Error en moderación de IA: ${analysisResult.exceptionOrNull()?.message}")
-                    // Bloqueamos por seguridad si la IA falla técnicamente
-                    ModerationResult(isSafe = false)
+                    Log.e("ReporteViewModel", "Error técnico en moderación de IA: ${it.message}. Permitiendo reporte por defecto.")
+                    // Si la IA falla por red/API, NO bloqueamos al usuario
+                    ModerationResult(isSafe = true)
                 }
                 
                 _uiState.update { it.copy(isAnalyzingImage = false) }

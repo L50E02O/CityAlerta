@@ -30,15 +30,13 @@ class PushSubscriptionRepository(
     }
 
     override suspend fun saveOrUpdate(entity: PushSubscriptionCreateDto): Result<PushSubscription> = safeSupabaseCall {
-        try {
-            insert(entity)
-        } catch (e: Exception) {
-            if (isDuplicateTokenError(e)) {
-                updateByTokenInternal(entity.token, entity.toUpdateDto())
-            } else {
-                throw e
+        val response = SupabaseProvider.client.from(tableName)
+            .upsert(entity.toCreateJson(), onConflict = PushColumns.token) {
+                select()
             }
-        }
+            .decodeList<JsonObject>()
+            .firstOrNull()
+        response?.toPushSubscription() ?: throw Exception("Error al guardar/actualizar suscripcion")
     }
 
     override suspend fun deleteByToken(token: String): Result<Unit> = safeSupabaseCall {
@@ -46,36 +44,6 @@ class PushSubscriptionRepository(
             filter { eq(PushColumns.token, token) }
         }
         Unit
-    }
-
-    private suspend fun insert(entity: PushSubscriptionCreateDto): PushSubscription {
-        val response = SupabaseProvider.client.from(tableName)
-            .insert(entity.toCreateJson()) {
-                select()
-            }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-        return response?.toPushSubscription() ?: throw Exception("Error al guardar suscripcion")
-    }
-
-    private suspend fun updateByTokenInternal(token: String, entity: PushSubscriptionUpdateDto): PushSubscription {
-        val response = SupabaseProvider.client.from(tableName)
-            .update(entity.toUpdateJson()) {
-                filter { eq(PushColumns.token, token) }
-                select()
-            }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-        return response?.toPushSubscription() ?: throw Exception("Error al actualizar suscripcion")
-    }
-
-    private fun PushSubscriptionCreateDto.toUpdateDto(): PushSubscriptionUpdateDto {
-        return PushSubscriptionUpdateDto(
-            usuario_id = usuario_id,
-            device_id = device_id,
-            platform = platform,
-            enabled = enabled
-        )
     }
 
     private fun PushSubscriptionCreateDto.toCreateJson(): JsonObject {
@@ -87,20 +55,6 @@ class PushSubscriptionRepository(
         device_id?.let { map[PushColumns.deviceId] = JsonPrimitive(it) }
         platform?.let { map[PushColumns.platform] = JsonPrimitive(it) }
         return JsonObject(map)
-    }
-
-    private fun PushSubscriptionUpdateDto.toUpdateJson(): JsonObject {
-        val map = mutableMapOf<String, JsonElement>()
-        usuario_id?.let { map[PushColumns.userId] = JsonPrimitive(it) }
-        device_id?.let { map[PushColumns.deviceId] = JsonPrimitive(it) }
-        platform?.let { map[PushColumns.platform] = JsonPrimitive(it) }
-        enabled?.let { map[PushColumns.enabled] = JsonPrimitive(it) }
-        return JsonObject(map)
-    }
-
-    private fun isDuplicateTokenError(error: Exception): Boolean {
-        val message = error.message.orEmpty()
-        return message.contains("duplicate key value violates unique constraint", ignoreCase = true)
     }
 
     private fun JsonObject.toPushSubscription(): PushSubscription {

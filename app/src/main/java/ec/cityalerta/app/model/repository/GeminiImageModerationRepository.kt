@@ -2,52 +2,79 @@ package ec.cityalerta.app.model.repository
 
 import android.graphics.BitmapFactory
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.BlockThreshold
+import com.google.ai.client.generativeai.type.SafetySetting
+import com.google.ai.client.generativeai.type.HarmCategory
 import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
 import ec.cityalerta.app.BuildConfig
 import ec.cityalerta.app.model.data.contracts.moderation.ImageModerationContract
 import ec.cityalerta.app.model.data.contracts.moderation.ModerationResult
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonPrimitive
 
 class GeminiImageModerationRepository : ImageModerationContract {
 
+    private val jsonParser = Json { ignoreUnknownKeys = true }
+
     private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash-latest",
-        apiKey = BuildConfig.GEMINI_API_KEY
+        modelName = "gemini-1.5-flash",
+        apiKey = BuildConfig.GEMINI_API_KEY,
+        generationConfig = generationConfig {
+            temperature = 0.1f
+            topK = 1
+            topP = 1f
+            responseMimeType = "application/json"
+        },
+        safetySettings = listOf(
+            SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.ONLY_HIGH),
+            SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.ONLY_HIGH),
+            SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.ONLY_HIGH),
+            SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.ONLY_HIGH)
+        )
     )
 
     override suspend fun analyzeContent(imageBytes: ByteArray, description: String): Result<ModerationResult> {
         return runCatching {
-            android.util.Log.d("GeminiModeration", "Iniciando análisis de IA para Imagen y Texto...")
-            
             val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
                 ?: throw Exception("No se pudo decodificar la imagen")
 
             val prompt = """
-                Actúa como un moderador de contenido estricto.
-                Analiza minuciosamente el siguiente contenido:
+                ACTÚA COMO UN MODERADOR DE SEGURIDAD PARA REPORTES CIUDADANOS.
                 
-                DESCRIPCIÓN DEL USUARIO: "$description"
+                CONTEXTO: El usuario reporta fallos en servicios públicos.
+                REGLA CRÍTICA DE "APAGÓN": Si la imagen es totalmente oscura, negra o de baja calidad PERO el texto menciona "no tengo energía", "sin luz", "apagón", "oscuridad", "ayuda" o "no hay electricidad", DEBES marcar "image_flagged": false. Es una evidencia válida del problema.
                 
-                REGLAS DE MODERACIÓN:
-                1. IMAGEN: Marcar como FLAGGED si contiene sangre, heridas, violencia, accidentes gráficos, contenido sexual o material perturbador. De lo contrario, SAFE.
-                2. DESCRIPCIÓN: Marcar como FLAGGED si contiene vulgaridades, insultos, lenguaje de odio o enlaces sospechosos. De lo contrario, SAFE.
+                REGLAS DE BLOQUEO:
+                - image_flagged: true solo para SEXUAL, SANGRE EXTREMA o TERRORISMO.
+                - text_flagged: true solo para INSULTOS GRAVES o AMENAZAS.
                 
-                Responde ÚNICAMENTE en este formato:
-                IMAGE:[SAFE o FLAGGED]
-                TEXT:[SAFE o FLAGGED]
+                TEXTO DEL USUARIO: "$description"
+                
+                RESPUESTA EN JSON:
+                {
+                  "image_flagged": boolean,
+                  "text_flagged": boolean,
+                  "reason": "explicación"
+                }
             """.trimIndent()
 
-            val response = generativeModel.generateContent(
-                content {
+            val response = try {
+                generativeModel.generateContent(content {
                     image(bitmap)
                     text(prompt)
-                }
-            )
+                })
+            } catch (e: Exception) {
+                return@runCatching ModerationResult(isSafe = true)
+            }
 
-            val textResponse = response.text?.trim()?.uppercase() ?: ""
-            android.util.Log.d("GeminiModeration", "IA Response:\n$textResponse")
-
-            val imageFlagged = textResponse.contains("IMAGE:FLAGGED")
-            val descriptionFlagged = textResponse.contains("TEXT:FLAGGED")
+            val jsonResponse = response.text ?: return@runCatching ModerationResult(isSafe = true)
+            
+            val resultElement = jsonParser.parseToJsonElement(jsonResponse) as JsonObject
+            val imageFlagged = resultElement["image_flagged"]?.jsonPrimitive?.boolean ?: false
+            val descriptionFlagged = resultElement["text_flagged"]?.jsonPrimitive?.boolean ?: false
             
             ModerationResult(
                 isSafe = !imageFlagged && !descriptionFlagged,

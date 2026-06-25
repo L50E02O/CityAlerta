@@ -14,14 +14,21 @@ import ec.cityalerta.app.model.utils.toReportTypeOrDefault
 import ec.cityalerta.app.model.utils.toReporteEstadoOrDefault
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.result.PostgrestResult
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
 
-class ReporteRepository : CrudRepositoryContract<Reporte, ReporteCreateDto, ReporteUpdateDto> {
+import ec.cityalerta.app.model.local.ReporteDao
+import ec.cityalerta.app.model.local.ReporteEntity
+
+class ReporteRepository(
+    private val reporteDao: ReporteDao? = null
+) : CrudRepositoryContract<Reporte, ReporteCreateDto, ReporteUpdateDto> {
 
     private val tableName = "reporte"
 
@@ -86,16 +93,68 @@ class ReporteRepository : CrudRepositoryContract<Reporte, ReporteCreateDto, Repo
             .map { it.toReporte() }
     }
 
-    suspend fun getReporteByCiudadId(ciudadId: String): Result<List<Reporte>> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
+    suspend fun getReporteByCiudadId(
+        ciudadId: String,
+        limit: Int = 10,
+        offset: Int = 0
+    ): Result<Pair<List<Reporte>, Long>> = safeSupabaseCall {
+        val response = SupabaseProvider.client.from(tableName)
+            .select(Columns.raw("*, reporte_imagen(url_path, storage_uuid), reporte_ubicacion(direccion_aproximada, lat, lng), barrio(nombre)")) {
                 filter {
                     eq("ciudad_id", ciudadId)
                 }
                 order("created_at", Order.DESCENDING)
+                range(offset.toLong(), (offset + limit - 1).toLong())
+                count(Count.EXACT)
             }
-            .decodeList<JsonObject>()
-            .map { it.toReporte() }
+        
+        val reportes = response.decodeList<JsonObject>().map { it.toReporte() }
+        val totalCount = response.countOrNull() ?: 0L
+        
+        // Sincronizar con Room
+        reporteDao?.let { dao ->
+            if (reportes.isNotEmpty()) {
+                val entities = response.decodeList<JsonObject>().map { json ->
+                    val r = json.toReporte()
+                    val img = json["reporte_imagen"]?.let { if (it is kotlinx.serialization.json.JsonArray) it.firstOrNull() as? JsonObject else null }
+                    val ubi = json["reporte_ubicacion"] as? JsonObject
+                    val bar = json["barrio"] as? JsonObject
+                    
+                    ReporteEntity(
+                        id = r.id,
+                        usuario_id = r.usuario_id,
+                        ciudad_id = r.ciudad_id,
+                        ubicacion_id = r.ubicacion_id,
+                        descripcion = r.descripcion,
+                        estado = r.estado,
+                        fecha_reporte = r.fecha_reporte,
+                        categoria = r.categoria,
+                        created_at = r.created_at,
+                        updated_at = r.updated_at,
+                        barrio_id = r.barrio_id,
+                        barrio_nombre = bar?.stringOrEmpty("nombre"),
+                        direccion_aproximada = ubi?.stringOrEmpty("direccion_aproximada"),
+                        image_url = img?.stringOrEmpty("storage_uuid")
+                    )
+                }
+                dao.refreshReportes(ciudadId, entities)
+            }
+        }
+        
+        Pair(reportes, totalCount)
+    }
+
+    fun getLocalReportesFlow(
+        ciudadId: String,
+        limit: Int = 10,
+        offset: Int = 0
+    ): kotlinx.coroutines.flow.Flow<List<ReporteEntity>> {
+        return reporteDao?.getReportesByCiudadFlow(ciudadId, limit, offset) 
+            ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    }
+
+    suspend fun getTotalLocalReportesCount(ciudadId: String): Int {
+        return reporteDao?.countReportesByCiudad(ciudadId) ?: 0
     }
 
     suspend fun searchReportes(

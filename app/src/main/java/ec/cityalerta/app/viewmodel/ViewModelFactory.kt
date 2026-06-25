@@ -33,7 +33,7 @@ class AppViewModelFactory(
     }
 
     private val reporteRepository by lazy {
-        ReporteRepository()
+        ReporteRepository(database.reporteDao())
     }
 
     private val ciudadRepository by lazy {
@@ -102,7 +102,13 @@ class AppViewModelFactory(
         return when {
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                AuthViewModel(authRepository, ciudadRepository, pushRegistrar) as T
+                AuthViewModel(
+                    authRepository,
+                    ciudadRepository,
+                    perfilResumenRepository,
+                    perfilLocalRepository,
+                    pushRegistrar
+                ) as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
@@ -119,12 +125,8 @@ class AppViewModelFactory(
                 ExploreViewModel(
                     authRepository,
                     reporteRepository,
-                    imagenReporte,
-                    ubicacionReporte,
                     storageReporte,
-                    perfilRepository,
-                    ciudadRepository,
-                    barrioRepository
+                    ciudadRepository
                 ) as T
             }
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {

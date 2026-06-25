@@ -8,6 +8,8 @@ import ec.cityalerta.app.model.remote.service.PushSubscriptionRegistrar
 import ec.cityalerta.app.model.remote.service.PushSubscriptionTokenMissingException
 import ec.cityalerta.app.model.repository.AuthMappedException
 import ec.cityalerta.app.model.repository.CiudadRepository
+import ec.cityalerta.app.model.repository.PerfilLocalRepository
+import ec.cityalerta.app.model.repository.PerfilResumenRepository
 import ec.cityalerta.app.model.utils.AuthErrorMapper
 import ec.cityalerta.app.model.utils.MappedAuthError
 import androidx.lifecycle.ViewModel
@@ -35,6 +37,8 @@ data class AuthState(
 class AuthViewModel(
     private val repository: AuthRepositoryContract,
     private val ciudadRepository: CiudadRepository,
+    private val perfilResumenRepository: PerfilResumenRepository? = null,
+    private val perfilLocalRepository: PerfilLocalRepository? = null,
     private val pushRegistrar: PushSubscriptionRegistrar? = null
 ) : ViewModel() {
     
@@ -118,6 +122,8 @@ class AuthViewModel(
             try {
                 repository.signIn(currentState.email, currentState.password).fold(
                     onSuccess = {
+                        // Persistir perfil localmente tras login exitoso
+                        fetchAndPersistProfile()
                         registerPushSubscriptionIfPossible()
                         onSuccess()
                     },
@@ -128,6 +134,17 @@ class AuthViewModel(
                 applyAuthFailure(e)
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    private suspend fun fetchAndPersistProfile() {
+        val remoteRepo = perfilResumenRepository ?: return
+        val localRepo = perfilLocalRepository ?: return
+
+        remoteRepo.getCurrentResumen().onSuccess { perfil ->
+            if (perfil != null) {
+                localRepo.guardarPerfilResumen(perfil)
             }
         }
     }
