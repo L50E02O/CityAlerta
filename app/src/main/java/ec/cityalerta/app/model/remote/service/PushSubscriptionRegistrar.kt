@@ -108,27 +108,21 @@ class PushSubscriptionRegistrar(
             pushPreferences.getToken() ?: return Result.failure(it)
         }
 
+        // Si el token actual es igual al que tenemos en caché, no es necesario registrar de nuevo.
+        val cachedToken = pushPreferences.getToken()
+        if (token == cachedToken && !cachedToken.isNullOrBlank()) {
+            return Result.success(PushSubscription(id = "", usuario_id = "", token = token, enabled = true))
+        }
+
         val userIdResult = authRepository.getUserId()
         val userId = userIdResult.getOrElse { error ->
             return Result.failure(PushSubscriptionAuthRequiredException(error.message ?: "No hay usuario logueado"))
         }
 
-        // Evitar re-registro si el token y el usuario no han cambiado
-        val cachedToken = pushPreferences.getToken()
-        // Aquí podrías guardar también el userId en preferencias si fuera necesario, 
-        // por ahora confiamos en que si el token es el mismo, ya está registrado para este dispositivo.
-        // Pero para ser más seguros, si ya tenemos el token cacheado, asumimos que ya se registró.
-        if (token == cachedToken) {
-            android.util.Log.d("PushRegistrar", "Token ya registrado localmente, omitiendo llamada a red.")
-            // Retornamos un objeto dummy o null si el contrato lo permite, o simplemente éxito.
-            // Dado que registerToken devuelve Result<PushSubscription>, podríamos intentar obtenerlo de la DB
-            // o simplemente proceder si queremos estar 100% seguros.
-            // Para optimizar recursos:
-            return Result.success(PushSubscription(id="", usuario_id=userId, token=token, enabled=true))
+        // Intentamos el registro. Si es exitoso, actualizamos la caché local.
+        return registerToken(token).onSuccess {
+            cacheToken(token)
         }
-
-        cacheToken(token)
-        return registerToken(token)
     }
 
     suspend fun unregisterToken(): Result<Unit> {

@@ -31,7 +31,7 @@ class PushSubscriptionRepository(
 
     override suspend fun saveOrUpdate(entity: PushSubscriptionCreateDto): Result<PushSubscription> = safeSupabaseCall {
         val response = SupabaseProvider.client.from(tableName)
-            .upsert(entity.toCreateJson(), onConflict = PushColumns.token) {
+            .upsert(entity.toCreateJson(), onConflict = PushColumns.deviceId) {
                 select()
             }
             .decodeList<JsonObject>()
