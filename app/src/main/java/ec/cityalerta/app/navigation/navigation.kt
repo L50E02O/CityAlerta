@@ -159,7 +159,10 @@ fun AppNavigation(
             composable(Routes.Splash.route) {
                 SplashScreen(
                     onTimeout = {
-                        val hasSession = sessionState is SessionState.Authenticated
+                        val currentState = sessionState
+                        android.util.Log.d("SessionDebug", "Splash timeout - Estado actual: $currentState")
+                        val hasSession = currentState !is SessionState.Unauthenticated && 
+                                       !(currentState is SessionState.Error && !currentState.isTransient)
                         val linkType = AuthDeepLinkParser.parseType(currentIntent)
                         val isDeepLink = AuthDeepLinkParser.isAppAuthDeepLink(currentIntent)
                         val nextRoute = if (!isDeepLink) {
@@ -346,6 +349,18 @@ private fun RequireAuth(
     when (sessionState) {
         is SessionState.Authenticated -> content()
         is SessionState.Refreshing -> Unit
+        is SessionState.Error -> {
+            if (sessionState.isTransient) {
+                content()
+            } else {
+                LaunchedEffect(sessionState) {
+                    navController.navigate(Routes.Login.route) {
+                        popUpTo(Routes.Login.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
         else -> {
             LaunchedEffect(sessionState) {
                 navController.navigate(Routes.Login.route) {
