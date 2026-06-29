@@ -11,7 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.unit.dp
 import ec.cityalerta.app.R
+import ec.cityalerta.app.navigation.Routes
 import ec.cityalerta.app.theme.AppLanguage
 import ec.cityalerta.app.theme.LocalLocaleManager
 import ec.cityalerta.app.view.components.CityPickerSheet
@@ -41,8 +42,8 @@ fun SettingsScreen(
     viewModel: ProfileViewModel,
     authViewModel: AuthViewModel
 ) {
-    val state by viewModel.state.collectAsState()
-    val authState = authViewModel.uiState
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val authState by authViewModel.uiState.collectAsStateWithLifecycle()
     val localeManager = LocalLocaleManager.current
     val context = LocalContext.current
     val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
@@ -89,7 +90,7 @@ fun SettingsScreen(
     val emailSameMessage = stringResource(R.string.settings_email_same)
     val emailUpdatedMessage = stringResource(R.string.settings_email_updated)
     val emailUpdateErrorMessage = stringResource(R.string.settings_email_update_error)
-    val cityUpdatedMessage = stringResource(R.string.settings_language_changed) // Podriamos crear uno mas especifico pero reusamos este por ahora
+    val cityUpdatedMessage = stringResource(R.string.settings_language_changed)
     val cityUpdateErrorMessage = stringResource(R.string.auth_city_load_error)
     val deleteErrorMessage = stringResource(R.string.settings_delete_error)
 
@@ -138,6 +139,9 @@ fun SettingsScreen(
                     onOpenLanguage = {
                         viewModel.clearSettingsMessages()
                         showLanguageDialog = true
+                    },
+                    onOpenHelp = {
+                        navController.navigate(Routes.Help.route)
                     },
                     onOpenDelete = { showDeleteDialog = true },
                     onToggleNotifications = { enabled ->
@@ -288,21 +292,11 @@ fun SettingsScreen(
         }
     )
 
-    SettingsNameDialogCloser(
-        isSaving = state.isSavingSettings,
-        settingsInfoMessage = state.settingsInfoMessage,
-        pendingSave = pendingLocationSave,
-        onClose = {
-            showLocationDialog = false
-            pendingLocationSave = false
-        }
-    )
-
     SettingsLanguagePicker(
         visible = showLanguageDialog,
         currentLanguage = currentLanguage,
         onDismiss = { showLanguageDialog = false },
-        onLanguageSelected = { }
+        onLanguageSelected = { /* Se maneja internamente */ }
     )
 
     SettingsDeleteDialog(

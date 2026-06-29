@@ -15,6 +15,7 @@ import ec.cityalerta.app.model.data.perfil.PerfilUpdateDto
 import ec.cityalerta.app.model.data.ciudad.Ciudad
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
+import ec.cityalerta.app.model.repository.PerfilLocalRepository
 import ec.cityalerta.app.model.repository.PerfilRepository
 import ec.cityalerta.app.model.utils.EmailValidator
 import ec.cityalerta.app.model.repository.PerfilImagenRepository
@@ -79,6 +80,7 @@ class ProfileViewModel(
     private val authRepository: AuthRepositoryContract,
     private val perfilRepository: PerfilRepository,
     private val perfilResumenRepository: PerfilResumenRepository,
+    private val perfilLocalRepository: PerfilLocalRepository,
     private val ciudadRepository: CiudadRepository,
     private val reporteRepository: ReporteRepository,
     private val reporteImagenRepository: ReporteImagenRepository,
@@ -102,29 +104,17 @@ class ProfileViewModel(
     fun loadSummary() {
         viewModelScope.launch {
             setLoading(true)
-            loadSummaryInternal()?.let { resumen ->
-                val (cityName, profileImage, userEmail) = coroutineScope {
-                    val cityDeferred = async { ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty() }
-                    val imageDeferred = async { loadProfileImage(resumen.id) }
-                    val emailDeferred = async { authRepository.getUserEmail().getOrNull().orEmpty() }
-                    Triple(cityDeferred.await(), imageDeferred.await(), emailDeferred.await())
-                }
-                _state.value = _state.value.copy(
-                    errorMessage = null,
-                    fullName = resumen.nombreCompleto,
-                    initials = buildInitials(resumen.nombreCompleto),
-                    profileImageUrl = profileImage?.first,
-                    profileImageId = profileImage?.second,
-                    profileStorageUuid = profileImage?.third,
-                    cityName = cityName,
-                    ciudadId = resumen.ciudadId,
-                    userEmail = userEmail,
-                    totalReports = resumen.totalReportes,
-                    resolvedReports = resumen.reportesResueltos,
-                    myReports = emptyList()
-                )
-                summaryLoaded = true
+            val cachedResumen = perfilLocalRepository.obtenerPerfilResumen()
+            if (cachedResumen != null) {
+                updateProfileStateFromResumen(cachedResumen)
             }
+
+            val freshResumen = loadSummaryInternal()
+            if (freshResumen != null) {
+                perfilLocalRepository.guardarPerfilResumen(freshResumen)
+                updateProfileStateFromResumen(freshResumen)
+            }
+            summaryLoaded = true
             setLoading(false)
         }
     }
@@ -136,6 +126,8 @@ class ProfileViewModel(
                 setLoading(false)
                 return@launch
             }
+
+            perfilLocalRepository.guardarPerfilResumen(resumen)
 
             val (cityName, reportes, profileImage) = coroutineScope {
                 val cityDeferred = async { ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty() }
@@ -170,6 +162,7 @@ class ProfileViewModel(
                 return@launch
             }
 
+            perfilLocalRepository.guardarPerfilResumen(resumen)
             val reportes = loadUserReports(resumen.id)
             _state.value = _state.value.copy(
                 errorMessage = null,
@@ -550,6 +543,7 @@ class ProfileViewModel(
             authRepository.logOut()
                 .onSuccess {
                     summaryLoaded = false
+                    perfilLocalRepository.borrarPerfilResumen()
                     _state.value = ProfileState()
                     onSuccess()
                 }
@@ -564,6 +558,29 @@ class ProfileViewModel(
 
     private suspend fun loadSummaryInternal(): PerfilResumen? {
         return perfilResumenRepository.getCurrentResumen().getOrNull()
+    }
+
+    private suspend fun updateProfileStateFromResumen(resumen: PerfilResumen) {
+        val (cityName, profileImage, userEmail) = coroutineScope {
+            val cityDeferred = async { ciudadRepository.getById(resumen.ciudadId).getOrNull()?.nombre.orEmpty() }
+            val imageDeferred = async { loadProfileImage(resumen.id) }
+            val emailDeferred = async { authRepository.getUserEmail().getOrNull().orEmpty() }
+            Triple(cityDeferred.await(), imageDeferred.await(), emailDeferred.await())
+        }
+        _state.value = _state.value.copy(
+            errorMessage = null,
+            fullName = resumen.nombreCompleto,
+            initials = buildInitials(resumen.nombreCompleto),
+            profileImageUrl = profileImage?.first,
+            profileImageId = profileImage?.second,
+            profileStorageUuid = profileImage?.third,
+            cityName = cityName,
+            ciudadId = resumen.ciudadId,
+            userEmail = userEmail,
+            totalReports = resumen.totalReportes,
+            resolvedReports = resumen.reportesResueltos,
+            myReports = emptyList()
+        )
     }
 
     private suspend fun loadUserReports(userId: String): List<UserReportUi> = coroutineScope {

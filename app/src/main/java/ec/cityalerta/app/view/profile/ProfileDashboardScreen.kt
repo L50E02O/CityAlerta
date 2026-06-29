@@ -30,7 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,7 +54,7 @@ fun ProfileDashboardScreen(
     navController: NavController,
     viewModel: ProfileViewModel
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val launchProfileImagePicker = rememberProfileImagePicker(
         hasCustomImage = !state.profileImageId.isNullOrBlank(),
         onImageBytes = { bytes -> viewModel.updateProfileImage(bytes) },
@@ -133,7 +133,7 @@ fun ProfileDashboardScreen(
                                 Card(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clickable { navController.navigate(Routes.MyReports.route) },
+                                        .clickable { navController.navigate(Routes.MyReports.route.replace("{resolved}", "false")) },
                                     shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                                 ) {
@@ -154,7 +154,9 @@ fun ProfileDashboardScreen(
                                     }
                                 }
                                 Card(
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clickable { navController.navigate(Routes.MyReports.route.replace("{resolved}", "true")) },
                                     shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                                 ) {
@@ -207,7 +209,7 @@ fun ProfileDashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 Button(
-                                    onClick = { navController.navigate(Routes.MyReports.route) },
+                                    onClick = { navController.navigate(Routes.MyReports.route.replace("{resolved}", "false")) },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.tertiary,

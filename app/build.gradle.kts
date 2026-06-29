@@ -19,6 +19,14 @@ jacoco {
 }
 
 android {
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperty("test", "true")
+            }
+        }
+    }
     namespace = "ec.cityalerta.app"
     compileSdk = 37
 
@@ -61,6 +69,10 @@ android {
             .orElse(properties.getProperty("PASSWORD_RESET_SECRET") ?: "")
             .getOrElse("")
 
+        val geminiApiKey = providers.gradleProperty("GEMINI_API_KEY")
+            .orElse(properties.getProperty("GEMINI_API_KEY") ?: "")
+            .getOrElse("")
+
         if (supabaseUrl.isEmpty() || supabaseKey.isEmpty()) {
             project.logger.warn("WARNING: Missing Supabase config. Define SUPABASE_URL and SUPABASE_ANON_KEY in local.properties or gradle.properties. Build tasks that require Supabase will fail.")
         }
@@ -78,6 +90,7 @@ android {
         buildConfigField("String", "STORAGE_BASE_URL", "\"$storageBaseUrl\"")
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"$googleMapsApiKey\"")
         buildConfigField("String", "PASSWORD_RESET_SECRET", "\"$passwordResetSecret\"")
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
 
         // Inyectar API Key al manifest
         manifestPlaceholders["GOOGLE_MAPS_API_KEY"] = googleMapsApiKey
@@ -225,6 +238,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -248,6 +262,7 @@ dependencies {
     implementation(libs.supabase.core)
     implementation(libs.supabase.postgrest)
     implementation(libs.supabase.storage)
+    implementation(libs.supabase.realtime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.android)
     implementation(platform(libs.kotlinx.coroutines.bom))
@@ -291,4 +306,11 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.14.0"))
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-analytics")
+
+    // Media3 for Video Player
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
+    // Gemini AI
+    implementation(libs.google.generativeai)
 }

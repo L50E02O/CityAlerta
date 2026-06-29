@@ -103,15 +103,26 @@ class PushSubscriptionRegistrar(
             return Result.failure(PushSubscriptionDisabledException("Notificaciones desactivadas"))
         }
 
-        // Simplificación: Intentamos obtener el token de la fuente de verdad (Firebase) 
-        // o de nuestra caché si Firebase falla por alguna razón.
         val tokenResult = tokenProvider.getToken()
-        val token = tokenResult.getOrElse { 
-            pushPreferences.getToken() ?: return Result.failure(it) 
+        val token = tokenResult.getOrElse {
+            pushPreferences.getToken() ?: return Result.failure(it)
         }
-        
-        cacheToken(token)
-        return registerToken(token)
+
+        // Si el token actual es igual al que tenemos en caché, no es necesario registrar de nuevo.
+        val cachedToken = pushPreferences.getToken()
+        if (token == cachedToken && !cachedToken.isNullOrBlank()) {
+            return Result.success(PushSubscription(id = "", usuario_id = "", token = token, enabled = true))
+        }
+
+        val userIdResult = authRepository.getUserId()
+        val userId = userIdResult.getOrElse { error ->
+            return Result.failure(PushSubscriptionAuthRequiredException(error.message ?: "No hay usuario logueado"))
+        }
+
+        // Intentamos el registro. Si es exitoso, actualizamos la caché local.
+        return registerToken(token).onSuccess {
+            cacheToken(token)
+        }
     }
 
     suspend fun unregisterToken(): Result<Unit> {

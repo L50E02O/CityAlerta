@@ -49,7 +49,7 @@ import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import ec.cityalerta.app.model.utils.AuthDeepLinkParser
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import io.github.jan.supabase.gotrue.auth
 import kotlinx.coroutines.launch
@@ -61,6 +61,7 @@ import ec.cityalerta.app.view.components.AppNavigationRail
 import ec.cityalerta.app.view.components.AppNavigationDrawer
 import ec.cityalerta.app.view.utils.CityAlertaNavigationType
 import androidx.compose.ui.unit.dp
+import ec.cityalerta.app.view.profile.HelpScreen
 
 @Composable
 fun AppNavigation(
@@ -76,7 +77,7 @@ fun AppNavigation(
     val currentIntent = activity?.intent
     val factory = remember { AppViewModelFactory(authRepository, context) }
     val sessionManager = remember { SessionManager(SupabaseProvider.client.auth) }
-    val sessionState by sessionManager.state.collectAsState()
+    val sessionState by sessionManager.state.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
 
@@ -130,7 +131,7 @@ fun AppNavigation(
         }
     }
 
-    val profileState = profileViewModel.state.collectAsState().value
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
 
     val reportIdFromIntent = remember(currentIntent) {
         currentIntent?.getStringExtra("reporte_id")
@@ -158,7 +159,10 @@ fun AppNavigation(
             composable(Routes.Splash.route) {
                 SplashScreen(
                     onTimeout = {
-                        val hasSession = sessionState is SessionState.Authenticated
+                        val currentState = sessionState
+                        android.util.Log.d("SessionDebug", "Splash timeout - Estado actual: $currentState")
+                        val hasSession = currentState !is SessionState.Unauthenticated && 
+                                       !(currentState is SessionState.Error && !currentState.isTransient)
                         val linkType = AuthDeepLinkParser.parseType(currentIntent)
                         val isDeepLink = AuthDeepLinkParser.isAppAuthDeepLink(currentIntent)
                         val nextRoute = if (!isDeepLink) {
@@ -191,12 +195,12 @@ fun AppNavigation(
             }
             composable(Routes.Home.route) {
                 RequireAuth(navController, sessionState) {
-                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
+                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel, reporteViewModel)
                 }
             }
             composable(Routes.Explore.route){
                 RequireAuth(navController, sessionState) {
-                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel)
+                    ExploreScreen(navController, authViewModel, exploreViewModel, profileViewModel, reporteViewModel)
                 }
             }
 
@@ -256,9 +260,19 @@ fun AppNavigation(
                     ProfileDashboardScreen(navController, profileViewModel)
                 }
             }
-            composable(Routes.MyReports.route) {
+            composable(
+                route = Routes.MyReports.route,
+                arguments = listOf(
+                    navArgument("resolved") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val resolved = backStackEntry.arguments?.getString("resolved") == "true"
                 RequireAuth(navController, sessionState) {
-                    MyReportsScreen(navController, profileViewModel)
+                    MyReportsScreen(navController, profileViewModel, filterResolved = resolved)
                 }
             }
             composable(
@@ -286,6 +300,11 @@ fun AppNavigation(
             composable(Routes.Accessibility.route) {
                 RequireAuth(navController, sessionState) {
                     AccessibilityScreen(navController)
+                }
+            }
+            composable(Routes.Help.route) {
+                RequireAuth(navController, sessionState) {
+                    HelpScreen(navController)
                 }
             }
         }
@@ -330,6 +349,18 @@ private fun RequireAuth(
     when (sessionState) {
         is SessionState.Authenticated -> content()
         is SessionState.Refreshing -> Unit
+        is SessionState.Error -> {
+            if (sessionState.isTransient) {
+                content()
+            } else {
+                LaunchedEffect(sessionState) {
+                    navController.navigate(Routes.Login.route) {
+                        popUpTo(Routes.Login.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
         else -> {
             LaunchedEffect(sessionState) {
                 navController.navigate(Routes.Login.route) {

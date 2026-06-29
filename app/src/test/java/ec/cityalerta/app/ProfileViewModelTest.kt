@@ -59,6 +59,8 @@ class ProfileViewModelTest {
     @Mock
     private lateinit var perfilStorageRepository: PerfilStorageRepository
     @Mock
+    private lateinit var perfilLocalRepository: PerfilLocalRepository
+    @Mock
     private lateinit var barrioRepository: BarrioRepository
 
     private lateinit var viewModel: ProfileViewModel
@@ -70,6 +72,7 @@ class ProfileViewModelTest {
             authRepository,
             perfilRepository,
             perfilResumenRepository,
+            perfilLocalRepository,
             ciudadRepository,
             reporteRepository,
             reporteImagenRepository,

@@ -1,8 +1,5 @@
 package ec.cityalerta.app.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.LatLng
@@ -22,6 +19,10 @@ import ec.cityalerta.app.model.utils.IRiskZoneDetector
 import ec.cityalerta.app.model.utils.RadialRiskZoneDetector
 import ec.cityalerta.app.model.utils.ExponentialRiskColorProvider
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -49,13 +50,13 @@ class MapViewModel(
     private val riskDetector: IRiskZoneDetector = RadialRiskZoneDetector(ExponentialRiskColorProvider())
 ) : ViewModel() {
 
-    var uiState by mutableStateOf(MapUiState())
-        private set
+    private val _uiState = MutableStateFlow(MapUiState())
+    val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
     private var polygonPoints: List<LatLng> = emptyList()
 
     fun loadCiudad(ciudadId: String) {
-        uiState = uiState.copy(isLoading = true, errorMessage = null)
+        _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
         viewModelScope.launch {
             try {
@@ -70,10 +71,12 @@ class MapViewModel(
                 }
                 
                 if (realCiudadId.isEmpty()) {
-                    uiState = uiState.copy(
-                        isLoading = false,
-                        errorMessage = "No se pudo determinar la ciudad actual"
-                    )
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = "No se pudo determinar la ciudad actual"
+                        )
+                    }
                     return@launch
                 }
 
@@ -108,78 +111,92 @@ class MapViewModel(
                             }
                         }.distinctBy { it.id }
 
-                        uiState = uiState.copy(
-                            ciudad = ciudad,
-                            isLoading = false,
-                            reportMarkers = markers,
-                            barrioRisks = riskZones,
-                            reports = filteredReports
-                        )
+                        _uiState.update { 
+                            it.copy(
+                                ciudad = ciudad,
+                                isLoading = false,
+                                reportMarkers = markers,
+                                barrioRisks = riskZones,
+                                reports = filteredReports
+                            )
+                        }
                     } else {
-                        uiState = uiState.copy(
-                            ciudad = ciudad,
-                            isLoading = false,
-                            errorMessage = "Error al obtener datos de la base de datos"
-                        )
+                        _uiState.update { 
+                            it.copy(
+                                ciudad = ciudad,
+                                isLoading = false,
+                                errorMessage = "Error al obtener datos de la base de datos"
+                            )
+                        }
                     }
                 } else {
-                    uiState = uiState.copy(
-                        isLoading = false,
-                        errorMessage = "Ciudad no encontrada en el sistema"
-                    )
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = "Ciudad no encontrada en el sistema"
+                        )
+                    }
                 }
             } catch (e: Exception) {
-                uiState = uiState.copy(
-                    isLoading = false,
-                    errorMessage = "Error cargando ciudad: ${e.message}"
-                )
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Error cargando ciudad: ${e.message}"
+                    )
+                }
             }
         }
     }
 
     fun updateCameraZoom(zoom: Float) {
-        uiState = uiState.copy(cameraZoom = zoom)
+        _uiState.update { it.copy(cameraZoom = zoom) }
     }
 
     fun onCategorySelected(category: ReportType) {
-        val newCategory = if (uiState.selectedCategory == category) null else category
-        uiState = uiState.copy(
-            selectedCategory = newCategory,
-            selectedReport = null,
-            isMultiReport = false,
-            reportCount = 0
-        )
+        _uiState.update { currentState ->
+            val newCategory = if (currentState.selectedCategory == category) null else category
+            currentState.copy(
+                selectedCategory = newCategory,
+                selectedReport = null,
+                isMultiReport = false,
+                reportCount = 0
+            )
+        }
     }
 
     fun onReportClicked(reportId: String) {
-        val report = uiState.reports.firstOrNull { it.id == reportId }
-        uiState = uiState.copy(
-            selectedReport = report,
-            isMultiReport = false,
-            reportCount = 1
-        )
+        _uiState.update { currentState ->
+            val report = currentState.reports.firstOrNull { it.id == reportId }
+            currentState.copy(
+                selectedReport = report,
+                isMultiReport = false,
+                reportCount = 1
+            )
+        }
     }
 
     fun onClusterClicked(reportType: ReportType, count: Int) {
-        val dummyReport = Reporte(
-            id = "cluster",
-            usuario_id = "",
-            ciudad_id = "",
-            ubicacion_id = "",
-            descripcion = "",
-            estado = ReporteEstado.PENDIENTE,
-            fecha_reporte = "",
-            categoria = reportType,
-            barrio_id = ""
-        )
-        uiState = uiState.copy(
-            selectedReport = dummyReport,
-            isMultiReport = true,
-            reportCount = count
-        )
+        _uiState.update { currentState ->
+            val dummyReport = Reporte(
+                id = "cluster",
+                usuario_id = "",
+                ciudad_id = "",
+                ubicacion_id = "",
+                descripcion = "",
+                estado = ReporteEstado.PENDIENTE,
+                fecha_reporte = "",
+                categoria = reportType,
+                barrio_id = ""
+            )
+            currentState.copy(
+                selectedReport = dummyReport,
+                isMultiReport = true,
+                reportCount = count
+            )
+        }
     }
 
     fun onDismissReport(){
-        uiState = uiState.copy(selectedReport = null, isMultiReport = false, reportCount = 0)
+        _uiState.update { it.copy(selectedReport = null, isMultiReport = false, reportCount = 0) }
     }
 }

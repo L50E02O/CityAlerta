@@ -1,15 +1,18 @@
 package ec.cityalerta.app.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import android.content.Context
+import androidx.room.Room
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
+import ec.cityalerta.app.model.local.AppDatabase
 import ec.cityalerta.app.model.repository.MapRepository
 import ec.cityalerta.app.model.repository.LocationRepository
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.repository.PerfilImagenRepository
+import ec.cityalerta.app.model.repository.PerfilLocalRepository
 import ec.cityalerta.app.model.repository.PerfilRepository
 import ec.cityalerta.app.model.repository.PerfilResumenRepository
 import ec.cityalerta.app.model.repository.PerfilStorageRepository
@@ -30,7 +33,7 @@ class AppViewModelFactory(
     }
 
     private val reporteRepository by lazy {
-        ReporteRepository()
+        ReporteRepository(database.reporteDao())
     }
 
     private val ciudadRepository by lazy {
@@ -45,8 +48,18 @@ class AppViewModelFactory(
         PerfilRepository()
     }
 
+    private val database by lazy {
+        Room.databaseBuilder(appContext.applicationContext, AppDatabase::class.java, "cityalerta.db")
+            .fallbackToDestructiveMigration()
+            .build()
+    }
+
     private val perfilResumenRepository by lazy {
         PerfilResumenRepository()
+    }
+
+    private val perfilLocalRepository by lazy {
+        PerfilLocalRepository(database.perfilResumenDao())
     }
 
     private val ubicacionReporte by lazy {
@@ -77,6 +90,10 @@ class AppViewModelFactory(
         LocationRepository(appContext)
     }
 
+    private val imageModerationRepository by lazy {
+        ec.cityalerta.app.model.repository.GeminiImageModerationRepository()
+    }
+
     private val pushRegistrar by lazy {
         PushSubscriptionRegistrar.createDefault(appContext)
     }
@@ -85,7 +102,13 @@ class AppViewModelFactory(
         return when {
             modelClass.isAssignableFrom(AuthViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
-                AuthViewModel(authRepository, pushRegistrar) as T
+                AuthViewModel(
+                    authRepository,
+                    ciudadRepository,
+                    perfilResumenRepository,
+                    perfilLocalRepository,
+                    pushRegistrar
+                ) as T
             }
             modelClass.isAssignableFrom(MapViewModel::class.java) -> {
                 @Suppress("UNCHECKED_CAST")
@@ -102,12 +125,8 @@ class AppViewModelFactory(
                 ExploreViewModel(
                     authRepository,
                     reporteRepository,
-                    imagenReporte,
-                    ubicacionReporte,
                     storageReporte,
-                    perfilRepository,
-                    ciudadRepository,
-                    barrioRepository
+                    ciudadRepository
                 ) as T
             }
             modelClass.isAssignableFrom(ProfileViewModel::class.java) -> {
@@ -116,6 +135,7 @@ class AppViewModelFactory(
                     authRepository,
                     perfilRepository,
                     perfilResumenRepository,
+                    perfilLocalRepository,
                     ciudadRepository,
                     reporteRepository,
                     imagenReporte,
@@ -137,7 +157,8 @@ class AppViewModelFactory(
                     authRepository,
                     mapRepository,
                     barrioRepository,
-                    geocodingRepository
+                    geocodingRepository,
+                    imageModerationRepository
                 ) as T
             }
             modelClass.isAssignableFrom(SearchReportViewModel::class.java) -> {

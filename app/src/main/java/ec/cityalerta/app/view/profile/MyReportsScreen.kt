@@ -41,7 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import ec.cityalerta.app.model.data.reporte.ReportType
+import ec.cityalerta.app.model.data.reporte.ReporteEstado
 import ec.cityalerta.app.view.components.AppTopBar
 import ec.cityalerta.app.view.utils.readBytesFromUri
 import ec.cityalerta.app.viewmodel.ProfileViewModel
@@ -67,9 +68,10 @@ import ec.cityalerta.app.viewmodel.UserReportUi
 @Composable
 fun MyReportsScreen(
     navController: NavController,
-    viewModel: ProfileViewModel
+    viewModel: ProfileViewModel,
+    filterResolved: Boolean = false
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var editingReport by remember { mutableStateOf<UserReportUi?>(null) }
     var reportToDelete by remember { mutableStateOf<UserReportUi?>(null) }
 
@@ -80,7 +82,7 @@ fun MyReportsScreen(
     Scaffold(
         topBar = {
             AppTopBar(
-                title = "Mis reportes",
+                title = if (filterResolved) "Reportes resueltos" else "Mis reportes",
                 showBack = true,
                 showProfile = false,
                 onBackClick = { navController.popBackStack() }
@@ -93,6 +95,12 @@ fun MyReportsScreen(
                 .padding(padding)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
+            val reportsToDisplay = if (filterResolved) {
+                state.myReports.filter { it.estado == ReporteEstado.RESUELTO }
+            } else {
+                state.myReports
+            }
+
             when {
                 state.isLoading -> {
                     CircularProgressIndicator(
@@ -101,9 +109,9 @@ fun MyReportsScreen(
                     )
                 }
 
-                state.myReports.isEmpty() -> {
+                reportsToDisplay.isEmpty() -> {
                     Text(
-                        text = "No hay reportes para mostrar",
+                        text = if (filterResolved) "No tienes reportes resueltos" else "No hay reportes para mostrar",
                         modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -119,7 +127,7 @@ fun MyReportsScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(20.dp)
                         ) {
-                        items(state.myReports, key = { it.id }) { report ->
+                        items(reportsToDisplay, key = { it.id }) { report ->
                             MyReportCard(
                                 report = report,
                                 onEdit = { editingReport = report },

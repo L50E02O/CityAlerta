@@ -27,10 +27,23 @@ class SessionManager(
 
     fun start() {
         if (listenerJob != null) return
-        updateFromCurrentSession()
+        
         listenerJob = scope.launch {
-            auth.sessionStatus.collect {
-                updateFromCurrentSession()
+            auth.sessionStatus.collect { status ->
+                when (status) {
+                    is io.github.jan.supabase.gotrue.SessionStatus.Authenticated -> {
+                        _state.value = SessionState.Authenticated(status.session.user?.id.orEmpty())
+                    }
+                    is io.github.jan.supabase.gotrue.SessionStatus.LoadingFromStorage -> {
+                        _state.value = SessionState.Refreshing
+                    }
+                    is io.github.jan.supabase.gotrue.SessionStatus.NetworkError -> {
+                        _state.value = SessionState.Error("Error de red", isTransient = true)
+                    }
+                    is io.github.jan.supabase.gotrue.SessionStatus.NotAuthenticated -> {
+                        _state.value = SessionState.Unauthenticated
+                    }
+                }
             }
         }
     }
@@ -47,35 +60,26 @@ class SessionManager(
             if (now - lastRefreshAttemptMs < refreshBackoffMs) return
             lastRefreshAttemptMs = now
 
-            val session = auth.currentSessionOrNull()
-            if (session != null) {
-                refreshBackoffMs = DEFAULT_REFRESH_BACKOFF_MS
-                _state.value = SessionState.Authenticated(session.user?.id.orEmpty())
-                return
-            }
+            if (_state.value is SessionState.Authenticated) return
 
-            _state.value = SessionState.Refreshing
             runCatching { auth.refreshCurrentSession() }
-                .onSuccess {
-                    refreshBackoffMs = DEFAULT_REFRESH_BACKOFF_MS
-                    updateFromCurrentSession()
-                }
                 .onFailure { error ->
                     refreshBackoffMs = (refreshBackoffMs * 2).coerceAtMost(MAX_REFRESH_BACKOFF_MS)
-                    _state.value = SessionState.Error(error.message ?: "Session refresh failed")
+                    if (isNetworkError(error)) {
+                        _state.value = SessionState.Error("Sin conexión", isTransient = true)
+                    }
                 }
         } finally {
             refreshMutex.unlock()
         }
     }
 
-    private fun updateFromCurrentSession() {
-        val session = auth.currentSessionOrNull()
-        _state.value = if (session == null) {
-            SessionState.Unauthenticated
-        } else {
-            SessionState.Authenticated(session.user?.id.orEmpty())
-        }
+    private fun isNetworkError(throwable: Throwable): Boolean {
+        val msg = throwable.message?.lowercase() ?: ""
+        return throwable is java.io.IOException || 
+               msg.contains("timeout") || 
+               msg.contains("network") || 
+               msg.contains("connection")
     }
 
     companion object {

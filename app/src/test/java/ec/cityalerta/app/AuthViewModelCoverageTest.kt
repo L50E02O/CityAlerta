@@ -36,6 +36,9 @@ class AuthViewModelCoverageTest {
     @Mock
     private lateinit var mockPushRegistrar: PushSubscriptionRegistrar
 
+    @Mock
+    private lateinit var mockCiudadRepository: ec.cityalerta.app.model.repository.CiudadRepository
+
     private lateinit var authRepository: FakeAuthRepository
 
     @Before
@@ -49,16 +52,16 @@ class AuthViewModelCoverageTest {
     fun init_conPushRegistrar_cargaEstadoNotificaciones() {
         whenever(mockPushRegistrar.isNotificationsEnabled()).thenReturn(true)
 
-        val viewModel = AuthViewModel(authRepository, mockPushRegistrar)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository, pushRegistrar = mockPushRegistrar)
 
-        assertTrue(viewModel.uiState.notificationsEnabled)
+        assertTrue(viewModel.uiState.value.notificationsEnabled)
     }
 
     @Test
     fun onRegisterClick_conSesion_registraPushYCompleta() = runTest {
         authRepository.getUserIdResult = Result.success("user-1")
         whenever(mockPushRegistrar.registerTokenIfAllowed()).thenReturn(Result.failure(PushSubscriptionDisabledException("off")))
-        val viewModel = AuthViewModel(authRepository, mockPushRegistrar)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository, pushRegistrar = mockPushRegistrar)
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
         viewModel.onCiudadSelected("Manta", "ciudad-1")
@@ -68,14 +71,14 @@ class AuthViewModelCoverageTest {
         advanceUntilIdle()
 
         assertTrue(success)
-        assertNull(viewModel.uiState.infoMessage)
+        assertNull(viewModel.uiState.value.infoMessage)
         verify(mockPushRegistrar).registerTokenIfAllowed()
     }
 
     @Test
     fun onLoginClick_conPush_registraToken() = runTest {
         whenever(mockPushRegistrar.registerTokenIfAllowed()).thenReturn(Result.failure(PushSubscriptionTokenMissingException("sin token")))
-        val viewModel = AuthViewModel(authRepository, mockPushRegistrar)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository, pushRegistrar = mockPushRegistrar)
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
 
@@ -88,12 +91,12 @@ class AuthViewModelCoverageTest {
     @Test
     fun onNotificationsPermissionGranted_registraPush() = runTest {
         whenever(mockPushRegistrar.registerTokenIfAllowed()).thenReturn(Result.failure(PushSubscriptionAuthRequiredException("sin auth")))
-        val viewModel = AuthViewModel(authRepository, mockPushRegistrar)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository, pushRegistrar = mockPushRegistrar)
 
         viewModel.onNotificationsPermissionGranted()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.notificationsEnabled)
+        assertTrue(viewModel.uiState.value.notificationsEnabled)
         verify(mockPushRegistrar).setNotificationsEnabled(true)
         verify(mockPushRegistrar).registerTokenIfAllowed()
     }
@@ -101,12 +104,12 @@ class AuthViewModelCoverageTest {
     @Test
     fun onNotificationsDisabledByUser_desregistraToken() = runTest {
         whenever(mockPushRegistrar.unregisterToken()).thenReturn(Result.success(Unit))
-        val viewModel = AuthViewModel(authRepository, mockPushRegistrar)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository, pushRegistrar = mockPushRegistrar)
 
         viewModel.onNotificationsDisabledByUser()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.notificationsEnabled)
+        assertFalse(viewModel.uiState.value.notificationsEnabled)
         verify(mockPushRegistrar).setNotificationsEnabled(false)
         verify(mockPushRegistrar).unregisterToken()
     }
@@ -114,7 +117,7 @@ class AuthViewModelCoverageTest {
     @Test
     fun onLoginClick_mientrasCarga_noRelanza() = runTest {
         authRepository.signInResult = Result.success(Unit)
-        val viewModel = AuthViewModel(authRepository)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository)
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
         viewModel.onLoginClick { }
@@ -122,12 +125,12 @@ class AuthViewModelCoverageTest {
 
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.isLoading)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
     fun onRegisterClick_mientrasCarga_noRelanza() = runTest {
-        val viewModel = AuthViewModel(authRepository)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository)
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
         viewModel.onCiudadSelected("Manta", "ciudad-1")
@@ -136,7 +139,7 @@ class AuthViewModelCoverageTest {
 
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.isLoading)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -144,38 +147,38 @@ class AuthViewModelCoverageTest {
         authRepository.resendSignupConfirmationResult = Result.failure(
             AuthMappedException("Correo no confirmado", true)
         )
-        val viewModel = AuthViewModel(authRepository)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository)
         viewModel.onEmailChange("user@example.com")
 
         viewModel.resendActivationEmail()
         advanceUntilIdle()
 
-        assertNotNull(viewModel.uiState.errorMessage)
-        assertTrue(viewModel.uiState.isEmailUnconfirmed)
+        assertNotNull(viewModel.uiState.value.errorMessage)
+        assertTrue(viewModel.uiState.value.isEmailUnconfirmed)
     }
 
     @Test
     fun onLoginClick_excepcionInesperada_mapeaError() = runTest {
         val mockRepository = org.mockito.kotlin.mock<AuthRepositoryContract>()
         whenever(mockRepository.signIn(any(), any())).thenThrow(RuntimeException("red caida"))
-        val viewModel = AuthViewModel(mockRepository)
+        val viewModel = AuthViewModel(mockRepository, mockCiudadRepository)
         viewModel.onEmailChange("user@example.com")
         viewModel.onPasswordChange("password123")
 
         viewModel.onLoginClick { }
         advanceUntilIdle()
 
-        assertEquals("red caida", viewModel.uiState.errorMessage)
+        assertEquals("red caida", viewModel.uiState.value.errorMessage)
     }
 
     @Test
     fun authViewModel_sinPushRegistrar_ignoraNotificaciones() = runTest {
-        val viewModel = AuthViewModel(authRepository)
+        val viewModel = AuthViewModel(authRepository, mockCiudadRepository)
 
         viewModel.onNotificationsPermissionGranted()
         viewModel.onNotificationsDisabledByUser()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.notificationsEnabled)
+        assertFalse(viewModel.uiState.value.notificationsEnabled)
     }
 }

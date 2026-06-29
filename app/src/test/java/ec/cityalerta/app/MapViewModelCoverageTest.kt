@@ -47,7 +47,7 @@ class MapViewModelCoverageTest {
     private suspend fun TestScope.awaitMapLoad() {
         withContext(Dispatchers.Default.limitedParallelism(1)) {
             withTimeout(5_000) {
-                while (viewModel.uiState.isLoading) {
+                while (viewModel.uiState.value.isLoading) {
                     testDispatcher.scheduler.advanceUntilIdle()
                     delay(20)
                 }
@@ -60,11 +60,11 @@ class MapViewModelCoverageTest {
         viewModel = createViewModel()
         viewModel.onClusterClicked(ReportType.AGUA, 5)
 
-        val state = viewModel.uiState
+        val state = viewModel.uiState.value
         assertTrue(state.isMultiReport)
         assertEquals(5, state.reportCount)
         assertNotNull(state.selectedReport)
-        assertEquals(ReportType.AGUA, state.selectedReport?.categoria)
+        assertEquals(ReportType.AGUA, state.selectedReport.categoria)
     }
 
     @Test
@@ -73,9 +73,9 @@ class MapViewModelCoverageTest {
         viewModel.onClusterClicked(ReportType.LUZ, 3)
         viewModel.onDismissReport()
 
-        assertNull(viewModel.uiState.selectedReport)
-        assertFalse(viewModel.uiState.isMultiReport)
-        assertEquals(0, viewModel.uiState.reportCount)
+        assertNull(viewModel.uiState.value.selectedReport)
+        assertFalse(viewModel.uiState.value.isMultiReport)
+        assertEquals(0, viewModel.uiState.value.reportCount)
     }
 
     @Test
@@ -98,8 +98,8 @@ class MapViewModelCoverageTest {
         viewModel.loadCiudad("current")
         awaitMapLoad()
 
-        assertEquals(ciudad, viewModel.uiState.ciudad)
-        assertFalse(viewModel.uiState.isLoading)
+        assertEquals(ciudad, viewModel.uiState.value.ciudad)
+        assertFalse(viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -110,8 +110,8 @@ class MapViewModelCoverageTest {
         viewModel.loadCiudad("Sin ciudad")
         awaitMapLoad()
 
-        assertEquals("No se pudo determinar la ciudad actual", viewModel.uiState.errorMessage)
-        assertNull(viewModel.uiState.ciudad)
+        assertEquals("No se pudo determinar la ciudad actual", viewModel.uiState.value.errorMessage)
+        assertNull(viewModel.uiState.value.ciudad)
     }
 
     @Test
@@ -122,7 +122,7 @@ class MapViewModelCoverageTest {
         viewModel.loadCiudad("   ")
         awaitMapLoad()
 
-        assertEquals("No se pudo determinar la ciudad actual", viewModel.uiState.errorMessage)
+        assertEquals("No se pudo determinar la ciudad actual", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -131,9 +131,9 @@ class MapViewModelCoverageTest {
         viewModel.onClusterClicked(ReportType.BACHE, 2)
         viewModel.onCategorySelected(ReportType.AGUA)
 
-        assertEquals(ReportType.AGUA, viewModel.uiState.selectedCategory)
-        assertNull(viewModel.uiState.selectedReport)
-        assertFalse(viewModel.uiState.isMultiReport)
+        assertEquals(ReportType.AGUA, viewModel.uiState.value.selectedCategory)
+        assertNull(viewModel.uiState.value.selectedReport)
+        assertFalse(viewModel.uiState.value.isMultiReport)
     }
 
     private fun createViewModel(): MapViewModel {

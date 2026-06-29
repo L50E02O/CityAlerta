@@ -18,10 +18,13 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import ec.cityalerta.app.view.components.ActionFeedbackHandler
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,12 +51,12 @@ fun ReporteScreen(
     profileViewModel: ProfileViewModel,
     onReportSent: () -> Unit
 ) {
-    val profileState by profileViewModel.state.collectAsState()
-    val descripcion by viewModel.descripcion.collectAsState()
-    val categoria by viewModel.categoria.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val isSubmitting by viewModel.isSubmitting.collectAsState()
-    val currentLocation by viewModel.currentLocation.collectAsState()
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
+    val descripcion by viewModel.descripcion.collectAsStateWithLifecycle()
+    val categoria by viewModel.categoria.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val isSubmitting by viewModel.isSubmitting.collectAsStateWithLifecycle()
+    val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
     val selectedLocation = remember(currentLocation) {
         currentLocation?.let { LatLng(it.latitude, it.longitude) }
     }

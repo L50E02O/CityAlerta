@@ -1,57 +1,28 @@
 package ec.cityalerta.app.view.authView
 
 import android.util.Patterns
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
-import ec.cityalerta.app.model.data.ciudad.Ciudad
-import ec.cityalerta.app.viewmodel.AuthViewModel
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ec.cityalerta.app.view.components.CityPickerSheet
 import ec.cityalerta.app.R
-
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
+import ec.cityalerta.app.model.data.ciudad.Ciudad
+import ec.cityalerta.app.view.components.CityPickerSheet
+import ec.cityalerta.app.viewmodel.AuthViewModel
 
 data class AuthScreenConfig(
     val title: String,
@@ -74,11 +45,16 @@ fun AuthScreenScaffold(
     viewModel: AuthViewModel,
     config: AuthScreenConfig
 ) {
-    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(viewModel.uiState.email).matches()
-    val isPasswordValid =
-        viewModel.uiState.password.isNotEmpty() && viewModel.uiState.password.length >= 8
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()
+    val isPasswordValid = if (config.isLogin) {
+        uiState.password.isNotEmpty()
+    } else {
+        uiState.password.isNotEmpty() && uiState.password.length >= 8
+    }
     val isCiudadValid = !config.showCitySection ||
-            (config.fixedCity != null || (config.ciudades.isNotEmpty() && viewModel.uiState.ciudadId.isNotEmpty()))
+            (config.fixedCity != null || (config.ciudades.isNotEmpty() && uiState.ciudadId.isNotEmpty()))
     val isFormValid = isEmailValid && isPasswordValid && isCiudadValid
 
     Box(
@@ -164,13 +140,15 @@ fun AuthScreenScaffold(
 
                 AuthFormComponent(
                     viewModel = viewModel,
+                    isLogin = config.isLogin,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 if (config.showCitySection) {
                     AuthCitySection(
                         config = config,
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        uiState = uiState
                     )
                 }
 
@@ -181,7 +159,7 @@ fun AuthScreenScaffold(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = isFormValid && !viewModel.uiState.isLoading,
+                    enabled = isFormValid && !uiState.isLoading,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -189,7 +167,7 @@ fun AuthScreenScaffold(
                     )
                 ) {
                     Text(
-                        text = if (viewModel.uiState.isLoading) "Cargando..." else "${config.primaryButtonText} →",
+                        text = if (uiState.isLoading) "Cargando..." else "${config.primaryButtonText} →",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -218,6 +196,7 @@ fun AuthScreenScaffold(
         }
     }
 }
+
 @Composable
 fun AuthTab(
     text: String,
@@ -250,7 +229,8 @@ fun AuthTab(
 @Composable
 private fun AuthCitySection(
     config: AuthScreenConfig,
-    viewModel: AuthViewModel
+    viewModel: AuthViewModel,
+    uiState: ec.cityalerta.app.viewmodel.AuthState
 ) {
     Spacer(modifier = Modifier.height(16.dp))
     Text(
@@ -265,8 +245,8 @@ private fun AuthCitySection(
         config.fixedCity != null -> FixedCityField(city = config.fixedCity)
         config.ciudades.isNotEmpty() -> CiudadPickerField(
             ciudades = config.ciudades,
-            query = viewModel.uiState.ciudadNombre,
-            selectedId = viewModel.uiState.ciudadId,
+            query = uiState.ciudadNombre,
+            selectedId = uiState.ciudadId,
             onQueryChange = viewModel::onCiudadChange,
             onSelected = { ciudad ->
                 viewModel.onCiudadSelected(ciudad.nombre, ciudad.id)

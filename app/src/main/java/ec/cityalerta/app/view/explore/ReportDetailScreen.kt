@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,8 +42,8 @@ fun ReportDetailScreen(
     viewModel: ReportDetailViewModel,
     profileViewModel: ProfileViewModel
 ) {
-    val state by viewModel.state.collectAsState()
-    val profileState by profileViewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val profileState by profileViewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(reportId) {
@@ -189,11 +189,17 @@ fun ReportDetailScreen(
                                     }
 
                                     Column(horizontalAlignment = Alignment.End) {
+                                        val statusColor = when (report.estado) {
+                                            "Resuelto" -> SuccessGreen
+                                            "Pendiente" -> MaterialTheme.colorScheme.primary
+                                            "En Proceso" -> ActionBlue
+                                            else -> MaterialTheme.colorScheme.primary
+                                        }
                                         Text(
                                             text = report.estado,
                                             fontSize = 22.sp,
                                             fontWeight = FontWeight.ExtraBold,
-                                            color = MaterialTheme.colorScheme.primary
+                                            color = statusColor
                                         )
                                         Text(
                                             text = "ESTADO",

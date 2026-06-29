@@ -2,6 +2,7 @@ package ec.cityalerta.app
 
 import android.content.Context
 import ec.cityalerta.app.model.data.contracts.auth.AuthRepositoryContract
+import ec.cityalerta.app.util.MainDispatcherRule
 import ec.cityalerta.app.viewmodel.AppViewModelFactory
 import ec.cityalerta.app.viewmodel.AuthViewModel
 import ec.cityalerta.app.viewmodel.ExploreViewModel
@@ -12,6 +13,7 @@ import ec.cityalerta.app.viewmodel.ReporteViewModel
 import ec.cityalerta.app.viewmodel.SearchReportViewModel
 import androidx.lifecycle.ViewModel
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Answers
 import org.mockito.Mock
@@ -27,6 +29,9 @@ import kotlin.test.assertTrue
  * Valida la creacion de ViewModels y manejo de dependencias.
  */
 class ViewModelFactoryTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Mock
     private lateinit var mockAuthRepository: AuthRepositoryContract
