@@ -58,7 +58,7 @@ class MapViewModelTest {
     @Test
     fun testMapUiStateInitial() {
         // Arrange & Act
-        val state = viewModel.uiState
+        val state = viewModel.uiState.value
 
         // Assert
         assertNotNull(state)
@@ -112,13 +112,13 @@ class MapViewModelTest {
     @Test
     fun testUpdateCameraZoom() {
         // Arrange
-        val initialZoom = viewModel.uiState.cameraZoom
+        val initialZoom = viewModel.uiState.value.cameraZoom
 
         // Act
         viewModel.updateCameraZoom(20f)
 
         // Assert
-        assertEquals(20f, viewModel.uiState.cameraZoom)
+        assertEquals(20f, viewModel.uiState.value.cameraZoom)
         assertNotNull(initialZoom)
     }
 
@@ -131,7 +131,7 @@ class MapViewModelTest {
         viewModel.onCategorySelected(category)
 
         // Assert
-        assertEquals(category, viewModel.uiState.selectedCategory)
+        assertEquals(category, viewModel.uiState.value.selectedCategory)
     }
 
     @Test
@@ -141,11 +141,11 @@ class MapViewModelTest {
 
         // Act
         viewModel.onCategorySelected(category)
-        val selectedAfterFirst = viewModel.uiState.selectedCategory
+        val selectedAfterFirst = viewModel.uiState.value.selectedCategory
 
         // Act - Select again to deselect
         viewModel.onCategorySelected(category)
-        val selectedAfterSecond = viewModel.uiState.selectedCategory
+        val selectedAfterSecond = viewModel.uiState.value.selectedCategory
 
         // Assert
         assertEquals(category, selectedAfterFirst)
@@ -160,10 +160,10 @@ class MapViewModelTest {
 
         // Act
         viewModel.onCategorySelected(category1)
-        val selected1 = viewModel.uiState.selectedCategory
+        val selected1 = viewModel.uiState.value.selectedCategory
 
         viewModel.onCategorySelected(category2)
-        val selected2 = viewModel.uiState.selectedCategory
+        val selected2 = viewModel.uiState.value.selectedCategory
 
         // Assert
         assertEquals(category1, selected1)
@@ -180,7 +180,7 @@ class MapViewModelTest {
 
         // Assert
         // Should not crash, report might be null if reports list is empty
-        assertNull(viewModel.uiState.selectedReport)
+        assertNull(viewModel.uiState.value.selectedReport)
     }
 
     @Test
@@ -189,7 +189,7 @@ class MapViewModelTest {
         viewModel.onDismissReport()
 
         // Assert
-        assertNull(viewModel.uiState.selectedReport)
+        assertNull(viewModel.uiState.value.selectedReport)
     }
 
     @Test
@@ -200,14 +200,14 @@ class MapViewModelTest {
         // Act & Assert
         zoomLevels.forEach { zoom ->
             viewModel.updateCameraZoom(zoom)
-            assertEquals(zoom, viewModel.uiState.cameraZoom)
+            assertEquals(zoom, viewModel.uiState.value.cameraZoom)
         }
     }
 
     @Test
     fun testReportTypeCategories() {
         // Arrange & Act
-        val categories = viewModel.uiState.categories
+        val categories = viewModel.uiState.value.categories
 
         // Assert
         assertEquals(ReportType.entries, categories)
@@ -249,9 +249,9 @@ class MapViewModelTest {
         viewModel.onDismissReport()
 
         // Assert
-        assertEquals(18f, viewModel.uiState.cameraZoom)
-        assertEquals(ReportType.BACHE, viewModel.uiState.selectedCategory)
-        assertNull(viewModel.uiState.selectedReport)
+        assertEquals(18f, viewModel.uiState.value.cameraZoom)
+        assertEquals(ReportType.BACHE, viewModel.uiState.value.selectedCategory)
+        assertNull(viewModel.uiState.value.selectedReport)
     }
 
     @Test
@@ -271,9 +271,9 @@ class MapViewModelTest {
 
         // Act
         viewModel.onCategorySelected(cat1)
-        val select1 = viewModel.uiState.selectedCategory
+        val select1 = viewModel.uiState.value.selectedCategory
         viewModel.onCategorySelected(cat2)
-        val select2 = viewModel.uiState.selectedCategory
+        val select2 = viewModel.uiState.value.selectedCategory
 
         // Assert
         assertEquals(cat1, select1)
@@ -283,7 +283,7 @@ class MapViewModelTest {
     @Test
     fun testMapUiStateImmutability() {
         // Arrange
-        val originalState = viewModel.uiState
+        val originalState = viewModel.uiState.value
         val zoom1 = originalState.cameraZoom
 
         // Act
@@ -294,7 +294,7 @@ class MapViewModelTest {
         assertEquals(15f, zoom1)
         assertEquals(15f, zoom2)
         // State should be replaced, not mutated
-        assertEquals(20f, viewModel.uiState.cameraZoom)
+        assertEquals(20f, viewModel.uiState.value.cameraZoom)
     }
 }
 

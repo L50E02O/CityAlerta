@@ -6,6 +6,7 @@ import ec.cityalerta.app.model.data.contracts.geocoding.GeocodingRepositoryContr
 import ec.cityalerta.app.model.data.contracts.location.LocationProviderContract
 import ec.cityalerta.app.model.data.contracts.map.MapRepositoryContract
 import ec.cityalerta.app.model.data.geoJson.Geometry
+import ec.cityalerta.app.model.data.contracts.moderation.ImageModerationContract
 import ec.cityalerta.app.model.data.location.UserLocation
 import ec.cityalerta.app.model.data.reporte.ReportType
 import ec.cityalerta.app.model.data.reporte.Reporte
@@ -60,6 +61,8 @@ class ReporteViewModelTest {
     private lateinit var barrioRepository: BarrioRepository
     @Mock
     private lateinit var geocodingRepository: GeocodingRepositoryContract
+    @Mock
+    private lateinit var imageModerationRepository: ImageModerationContract
 
     private lateinit var viewModel: ReporteViewModel
 
@@ -75,39 +78,40 @@ class ReporteViewModelTest {
             authRepository,
             mapRepository,
             barrioRepository,
-            geocodingRepository
+            geocodingRepository,
+            imageModerationRepository
         )
     }
 
     @Test
     fun testInitialState() {
-        assertEquals("", viewModel.descripcion.value)
-        assertNull(viewModel.categoria.value)
-        assertNull(viewModel.imagenURL.value)
-        assertNull(viewModel.currentLocation.value)
-        assertNull(viewModel.errorMessage.value)
-        assertFalse(viewModel.isSubmitting.value)
+        assertEquals("", viewModel.uiState.value.descripcion)
+        assertNull(viewModel.uiState.value.categoria)
+        assertNull(viewModel.uiState.value.imagenURL)
+        assertNull(viewModel.uiState.value.currentLocation)
+        assertNull(viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isSubmitting)
     }
 
     @Test
     fun testOnDescriptionChange() {
         val desc = "Test description"
         viewModel.onDescriptionChange(desc)
-        assertEquals(desc, viewModel.descripcion.value)
+        assertEquals(desc, viewModel.uiState.value.descripcion)
     }
 
     @Test
     fun testOnCategoriaChange() {
         val category = ReportType.BACHE
         viewModel.onCategoriaChange(category)
-        assertEquals(category, viewModel.categoria.value)
+        assertEquals(category, viewModel.uiState.value.categoria)
     }
 
     @Test
     fun testSetImagen() {
         val uri = "content://media/external/images/media/1"
         viewModel.setImagen(uri)
-        assertEquals(uri, viewModel.imagenURL.value)
+        assertEquals(uri, viewModel.uiState.value.imagenURL)
     }
 
     @Test
@@ -115,8 +119,8 @@ class ReporteViewModelTest {
         val lat = -1.0
         val lng = -80.0
         viewModel.setUbicacion(lat, lng)
-        assertEquals(lat, viewModel.currentLocation.value?.latitude)
-        assertEquals(lng, viewModel.currentLocation.value?.longitude)
+        assertEquals(lat, viewModel.uiState.value.currentLocation?.latitude)
+        assertEquals(lng, viewModel.uiState.value.currentLocation?.longitude)
     }
 
     @Test
@@ -127,7 +131,7 @@ class ReporteViewModelTest {
         viewModel.requestCurrentLocation()
         advanceUntilIdle()
 
-        assertEquals(location, viewModel.currentLocation.value)
+        assertEquals(location, viewModel.uiState.value.currentLocation)
     }
 
     @Test
@@ -137,7 +141,7 @@ class ReporteViewModelTest {
         viewModel.requestCurrentLocation()
         advanceUntilIdle()
 
-        assertEquals("GPS error", viewModel.errorMessage.value)
+        assertEquals("GPS error", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -148,17 +152,17 @@ class ReporteViewModelTest {
         viewModel.sendReport()
         advanceUntilIdle()
 
-        assertEquals("Categoria no seleccionada", viewModel.errorMessage.value)
+        assertEquals("Categoria no seleccionada", viewModel.uiState.value.errorMessage)
 
         viewModel.onCategoriaChange(ReportType.BACHE)
         viewModel.sendReport()
         advanceUntilIdle()
-        assertEquals("Falta descripcion", viewModel.errorMessage.value)
+        assertEquals("Falta descripcion", viewModel.uiState.value.errorMessage)
 
         viewModel.onDescriptionChange("Bache grande")
         viewModel.sendReport()
         advanceUntilIdle()
-        assertEquals("Falta imagen", viewModel.errorMessage.value)
+        assertEquals("Falta imagen", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -184,7 +188,7 @@ class ReporteViewModelTest {
         viewModel.sendReport()
         advanceUntilIdle()
 
-        assertEquals("Ubicación fuera de los límites permitidos de la ciudad", viewModel.errorMessage.value)
+        assertEquals("Ubicación fuera de los límites permitidos de la ciudad", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -244,8 +248,8 @@ class ReporteViewModelTest {
         advanceUntilIdle()
 
         assertTrue(successCalled)
-        assertEquals("", viewModel.descripcion.value)
-        assertNull(viewModel.categoria.value)
-        assertNull(viewModel.errorMessage.value)
+        assertEquals("", viewModel.uiState.value.descripcion)
+        assertNull(viewModel.uiState.value.categoria)
+        assertNull(viewModel.uiState.value.errorMessage)
     }
 }

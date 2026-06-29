@@ -12,6 +12,9 @@ import ec.cityalerta.app.viewmodel.ExploreViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.whenever
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -35,17 +38,9 @@ class ExploreViewModelTest {
     @Mock
     private lateinit var reporteRepository: ReporteRepository
     @Mock
-    private lateinit var reporteImagenRepository: ReporteImagenRepository
-    @Mock
-    private lateinit var reporteUbicacionRepository: ReporteUbicacionRepository
-    @Mock
     private lateinit var reporteStorageRepository: ReporteStorageRepository
     @Mock
-    private lateinit var perfilRepository: PerfilRepository
-    @Mock
     private lateinit var ciudadRepository: CiudadRepository
-    @Mock
-    private lateinit var barrioRepository: BarrioRepository
 
     private lateinit var viewModel: ExploreViewModel
 
@@ -55,12 +50,8 @@ class ExploreViewModelTest {
         viewModel = ExploreViewModel(
             authRepository,
             reporteRepository,
-            reporteImagenRepository,
-            reporteUbicacionRepository,
             reporteStorageRepository,
-            perfilRepository,
-            ciudadRepository,
-            barrioRepository
+            ciudadRepository
         )
     }
 
@@ -92,10 +83,8 @@ class ExploreViewModelTest {
             updated_at = null,
             barrio_id = "barrio-1"
         )
-        whenever(reporteRepository.getReporteByCiudadId(ciudadId)).thenReturn(Result.success(listOf(reporte)))
-        whenever(reporteImagenRepository.getFirstImagenByReporteId("rep-1")).thenReturn(Result.success(null))
-        whenever(reporteUbicacionRepository.getById("ubic-1")).thenReturn(Result.success(null))
-        whenever(barrioRepository.getById("barrio-1")).thenReturn(Result.success(null))
+        whenever(reporteRepository.getReporteByCiudadId(eq(ciudadId), any(), any()))
+            .thenReturn(Result.success(Pair(listOf(reporte), 1L)))
 
         viewModel.loadData()
         advanceUntilIdle()

@@ -3,6 +3,7 @@ package ec.cityalerta.app
 import ec.cityalerta.app.model.repository.BarrioRepository
 import ec.cityalerta.app.model.repository.CiudadRepository
 import ec.cityalerta.app.model.repository.PerfilImagenRepository
+import ec.cityalerta.app.model.repository.PerfilLocalRepository
 import ec.cityalerta.app.model.repository.PerfilRepository
 import ec.cityalerta.app.model.repository.PerfilResumenRepository
 import ec.cityalerta.app.model.repository.PerfilStorageRepository
@@ -41,6 +42,9 @@ class ProfileViewModelSettingsTest {
     private lateinit var perfilResumenRepository: PerfilResumenRepository
 
     @Mock
+    private lateinit var perfilLocalRepository: PerfilLocalRepository
+
+    @Mock
     private lateinit var ciudadRepository: CiudadRepository
 
     @Mock
@@ -73,6 +77,7 @@ class ProfileViewModelSettingsTest {
             authRepository = authRepository,
             perfilRepository = perfilRepository,
             perfilResumenRepository = perfilResumenRepository,
+            perfilLocalRepository = perfilLocalRepository,
             ciudadRepository = ciudadRepository,
             reporteRepository = reporteRepository,
             reporteImagenRepository = reporteImagenRepository,

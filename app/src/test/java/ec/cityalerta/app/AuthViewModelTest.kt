@@ -30,6 +30,9 @@ class AuthViewModelTest {
     private lateinit var mockAuthRepository: AuthRepositoryContract
 
     @Mock
+    private lateinit var mockCiudadRepository: ec.cityalerta.app.model.repository.CiudadRepository
+
+    @Mock
     private lateinit var mockPushRegistrar: PushSubscriptionRegistrar
 
     private lateinit var viewModel: AuthViewModel
@@ -38,13 +41,13 @@ class AuthViewModelTest {
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         whenever(mockPushRegistrar.isNotificationsEnabled()).thenReturn(false)
-        viewModel = AuthViewModel(mockAuthRepository, mockPushRegistrar)
+        viewModel = AuthViewModel(mockAuthRepository, mockCiudadRepository, pushRegistrar = mockPushRegistrar)
     }
 
     @Test
     fun testInitialAuthState() {
         // Arrange & Act
-        val state = viewModel.uiState
+        val state = viewModel.uiState.value
 
         // Assert
         assertNotNull(state)
@@ -65,7 +68,7 @@ class AuthViewModelTest {
         viewModel.onNotificationsPermissionGranted()
 
         // Assert
-        assertTrue(viewModel.uiState.notificationsEnabled)
+        assertTrue(viewModel.uiState.value.notificationsEnabled)
         verify(mockPushRegistrar).setNotificationsEnabled(true)
     }
 
@@ -75,7 +78,7 @@ class AuthViewModelTest {
         viewModel.onNotificationsPermissionDenied()
 
         // Assert
-        assertFalse(viewModel.uiState.notificationsEnabled)
+        assertFalse(viewModel.uiState.value.notificationsEnabled)
         verify(mockPushRegistrar).setNotificationsEnabled(false)
     }
 
@@ -85,7 +88,7 @@ class AuthViewModelTest {
         viewModel.onNotificationsDisabledByUser()
 
         // Assert
-        assertFalse(viewModel.uiState.notificationsEnabled)
+        assertFalse(viewModel.uiState.value.notificationsEnabled)
         verify(mockPushRegistrar).setNotificationsEnabled(false)
     }
 
@@ -120,9 +123,9 @@ class AuthViewModelTest {
         viewModel.onEmailChange(newEmail)
 
         // Assert
-        assertEquals(newEmail, viewModel.uiState.email)
-        assertFalse(viewModel.uiState.isEmailUnconfirmed)
-        assertEquals(null, viewModel.uiState.errorMessage)
+        assertEquals(newEmail, viewModel.uiState.value.email)
+        assertFalse(viewModel.uiState.value.isEmailUnconfirmed)
+        assertEquals(null, viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -134,7 +137,7 @@ class AuthViewModelTest {
         viewModel.onPasswordChange(newPassword)
 
         // Assert
-        assertEquals(newPassword, viewModel.uiState.password)
+        assertEquals(newPassword, viewModel.uiState.value.password)
     }
 
     @Test
@@ -146,8 +149,8 @@ class AuthViewModelTest {
         viewModel.onCiudadChange(ciudadName)
 
         // Assert
-        assertEquals(ciudadName, viewModel.uiState.ciudadNombre)
-        assertEquals("", viewModel.uiState.ciudadId)
+        assertEquals(ciudadName, viewModel.uiState.value.ciudadNombre)
+        assertEquals("", viewModel.uiState.value.ciudadId)
     }
 
     @Test
@@ -160,8 +163,8 @@ class AuthViewModelTest {
         viewModel.onCiudadSelected(ciudadName, ciudadId)
 
         // Assert
-        assertEquals(ciudadName, viewModel.uiState.ciudadNombre)
-        assertEquals(ciudadId, viewModel.uiState.ciudadId)
+        assertEquals(ciudadName, viewModel.uiState.value.ciudadNombre)
+        assertEquals(ciudadId, viewModel.uiState.value.ciudadId)
     }
 
     @Test
@@ -173,9 +176,9 @@ class AuthViewModelTest {
         viewModel.setAuthInfoMessage(message)
 
         // Assert
-        assertEquals(message, viewModel.uiState.infoMessage)
-        assertEquals(null, viewModel.uiState.errorMessage)
-        assertFalse(viewModel.uiState.isEmailUnconfirmed)
+        assertEquals(message, viewModel.uiState.value.infoMessage)
+        assertEquals(null, viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isEmailUnconfirmed)
     }
 
     @Test
@@ -187,7 +190,7 @@ class AuthViewModelTest {
         viewModel.clearInfoMessage()
 
         // Assert
-        assertEquals(null, viewModel.uiState.infoMessage)
+        assertEquals(null, viewModel.uiState.value.infoMessage)
     }
 
     @Test
@@ -203,7 +206,7 @@ class AuthViewModelTest {
         assertFalse(successCalled)
         assertEquals(
             "El correo y la contrasena no pueden estar vacios",
-            viewModel.uiState.errorMessage
+            viewModel.uiState.value.errorMessage
         )
     }
 
@@ -220,7 +223,7 @@ class AuthViewModelTest {
         assertFalse(successCalled)
         assertEquals(
             "El correo y la contrasena no pueden estar vacios",
-            viewModel.uiState.errorMessage
+            viewModel.uiState.value.errorMessage
         )
     }
 
@@ -236,7 +239,7 @@ class AuthViewModelTest {
 
         // Assert
         assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
+        assertNotNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -251,7 +254,7 @@ class AuthViewModelTest {
 
         // Assert
         assertFalse(successCalled)
-        assertNotNull(viewModel.uiState.errorMessage)
+        assertNotNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -266,7 +269,7 @@ class AuthViewModelTest {
 
         // Assert
         assertFalse(successCalled)
-        assertEquals("Selecciona tu ciudad", viewModel.uiState.errorMessage)
+        assertEquals("Selecciona tu ciudad", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -283,7 +286,7 @@ class AuthViewModelTest {
         viewModel.onCiudadSelected(ciudadNombre, ciudadId)
 
         // Assert
-        val state = viewModel.uiState
+        val state = viewModel.uiState.value
         assertEquals(email, state.email)
         assertEquals(password, state.password)
         assertEquals(ciudadNombre, state.ciudadNombre)
@@ -301,7 +304,7 @@ class AuthViewModelTest {
         // Assert
         assertEquals(
             "Ingresa tu correo para reenviar la activacion",
-            viewModel.uiState.errorMessage
+            viewModel.uiState.value.errorMessage
         )
     }
 
@@ -313,18 +316,18 @@ class AuthViewModelTest {
         viewModel.onCiudadSelected("Manta", "ciudad-1")
 
         // Assert
-        assertEquals("test@example.com", viewModel.uiState.email)
-        assertEquals("password1", viewModel.uiState.password)
+        assertEquals("test@example.com", viewModel.uiState.value.email)
+        assertEquals("password1", viewModel.uiState.value.password)
 
         // Act - Update again
         viewModel.onEmailChange("new@example.com")
         viewModel.onPasswordChange("password2")
 
         // Assert
-        assertEquals("new@example.com", viewModel.uiState.email)
-        assertEquals("password2", viewModel.uiState.password)
+        assertEquals("new@example.com", viewModel.uiState.value.email)
+        assertEquals("password2", viewModel.uiState.value.password)
         // Ciudad should remain
-        assertEquals("ciudad-1", viewModel.uiState.ciudadId)
+        assertEquals("ciudad-1", viewModel.uiState.value.ciudadId)
     }
 
     @Test
@@ -336,7 +339,7 @@ class AuthViewModelTest {
         viewModel.onEmailChange("test@example.com")
 
         // Assert
-        assertEquals(null, viewModel.uiState.errorMessage)
+        assertEquals(null, viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -350,8 +353,8 @@ class AuthViewModelTest {
         viewModel.onPasswordChange(specialPassword)
 
         // Assert
-        assertEquals(specialEmail, viewModel.uiState.email)
-        assertEquals(specialPassword, viewModel.uiState.password)
+        assertEquals(specialEmail, viewModel.uiState.value.email)
+        assertEquals(specialPassword, viewModel.uiState.value.password)
     }
 
     @Test
@@ -363,7 +366,7 @@ class AuthViewModelTest {
         viewModel.onCiudadChange("Quito")
 
         // Assert
-        assertEquals("Quito", viewModel.uiState.ciudadNombre)
-        assertEquals("", viewModel.uiState.ciudadId)
+        assertEquals("Quito", viewModel.uiState.value.ciudadNombre)
+        assertEquals("", viewModel.uiState.value.ciudadId)
     }
 }
