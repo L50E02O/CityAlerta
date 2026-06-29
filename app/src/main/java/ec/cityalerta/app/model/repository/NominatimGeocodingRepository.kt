@@ -11,6 +11,8 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.Normalizer
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -20,8 +22,8 @@ class NominatimGeocodingRepository : GeocodingRepositoryContract {
         private val httpClient = HttpClient(Android)
     }
 
-    override suspend fun reverseGeocode(lat: Double, lng: Double): Result<String> {
-        return try {
+    override suspend fun reverseGeocode(lat: Double, lng: Double): Result<String> = withContext(Dispatchers.IO) {
+        try {
             val url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$lat&lon=$lng&addressdetails=1"
             val response: HttpResponse = httpClient.get(url) {
                 header("User-Agent", "CityAlerta/1.0")
@@ -30,7 +32,7 @@ class NominatimGeocodingRepository : GeocodingRepositoryContract {
 
             val body = response.bodyAsText()
             if (!response.status.isSuccess()) {
-                return Result.failure(Exception("Error de geocodificacion (${response.status.value})"))
+                return@withContext Result.failure(Exception("Error de geocodificacion (${response.status.value})"))
             }
 
             val jsonObject = Json.parseToJsonElement(body).jsonObject

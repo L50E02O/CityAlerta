@@ -4,19 +4,22 @@ import ec.cityalerta.app.model.data.perfil.PerfilResumen
 import ec.cityalerta.app.model.local.PerfilResumenDao
 import ec.cityalerta.app.model.local.PerfilResumenEntity
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 class PerfilLocalRepository(
     private val perfilResumenDao: PerfilResumenDao
 ) {
 
-    suspend fun obtenerPerfilResumen(): PerfilResumen? {
-        return perfilResumenDao.obtenerPerfilResumen()?.toPerfilResumen()
+    suspend fun obtenerPerfilResumen(): PerfilResumen? = withContext(Dispatchers.IO) {
+        perfilResumenDao.obtenerPerfilResumen()?.toPerfilResumen()
     }
 
-    suspend fun guardarPerfilResumen(perfil: PerfilResumen) {
+    suspend fun guardarPerfilResumen(perfil: PerfilResumen) = withContext(Dispatchers.IO) {
         perfilResumenDao.guardarPerfilResumen(perfil.toEntity())
     }
 
-    suspend fun borrarPerfilResumen() {
+    suspend fun borrarPerfilResumen() = withContext(Dispatchers.IO) {
         perfilResumenDao.borrarPerfilResumen()
     }
 
