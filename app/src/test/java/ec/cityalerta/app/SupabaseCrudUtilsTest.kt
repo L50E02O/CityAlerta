@@ -16,7 +16,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -44,12 +46,10 @@ class SupabaseCrudUtilsTest {
     @Test
     fun testSafeSupabaseCallRethrowsCancellation() = kotlinx.coroutines.test.runTest {
         val cancellation = CancellationException("cancelled")
-        try {
+        val e = assertFailsWith<CancellationException> {
             ec.cityalerta.app.model.utils.safeSupabaseCall<String> { throw cancellation }
-            assertTrue(false, "Debe relanzar CancellationException")
-        } catch (e: CancellationException) {
-            assertEquals(cancellation, e)
         }
+        assertEquals("cancelled", e.message)
     }
 
     @Test

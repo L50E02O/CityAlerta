@@ -152,12 +152,12 @@ class ReporteViewModelTest {
         viewModel.sendReport()
         advanceUntilIdle()
 
-        assertEquals("Categoria no seleccionada", viewModel.uiState.value.errorMessage)
+        assertEquals("Categoría no seleccionada", viewModel.uiState.value.errorMessage)
 
         viewModel.onCategoriaChange(ReportType.BACHE)
         viewModel.sendReport()
         advanceUntilIdle()
-        assertEquals("Falta descripcion", viewModel.uiState.value.errorMessage)
+        assertEquals("Falta descripción", viewModel.uiState.value.errorMessage)
 
         viewModel.onDescriptionChange("Bache grande")
         viewModel.sendReport()
@@ -170,6 +170,7 @@ class ReporteViewModelTest {
         val ciudadId = "city-123"
         whenever(authRepository.getUserId()).thenReturn(Result.success("user-123"))
         whenever(authRepository.getCiudadId()).thenReturn(Result.success(ciudadId))
+        whenever(imageModerationRepository.analyzeContent(any(), any())).thenReturn(Result.success(ec.cityalerta.app.model.data.contracts.moderation.ModerationResult(isSafe = true)))
 
         // Outside Manta polygon (simple square for test)
         val geoJson = Geometry(
@@ -201,6 +202,7 @@ class ReporteViewModelTest {
 
         whenever(authRepository.getUserId()).thenReturn(Result.success(userId))
         whenever(authRepository.getCiudadId()).thenReturn(Result.success(ciudadId))
+        whenever(imageModerationRepository.analyzeContent(any(), any())).thenReturn(Result.success(ec.cityalerta.app.model.data.contracts.moderation.ModerationResult(isSafe = true)))
 
         val geoJson = Geometry(
             type = "Polygon",

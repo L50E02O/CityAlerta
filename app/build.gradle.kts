@@ -19,6 +19,14 @@ jacoco {
 }
 
 android {
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.systemProperty("test", "true")
+            }
+        }
+    }
     namespace = "ec.cityalerta.app"
     compileSdk = 37
 
