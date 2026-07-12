@@ -15,8 +15,8 @@ interface ReporteDao {
     @Query("SELECT COUNT(*) FROM reportes WHERE ciudad_id = :ciudadId")
     suspend fun countReportesByCiudad(ciudadId: String): Int
 
-    @Query("SELECT * FROM reportes WHERE ciudad_id = :ciudadId ORDER BY created_at DESC")
-    suspend fun getReportesByCiudad(ciudadId: String): List<ReporteEntity>
+    @Query("SELECT * FROM reportes WHERE ciudad_id = :ciudadId ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
+    suspend fun getReportesByCiudad(ciudadId: String, limit: Int, offset: Int): List<ReporteEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReportes(reportes: List<ReporteEntity>)

@@ -63,9 +63,9 @@ class ReporteDaoTest {
             barrio_id = "barrio-2"
         )
 
-        whenever(mockReporteDao.getReportesByCiudad("ciudad-1")).thenReturn(listOf(reporte1, reporte2))
+        whenever(mockReporteDao.getReportesByCiudad("ciudad-1", 10, 0)).thenReturn(listOf(reporte1, reporte2))
 
-        val reportes = mockReporteDao.getReportesByCiudad("ciudad-1")
+        val reportes = mockReporteDao.getReportesByCiudad("ciudad-1", 10, 0)
 
         assertEquals(2, reportes.size)
         assertEquals("reporte-1", reportes[0].id)

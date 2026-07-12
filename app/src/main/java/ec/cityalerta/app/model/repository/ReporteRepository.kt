@@ -198,6 +198,14 @@ class ReporteRepository(
         }
     }
 
+    fun getLocalReportesFlow(ciudadId: String, limit: Int, offset: Int): kotlinx.coroutines.flow.Flow<List<ReporteEntity>> {
+        return reporteDao?.getReportesByCiudadFlow(ciudadId, limit, offset) ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    }
+
+    suspend fun getTotalLocalReportesCount(ciudadId: String): Int {
+        return reporteDao?.countReportesByCiudad(ciudadId) ?: 0
+    }
+
     suspend fun searchReportes(
         ciudadId: String,
         categoria: ReportType? = null,
