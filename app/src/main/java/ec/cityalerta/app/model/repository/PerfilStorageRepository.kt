@@ -6,6 +6,8 @@ import ec.cityalerta.app.model.utils.safeSupabaseCall
 import io.github.jan.supabase.storage.storage
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class PerfilStorageRepository {
 
@@ -15,18 +17,22 @@ class PerfilStorageRepository {
     suspend fun uploadProfileImage(
         bytes: ByteArray,
         objectName: String
-    ): Result<String> = safeSupabaseCall {
-        SupabaseProvider.client.storage[bucketName]
-            .upload(objectName, bytes)
-        objectName
+    ): Result<String> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.storage[bucketName]
+                .upload(objectName, bytes)
+            objectName
+        }
     }
 
     suspend fun generateSignedImageUrl(
         objectPath: String
-    ): Result<String> = safeSupabaseCall {
-        val signedUrl = SupabaseProvider.client.storage[bucketName]
-            .createSignedUrl(objectPath, expirationDuration)
-        normalizeSignedUrl(signedUrl)
+    ): Result<String> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val signedUrl = SupabaseProvider.client.storage[bucketName]
+                .createSignedUrl(objectPath, expirationDuration)
+            normalizeSignedUrl(signedUrl)
+        }
     }
 
     private fun normalizeSignedUrl(url: String): String {
@@ -40,9 +46,11 @@ class PerfilStorageRepository {
 
     suspend fun deleteProfileImage(
         imageUUID: String
-    ): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.storage[bucketName]
-            .delete(imageUUID)
-        Unit
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.storage[bucketName]
+                .delete(imageUUID)
+            Unit
+        }
     }
 }

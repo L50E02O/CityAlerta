@@ -14,61 +14,73 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class ReporteUbicacionRepository : CrudRepositoryContract<ReporteUbicacion, ReporteUbicacionCreateDto, ReporteUbicacionUpdateDto> {
 
     private val tableName = "reporte_ubicacion"
 
     override suspend fun create(entity: ReporteUbicacionCreateDto): Result<ReporteUbicacion> =
-        safeSupabaseCall {
-            val response = SupabaseProvider.client.from(tableName)
-                .insert(entity.toCreateJson()){
-                select()
-                }
-                .decodeList<JsonObject>()
-                .firstOrNull()
-            response?.toReporteUbicacion() ?: throw Exception("Error al crear reporte ubicacion")
+        withContext(Dispatchers.IO) {
+            safeSupabaseCall {
+                val response = SupabaseProvider.client.from(tableName)
+                    .insert(entity.toCreateJson()){
+                    select()
+                    }
+                    .decodeList<JsonObject>()
+                    .firstOrNull()
+                response?.toReporteUbicacion() ?: throw Exception("Error al crear reporte ubicacion")
+            }
         }
 
     override suspend fun update(entity: ReporteUbicacionUpdateDto, id: String): Result<ReporteUbicacion> =
-        safeSupabaseCall {
-            val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
-                filter {
-                    eq("id", id)
+        withContext(Dispatchers.IO) {
+            safeSupabaseCall {
+                val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
+                    filter {
+                        eq("id", id)
+                    }
+                    select()
                 }
-                select()
+                    .decodeList<JsonObject>()
+                    .firstOrNull()
+                response?.toReporteUbicacion() ?: throw Exception("Error al actualizar reporte ubicacion")
             }
+        }
+
+    override suspend fun getAll(): Result<List<ReporteUbicacion>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL)
+                .decodeList<JsonObject>()
+                .map { it.toReporteUbicacion() }
+        }
+    }
+
+    override suspend fun getById(id: String): Result<ReporteUbicacion?> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL) {
+                    filter {
+                        eq("id", id)
+                    }
+                }
                 .decodeList<JsonObject>()
                 .firstOrNull()
-            response?.toReporteUbicacion() ?: throw Exception("Error al actualizar reporte ubicacion")
+                ?.toReporteUbicacion()
         }
-
-    override suspend fun getAll(): Result<List<ReporteUbicacion>> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL)
-            .decodeList<JsonObject>()
-            .map { it.toReporteUbicacion() }
     }
 
-    override suspend fun getById(id: String): Result<ReporteUbicacion?> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
+    override suspend fun delete(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName).delete {
                 filter {
                     eq("id", id)
                 }
             }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toReporteUbicacion()
-    }
-
-    override suspend fun delete(id: String): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).delete {
-            filter {
-                eq("id", id)
-            }
+            Unit
         }
-        Unit
     }
 
     private fun JsonObject.toReporteUbicacion(): ReporteUbicacion {

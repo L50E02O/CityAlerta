@@ -13,6 +13,8 @@ import io.github.jan.supabase.postgrest.from
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class PushSubscriptionRepository(
     private val tableName: String = "push_subscription"
@@ -29,21 +31,25 @@ class PushSubscriptionRepository(
         const val updatedAt = "updated_at"
     }
 
-    override suspend fun saveOrUpdate(entity: PushSubscriptionCreateDto): Result<PushSubscription> = safeSupabaseCall {
-        val response = SupabaseProvider.client.from(tableName)
-            .upsert(entity.toCreateJson(), onConflict = PushColumns.deviceId) {
-                select()
-            }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-        response?.toPushSubscription() ?: throw Exception("Error al guardar/actualizar suscripcion")
+    override suspend fun saveOrUpdate(entity: PushSubscriptionCreateDto): Result<PushSubscription> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val response = SupabaseProvider.client.from(tableName)
+                .upsert(entity.toCreateJson(), onConflict = PushColumns.deviceId) {
+                    select()
+                }
+                .decodeList<JsonObject>()
+                .firstOrNull()
+            response?.toPushSubscription() ?: throw Exception("Error al guardar/actualizar suscripcion")
+        }
     }
 
-    override suspend fun deleteByToken(token: String): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).delete {
-            filter { eq(PushColumns.token, token) }
+    override suspend fun deleteByToken(token: String): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName).delete {
+                filter { eq(PushColumns.token, token) }
+            }
+            Unit
         }
-        Unit
     }
 
     private fun PushSubscriptionCreateDto.toCreateJson(): JsonObject {

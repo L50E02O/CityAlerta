@@ -22,6 +22,8 @@ import io.github.jan.supabase.postgrest.rpc
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 import ec.cityalerta.app.model.local.ReporteDao
 import ec.cityalerta.app.model.local.ReporteEntity
@@ -32,72 +34,85 @@ class ReporteRepository(
 
     private val tableName = "reporte"
 
-    override suspend fun create(entity: ReporteCreateDto): Result<Reporte> = safeSupabaseCall {
-        val response = SupabaseProvider.client.from(tableName)
-            .insert(entity.toCreateJson()){
+    override suspend fun create(entity: ReporteCreateDto): Result<Reporte> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val response = SupabaseProvider.client.from(tableName)
+                .insert(entity.toCreateJson()){
+                    select()
+                }
+                .decodeList<JsonObject>()
+                .firstOrNull()
+            response?.toReporte() ?: throw Exception("Error al crear reporte")
+        }
+    }
+
+    override suspend fun update(entity: ReporteUpdateDto, id: String): Result<Reporte> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
+                filter {
+                    eq("id", id)
+                }
                 select()
             }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-        response?.toReporte() ?: throw Exception("Error al crear reporte")
-    }
-
-    override suspend fun update(entity: ReporteUpdateDto, id: String): Result<Reporte> = safeSupabaseCall {
-        val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
-            filter {
-                eq("id", id)
-            }
-            select()
+                .decodeList<JsonObject>()
+                .firstOrNull()
+            response?.toReporte() ?: throw Exception("Error al actualizar reporte")
         }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-        response?.toReporte() ?: throw Exception("Error al actualizar reporte")
     }
 
-    override suspend fun getAll(): Result<List<Reporte>> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL)
-            .decodeList<JsonObject>()
-            .map { it.toReporte() }
+    override suspend fun getAll(): Result<List<Reporte>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL)
+                .decodeList<JsonObject>()
+                .map { it.toReporte() }
+        }
     }
 
-    override suspend fun getById(id: String): Result<Reporte?> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
+    override suspend fun getById(id: String): Result<Reporte?> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL) {
+                    filter {
+                        eq("id", id)
+                    }
+                }
+                .decodeList<JsonObject>()
+                .firstOrNull()
+                ?.toReporte()
+        }
+    }
+
+    override suspend fun delete(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName).delete {
                 filter {
                     eq("id", id)
                 }
             }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toReporte()
-    }
-
-    override suspend fun delete(id: String): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).delete {
-            filter {
-                eq("id", id)
-            }
+            Unit
         }
-        Unit
     }
 
-    suspend fun getReporteByUsuarioId(usuarioId: String): Result<List<Reporte>> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
-                filter {
-                    eq("usuario_id", usuarioId)
+    suspend fun getReporteByUsuarioId(usuarioId: String): Result<List<Reporte>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL) {
+                    filter {
+                        eq("usuario_id", usuarioId)
+                    }
                 }
-            }
-            .decodeList<JsonObject>()
-            .map { it.toReporte() }
+                .decodeList<JsonObject>()
+                .map { it.toReporte() }
+        }
     }
 
     suspend fun getReporteByCiudadId(
         ciudadId: String,
         limit: Int = 10,
         offset: Int = 0
-    ): Result<Pair<List<Reporte>, Long>> = safeSupabaseCall {
+    ): Result<Pair<List<Reporte>, Long>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
         val response = SupabaseProvider.client.from(tableName)
             .select(Columns.raw("*, reporte_imagen(url_path, storage_uuid), reporte_ubicacion(direccion_aproximada, lat, lng), barrio(nombre)")) {
                 filter {
@@ -140,28 +155,55 @@ class ReporteRepository(
                 dao.refreshReportes(ciudadId, entities)
             }
         }
-        
-        Pair(reportes, totalCount)
+            
+            Pair(reportes, totalCount)
+        }
     }
 
-    fun getLocalReportesFlow(
+    /**
+     * SSOT: Método unificado que obtiene reportes por ciudad.
+     * Internamente decide usar Room (cache) o Supabase (remoto).
+     * Los ViewModels no necesitan saber la fuente de datos.
+     */
+    fun getReportesByCiudad(
         ciudadId: String,
         limit: Int = 10,
-        offset: Int = 0
-    ): kotlinx.coroutines.flow.Flow<List<ReporteEntity>> {
-        return reporteDao?.getReportesByCiudadFlow(ciudadId, limit, offset) 
-            ?: kotlinx.coroutines.flow.flowOf(emptyList())
+        offset: Int = 0,
+        forceRefresh: Boolean = false
+    ): kotlinx.coroutines.flow.Flow<List<Reporte>> {
+        return kotlinx.coroutines.flow.flow {
+            // Si hay Room disponible y no se fuerza refresh, usar cache local
+            if (reporteDao != null && !forceRefresh) {
+                val localCount = reporteDao.countReportesByCiudad(ciudadId)
+                if (localCount > 0) {
+                    // Emitir datos locales primero (respuesta rápida)
+                    val localEntities = reporteDao.getReportesByCiudad(ciudadId, limit, offset)
+                    emit(localEntities.map { it.toReporte() })
+                }
+            }
+            
+            // Siempre sincronizar con Supabase para tener datos frescos
+            val remoteResult = getReporteByCiudadId(ciudadId, limit, offset)
+            remoteResult.onSuccess { (reportes, _) ->
+                emit(reportes)
+            }
+        }
     }
 
-    suspend fun getTotalLocalReportesCount(ciudadId: String): Int {
-        return reporteDao?.countReportesByCiudad(ciudadId) ?: 0
+    suspend fun getReportesCount(ciudadId: String): Int = withContext(Dispatchers.IO) {
+        // Priorizar conteo local si está disponible
+        reporteDao?.countReportesByCiudad(ciudadId) ?: run {
+            // Fallback a conteo remoto
+            getReporteByCiudadId(ciudadId, 1, 0).getOrNull()?.second?.toInt() ?: 0
+        }
     }
 
     suspend fun searchReportes(
         ciudadId: String,
         categoria: ReportType? = null,
         barrioNombreQuery: String? = null
-    ): Result<List<ReporteSearchResult>> = safeSupabaseCall {
+    ): Result<List<ReporteSearchResult>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
         SupabaseProvider.client.postgrest.rpc(
             "search_reportes",
             mapOf(
@@ -170,8 +212,9 @@ class ReporteRepository(
                 "p_barrio_nombre" to barrioNombreQuery?.trim()?.takeIf { it.isNotEmpty() }
             )
         )
-            .decodeList<JsonObject>()
-            .map { it.toReporteSearchResult() }
+                .decodeList<JsonObject>()
+                .map { it.toReporteSearchResult() }
+        }
     }
 
     private fun JsonObject.toReporteSearchResult(): ReporteSearchResult {

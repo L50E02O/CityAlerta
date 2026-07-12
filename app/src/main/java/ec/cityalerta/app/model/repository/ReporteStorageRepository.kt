@@ -8,6 +8,8 @@ import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
@@ -22,12 +24,14 @@ class ReporteStorageRepository {
     suspend fun uploadReportImage(
         bytes: ByteArray,
         objectName: String
-    ): Result<String> = safeSupabaseCall {
-        SupabaseProvider.client.storage[bucketName]
-            .upload(objectName, bytes)
-        // Limpiar cache si se sobreescribe
-        urlCache.remove(objectName)
-        objectName
+    ): Result<String> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.storage[bucketName]
+                .upload(objectName, bytes)
+            // Limpiar cache si se sobreescribe
+            urlCache.remove(objectName)
+            objectName
+        }
     }
 
     /**
@@ -36,30 +40,34 @@ class ReporteStorageRepository {
      */
     suspend fun generateSignedImageUrl(
         objectPath: String
-    ): Result<String> = safeSupabaseCall {
-        urlCache.get(objectPath)?.let { return@safeSupabaseCall it }
+    ): Result<String> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            urlCache.get(objectPath)?.let { return@safeSupabaseCall it }
 
-        val signedUrl = SupabaseProvider.client.storage[bucketName]
-            .createSignedUrl(objectPath, expirationDuration)
-        val normalized = normalizeSignedUrl(signedUrl)
-        
-        urlCache.put(objectPath, normalized)
-        normalized
+            val signedUrl = SupabaseProvider.client.storage[bucketName]
+                .createSignedUrl(objectPath, expirationDuration)
+            val normalized = normalizeSignedUrl(signedUrl)
+            
+            urlCache.put(objectPath, normalized)
+            normalized
+        }
     }
 
     suspend fun generateSignedImageUrls(objectPaths: List<String>): Result<Map<String, String>> =
-        safeSupabaseCall {
-            if (objectPaths.isEmpty()) {
-                return@safeSupabaseCall emptyMap()
-            }
-            coroutineScope {
-                objectPaths.distinct().map { path ->
-                    async {
-                        path to generateSignedImageUrl(path).getOrNull()
-                    }
-                }.awaitAll()
-                    .mapNotNull { (path, url) -> url?.let { path to it } }
-                    .toMap()
+        withContext(Dispatchers.IO) {
+            safeSupabaseCall {
+                if (objectPaths.isEmpty()) {
+                    return@safeSupabaseCall emptyMap()
+                }
+                coroutineScope {
+                    objectPaths.distinct().map { path ->
+                        async {
+                            path to generateSignedImageUrl(path).getOrNull()
+                        }
+                    }.awaitAll()
+                        .mapNotNull { (path, url) -> url?.let { path to it } }
+                        .toMap()
+                }
             }
         }
 
@@ -74,9 +82,11 @@ class ReporteStorageRepository {
 
     suspend fun deleteReportImage(
         imageUUID: String
-    ): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.storage[bucketName]
-            .delete(imageUUID)
-        Unit
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.storage[bucketName]
+                .delete(imageUUID)
+            Unit
+        }
     }
 }

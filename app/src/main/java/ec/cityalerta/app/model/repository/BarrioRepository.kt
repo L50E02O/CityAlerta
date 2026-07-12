@@ -17,72 +17,86 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 class BarrioRepository : CrudRepositoryContract<Barrio, BarrioCreateDto, BarrioUpdateDto> {
 
-    override suspend fun create(entity: BarrioCreateDto): Result<Barrio> = safeSupabaseCall {
-        val newId = SupabaseProvider.client.postgrest.rpc(
-            "create_barrio",
-            mapOf(
-                "p_ciudad_id" to entity.ciudadId,
-                "p_nombre" to entity.nombre,
-                "p_geojson" to entity.perimetro.toGeoJsonObject()
+    override suspend fun create(entity: BarrioCreateDto): Result<Barrio> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val newId = SupabaseProvider.client.postgrest.rpc(
+                "create_barrio",
+                mapOf(
+                    "p_ciudad_id" to entity.ciudadId,
+                    "p_nombre" to entity.nombre,
+                    "p_geojson" to entity.perimetro.toGeoJsonObject()
+                )
+            ).decodeAs<String>()
+
+            getById(newId).getOrNull() ?: throw Exception("Error al recuperar barrio creado")
+        }
+    }
+
+    override suspend fun update(entity: BarrioUpdateDto, id: String): Result<Barrio> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc(
+                "update_barrio",
+                mapOf(
+                    "p_id" to id,
+                    "p_nombre" to entity.nombre,
+                    "p_geojson" to entity.perimetro?.toGeoJsonObject()
+                )
             )
-        ).decodeAs<String>()
 
-        getById(newId).getOrNull() ?: throw Exception("Error al recuperar barrio creado")
+            getById(id).getOrNull() ?: throw Exception("Error al recuperar barrio actualizado")
+        }
     }
 
-    override suspend fun update(entity: BarrioUpdateDto, id: String): Result<Barrio> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc(
-            "update_barrio",
-            mapOf(
-                "p_id" to id,
-                "p_nombre" to entity.nombre,
-                "p_geojson" to entity.perimetro?.toGeoJsonObject()
+    override suspend fun getAll(): Result<List<Barrio>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc("get_barrios")
+                .decodeList<JsonObject>()
+                .map { it.toBarrio() }
+        }
+    }
+
+    override suspend fun getById(id: String): Result<Barrio?> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc(
+                "get_barrio_by_id",
+                mapOf("p_id" to id)
             )
-        )
-
-        getById(id).getOrNull() ?: throw Exception("Error al recuperar barrio actualizado")
+                .decodeList<JsonObject>()
+                .firstOrNull()
+                ?.toBarrio()
+        }
     }
 
-    override suspend fun getAll(): Result<List<Barrio>> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc("get_barrios")
-            .decodeList<JsonObject>()
-            .map { it.toBarrio() }
+    suspend fun getByPoint(ciudadId: String, lat: Double, lng: Double): Result<Barrio?> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc(
+                "get_barrio_by_point",
+                buildJsonObject {
+                    put("p_ciudad_id", JsonPrimitive(ciudadId))
+                    put("p_lat", JsonPrimitive(lat))
+                    put("p_lng", JsonPrimitive(lng))
+                }
+            )
+                .decodeList<JsonObject>()
+                .firstOrNull()
+                ?.toBarrio()
+        }
     }
 
-    override suspend fun getById(id: String): Result<Barrio?> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc(
-            "get_barrio_by_id",
-            mapOf("p_id" to id)
-        )
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toBarrio()
-    }
-
-    suspend fun getByPoint(ciudadId: String, lat: Double, lng: Double): Result<Barrio?> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc(
-            "get_barrio_by_point",
-            buildJsonObject {
-                put("p_ciudad_id", JsonPrimitive(ciudadId))
-                put("p_lat", JsonPrimitive(lat))
-                put("p_lng", JsonPrimitive(lng))
-            }
-        )
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toBarrio()
-    }
-
-    override suspend fun delete(id: String): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc(
-            "delete_barrio",
-            mapOf("p_id" to id)
-        )
-        Unit
+    override suspend fun delete(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc(
+                "delete_barrio",
+                mapOf("p_id" to id)
+            )
+            Unit
+        }
     }
 
     private fun JsonObject.toBarrio(): Barrio {

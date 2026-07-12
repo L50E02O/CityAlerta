@@ -19,74 +19,88 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class CiudadRepository : CrudRepositoryContract<Ciudad, CiudadCreateDto, CiudadUpdateDto> {
 
     private val tableName = "ciudad"
 
-    override suspend fun create(entity: CiudadCreateDto): Result<Ciudad> = safeSupabaseCall {
-        val newId = SupabaseProvider.client.postgrest.rpc(
-            "create_ciudad",
-            mapOf(
-                "p_nombre" to entity.nombre,
-                "p_pais" to entity.pais,
-                "p_geojson" to entity.geojson.toGeoJsonObject(),
-                "p_centro_lat" to entity.centroLat,
-                "p_centro_lng" to entity.centroLng
+    override suspend fun create(entity: CiudadCreateDto): Result<Ciudad> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val newId = SupabaseProvider.client.postgrest.rpc(
+                "create_ciudad",
+                mapOf(
+                    "p_nombre" to entity.nombre,
+                    "p_pais" to entity.pais,
+                    "p_geojson" to entity.geojson.toGeoJsonObject(),
+                    "p_centro_lat" to entity.centroLat,
+                    "p_centro_lng" to entity.centroLng
+                )
+            ).decodeAs<String>()
+
+            getById(newId).getOrNull() ?: throw Exception("Error al recuperar ciudad creada")
+        }
+    }
+
+    override suspend fun update(entity: CiudadUpdateDto, id: String): Result<Ciudad> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc(
+                "update_ciudad",
+                mapOf(
+                    "p_id" to id,
+                    "p_nombre" to entity.nombre,
+                    "p_pais" to entity.pais,
+                    "p_geojson" to entity.geojson?.toGeoJsonObject(),
+                    "p_centro_lat" to entity.centroLat,
+                    "p_centro_lng" to entity.centroLng
+                )
             )
-        ).decodeAs<String>()
 
-        getById(newId).getOrNull() ?: throw Exception("Error al recuperar ciudad creada")
+            getById(id).getOrNull() ?: throw Exception("Error al recuperar ciudad actualizada")
+        }
     }
 
-    override suspend fun update(entity: CiudadUpdateDto, id: String): Result<Ciudad> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc(
-            "update_ciudad",
-            mapOf(
-                "p_id" to id,
-                "p_nombre" to entity.nombre,
-                "p_pais" to entity.pais,
-                "p_geojson" to entity.geojson?.toGeoJsonObject(),
-                "p_centro_lat" to entity.centroLat,
-                "p_centro_lng" to entity.centroLng
-            )
-        )
-
-        getById(id).getOrNull() ?: throw Exception("Error al recuperar ciudad actualizada")
+    override suspend fun getAll(): Result<List<Ciudad>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc("get_ciudades")
+                .decodeList<JsonObject>()
+                .map { it.toCiudad() }
+        }
     }
 
-    override suspend fun getAll(): Result<List<Ciudad>> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc("get_ciudades")
-            .decodeList<JsonObject>()
-            .map { it.toCiudad() }
-    }
-
-    suspend fun getAllByCountry(country: String): Result<List<Ciudad>> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
-                filter {
-                    eq("pais", country)
+    suspend fun getAllByCountry(country: String): Result<List<Ciudad>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL) {
+                    filter {
+                        eq("pais", country)
+                    }
                 }
-            }
-            .decodeList<JsonObject>()
-            .map { it.toCiudad() }
+                .decodeList<JsonObject>()
+                .map { it.toCiudad() }
+        }
     }
 
-    override suspend fun getById(id: String): Result<Ciudad?> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc(
-            "get_ciudad_by_id",
-            mapOf("p_id" to id)
-        )
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toCiudad()
+    override suspend fun getById(id: String): Result<Ciudad?> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc(
+                "get_ciudad_by_id",
+                mapOf("p_id" to id)
+            )
+                .decodeList<JsonObject>()
+                .firstOrNull()
+                ?.toCiudad()
+        }
     }
 
-    override suspend fun delete(id: String): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.postgrest.rpc(
-            "delete_ciudad",
-            mapOf("p_id" to id)
-        ).let { }
+    override suspend fun delete(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.postgrest.rpc(
+                "delete_ciudad",
+                mapOf("p_id" to id)
+            ).let { }
+        }
     }
 
     private fun JsonObject.toCiudad(): Ciudad {

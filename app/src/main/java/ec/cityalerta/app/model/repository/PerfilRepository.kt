@@ -14,56 +14,68 @@ import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonElement
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class PerfilRepository : CrudRepositoryContract<Perfil, PerfilCreateDto, PerfilUpdateDto> {
 
     private val tableName = "perfil"
 
-    override suspend fun create(entity: PerfilCreateDto): Result<Perfil> = safeSupabaseCall {
-        val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
-            .decodeList<JsonObject>()
-            .firstOrNull()
-        response?.toPerfil() ?: throw Exception("Error al crear perfil")
-    }
-
-    override suspend fun update(entity: PerfilUpdateDto, id: String): Result<Perfil> = safeSupabaseCall {
-        val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
-            filter {
-                eq("id", id)
-            }
-            select()
+    override suspend fun create(entity: PerfilCreateDto): Result<Perfil> =withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val response = SupabaseProvider.client.from(tableName).insert(entity.toCreateJson())
+                .decodeList<JsonObject>()
+                .firstOrNull()
+            response?.toPerfil() ?: throw Exception("Error al crear perfil")
         }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-        response?.toPerfil() ?: throw Exception("Error al actualizar perfil")
     }
 
-    override suspend fun getAll(): Result<List<Perfil>> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL)
-            .decodeList<JsonObject>()
-            .map { it.toPerfil() }
+    override suspend fun update(entity: PerfilUpdateDto, id: String): Result<Perfil> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            val response = SupabaseProvider.client.from(tableName).update(entity.toUpdateJson()) {
+                filter {
+                    eq("id", id)
+                }
+                select()
+            }
+                .decodeList<JsonObject>()
+                .firstOrNull()
+            response?.toPerfil() ?: throw Exception("Error al actualizar perfil")
+        }
     }
 
-    override suspend fun getById(id: String): Result<Perfil?> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL) {
+    override suspend fun getAll(): Result<List<Perfil>> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL)
+                .decodeList<JsonObject>()
+                .map { it.toPerfil() }
+        }
+    }
+
+    override suspend fun getById(id: String): Result<Perfil?> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL) {
+                    filter {
+                        eq("id", id)
+                    }
+                }
+                .decodeList<JsonObject>()
+                .firstOrNull()
+                ?.toPerfil()
+        }
+    }
+
+    override suspend fun delete(id: String): Result<Unit> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName).delete {
                 filter {
                     eq("id", id)
                 }
             }
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toPerfil()
-    }
-
-    override suspend fun delete(id: String): Result<Unit> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName).delete {
-            filter {
-                eq("id", id)
-            }
+            Unit
         }
-        Unit
     }
 
     private fun JsonObject.toPerfil(): Perfil {

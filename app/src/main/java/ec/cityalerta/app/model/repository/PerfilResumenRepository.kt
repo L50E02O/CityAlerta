@@ -9,17 +9,21 @@ import ec.cityalerta.app.model.utils.stringOrEmpty
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.json.JsonObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class PerfilResumenRepository {
 
     private val tableName = "perfil_resumen"
 
-    suspend fun getCurrentResumen(): Result<PerfilResumen?> = safeSupabaseCall {
-        SupabaseProvider.client.from(tableName)
-            .select(Columns.ALL)
-            .decodeList<JsonObject>()
-            .firstOrNull()
-            ?.toPerfilResumen()
+    suspend fun getCurrentResumen(): Result<PerfilResumen?> = withContext(Dispatchers.IO) {
+        safeSupabaseCall {
+            SupabaseProvider.client.from(tableName)
+                .select(Columns.ALL)
+                .decodeList<JsonObject>()
+                .firstOrNull()
+                ?.toPerfilResumen()
+        }
     }
 
     private fun JsonObject.toPerfilResumen(): PerfilResumen {
