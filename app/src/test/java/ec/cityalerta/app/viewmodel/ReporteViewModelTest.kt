@@ -94,7 +94,7 @@ class ReporteViewModelTest {
         whenever(authRepository.getCiudadId()).thenReturn(Result.success("city-id"))
 
         // Set valid category, image, location, but leave description empty
-        viewModel.onCategoriaChange(ReportType.VANDALISMO)
+        viewModel.onCategoriaChange(ReportType.BACHE)
         viewModel.setImagenData(byteArrayOf(1, 2, 3))
         viewModel.setImagen("url")
         viewModel.setUbicacion(-0.95, -80.7)
@@ -133,7 +133,7 @@ class ReporteViewModelTest {
         whenever(authRepository.getCiudadId()).thenReturn(Result.success("city-id"))
 
         viewModel.onDescriptionChange("Robo en la calle")
-        viewModel.onCategoriaChange(ReportType.ROBO)
+        viewModel.onCategoriaChange(ReportType.LUZ)
         viewModel.setUbicacion(-0.95, -80.7)
         // No image set
 
