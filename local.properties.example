@@ -1,0 +1,6 @@
+SUPABASE_URL=https://your-supabase-url.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+STORAGE_BASE_URL=https://your-supabase-url.supabase.co/storage/v1
+GOOGLE_MAPS_API_KEY=AIzaSyYourGoogleMapsApiKeyHere
+PASSWORD_RESET_SECRET=your-password-reset-secret
+GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere

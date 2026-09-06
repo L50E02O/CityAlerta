@@ -1,309 +1,109 @@
 # CityAlerta
 
-Aplicación móvil nativa para Android que permite a los usuarios de Manta, Manabí, Ecuador reportar incidentes urbanos y dar seguimiento a su resolución mediante la interacción con administradores y agencias responsables.
+![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0-blue?logo=kotlin) ![Min SDK](https://img.shields.io/badge/Min%20SDK-28-green) ![Target SDK](https://img.shields.io/badge/Target%20SDK-37-brightgreen) ![Architecture](https://img.shields.io/badge/Architecture-MVVM%20%7C%20Clean-orange) ![Testing](https://img.shields.io/badge/Testing-TDD%20%7C%20JUnit-red)
+
+CityAlerta es una aplicación móvil nativa para Android diseñada para mejorar la comunicación entre ciudadanos y autoridades mediante el reporte geolocalizado de incidentes urbanos. Los ciudadanos pueden reportar problemas en tiempo real, mientras que las entidades responsables gestionan, categorizan y derivan estos reportes para su resolución eficiente.
 
 ---
 
-## Descripción
+## Arquitectura y Patrones
 
-CityAlerta es una solución móvil orientada a mejorar la comunicación entre ciudadanos, administradores y entidades responsables (empresas de servicios públicos, seguridad, etc.). Los usuarios pueden reportar problemas geolocalizados, mientras que los administradores gestionan y derivan estos reportes a agencias correspondientes.
+El proyecto implementa **MVVM (Model-View-ViewModel)** combinado con **Clean Architecture**. Esta separación estricta de responsabilidades garantiza un código escalable, testeable y mantenible. 
 
-El sistema está diseñado con un enfoque escalable, permitiendo su evolución hacia un backend centralizado y un panel web administrativo.
+### Flujo de Datos
 
----
-
-## Especificaciones del Proyecto
-
-- **Ubicación:** Manta, Manabí, Ecuador  
-- **Plataforma:** Android Nativo  
-- **Lenguaje:** Kotlin  
-- **Framework de UI:** Jetpack Compose  
-- **Arquitectura:** MVVM + Clean Architecture  
-- **Principios:** SOLID  
+```mermaid
+graph TD
+    UI[UI Layer - Jetpack Compose] -->|User Actions| VM[ViewModel]
+    VM -->|StateFlow Emissions| UI
+    VM -->|Business Logic| UC[Use Cases / Repository]
+    UC -->|Data Request| LS[Local Source - Room DAO]
+    UC -->|Network Request| RS[Remote Source - Supabase / API]
+    LS -.->|Flow| UC
+    RS -.->|Response| UC
+```
 
 ---
 
 ## Stack Tecnológico
 
-### Core
-- Kotlin  
-- Jetpack Compose  
-- Android Architecture Components (ViewModel, StateFlow)  
+### Core & UI
+- **Lenguaje:** Kotlin
+- **UI Toolkit:** Jetpack Compose (Material Design 3)
+- **Arquitectura:** Android Architecture Components (ViewModel, StateFlow, Coroutines)
 
-### Persistencia
-- Room Database (fuente local)  
-- Preparado para integración con backend remoto (API REST o servicios como Firebase/Supabase)  
+### Persistencia & Backend
+- **Local:** Room Database
+- **Remoto:** Supabase (GoTrue, PostgREST, Storage, Realtime)
+- **Networking:** Ktor Client
 
-### Mapas y Geolocalización
-- Google Maps SDK  
-- Ubicación base: Lat -0.967653, Lng -80.708910  
-
-### Inyección de Dependencias
-- Hilt (recomendado)  
+### Mapas & Multimedia
+- **Geolocalización:** Google Maps SDK & Maps Compose
+- **Cámara:** CameraX
+- **Imágenes:** Coil Compose
 
 ### Testing
-- JUnit (unit testing)  
-- Compose Testing Library (UI testing)  
+- **Unit Testing:** JUnit 4, Kotlinx Coroutines Test, Mockito
 
 ---
 
-## Arquitectura
+## Estrategia de Testing (TDD)
 
-El proyecto implementa **MVVM + Clean Architecture**, separando responsabilidades en capas bien definidas:
+El proyecto sigue la metodología **Test-Driven Development (TDD)** (Red-Green-Refactor) para blindar la lógica de negocio y garantizar la resiliencia del sistema. 
 
-    ├── ui/ # Capa de presentación
-    │ ├── screens/
-    │ ├── components/
-    │ └── navigation/
-    ├── viewmodel/ # ViewModels (estado y lógica de UI)
-    ├── domain/ # Lógica de negocio
-    │ ├── model/ # Entidades de dominio
-    │ ├── repository/ # Interfaces
-    │ └── usecase/ # Casos de uso
-    ├── data/ # Capa de datos
-    │ ├── local/ # Room
-    │ ├── remote/ # API
-    │ └── repository/ # Implementaciones
-    └── utils/ # Utilidades
+Nuestra suite de pruebas cubre:
+- **Validación de Datos:** Verificación de campos obligatorios, formatos y estados iniciales en la creación de reportes.
+- **Operaciones CRUD:** Pruebas sobre la capa de persistencia (Repositories y DAOs) para asegurar la correcta inserción, lectura y manejo de errores.
+- **Flujos de Estado:** Validación de las emisiones de `StateFlow` en los ViewModels (`Loading`, `Success`, `Error`).
 
+Para ejecutar la suite completa de pruebas desde la terminal, utiliza el siguiente comando:
 
----
-
-## Principios de Diseño
-
-### SOLID
-
-- **Single Responsibility:** Cada clase tiene una única responsabilidad.  
-- **Open/Closed:** El sistema permite extensión sin modificar código existente.  
-- **Liskov Substitution:** Las implementaciones pueden sustituirse sin afectar el sistema.  
-- **Interface Segregation:** Interfaces específicas y no monolíticas.  
-- **Dependency Inversion:** Dependencias hacia abstracciones, no implementaciones.  
-
-### Clean Architecture
-
-- Separación clara entre UI, dominio y datos.  
-- El dominio no depende de frameworks externos.  
-- Uso de casos de uso para encapsular lógica de negocio.  
-
----
-
-## Modelo de Datos (Alineado con ERD)
-
-```mermaid
-erDiagram
-    direction TB
-    ciudad {
-        uuid id PK ""
-        varchar nombre ""
-        varchar pais ""
-        jsonb geojson "Límites de la ciudad"
-        decimal centroLat ""
-        decimal centroLng ""
-        timestamp created_at ""
-        timestamp updated_at ""
-    }
-
-    barrio {
-        uuid id PK ""
-        uuid ciudad_id FK ""
-        varchar nombre ""
-        geometry perimetro ""
-        timestamp created_at ""
-        timestamp updated_at ""
-    }
-
-    perfil {
-        uuid id PK ""
-        varchar nombre_completo ""
-        varchar rol_slug ""
-        boolean activo ""
-        timestamp created_at ""
-        timestamp updated_at ""
-    }
-
-    reporte {
-        uuid id PK ""
-        uuid usuario_id FK ""
-        uuid ciudad_id FK ""
-        uuid ubicacion_id FK ""
-        text descripcion ""
-        varchar estado_slug ""
-        timestamp fecha_reporte ""
-        varchar categoria ""
-        timestamp created_at ""
-        timestamp updated_at ""
-    }
-
-    reporte_ubicacion {
-        uuid id PK ""
-        decimal lat ""
-        decimal lng ""
-        varchar direccion_aproximada ""
-        timestamp created_at ""
-        timestamp updated_at ""
-    }
-
-    reporte_imagen {
-        uuid id PK ""
-        uuid reporte_id FK ""
-        uuid storage_uuid ""
-        varchar url_path ""
-        timestamp created_at ""
-        timestamp updated_at ""
-    }
-
-    perfil ||--o{ reporte : "crea"
-    ciudad ||--o{ barrio : "contiene"
-    ciudad ||--o{ reporte : "registra"
-    reporte ||--|| reporte_ubicacion : "se ubica en"
-    reporte ||--o{ reporte_imagen : "contiene"
+```bash
+./gradlew test
 ```
----
-
-## Estados del Reporte
-
-Se recomienda el uso de un enum:
-
-    PENDIENTE
-    EN_PROCESO
-    RESUELTO
-
 
 ---
 
-## Casos de Uso (Ejemplos)
+## Configuración Local
 
-- CrearReporteUseCase  
-- ObtenerReportesUseCase  
-- AsignarAgenciaUseCase  
-- CambiarEstadoReporteUseCase  
-- SubirImagenReporteUseCase  
+Para ejecutar el proyecto en tu entorno local, sigue estos pasos:
 
----
+1. **Clonar el repositorio:**
+   ```bash
+   git clone <URL_DEL_REPOSITORIO>
+   cd CityAlerta
+   ```
 
-## Repositorios (Abstracción)
+2. **Configurar variables de entorno:**
+   El proyecto utiliza credenciales para servicios externos (Google Maps, Supabase, Gemini). Renombra o copia el archivo de ejemplo para crear tus variables locales:
+   ```bash
+   cp local.properties.example local.properties
+   ```
+   Abre `local.properties` y reemplaza los valores de ejemplo con tus propias API Keys y credenciales.
 
-Ejemplo:
-
-kotlin
-    ``
-    interface ReporteRepository {
-        suspend fun crearReporte(reporte: Reporte)
-        suspend fun obtenerReportes(): List<Reporte>
-        suspend fun asignarAgencia(reporteId: String, agenciaId: String)
-    }``
-
----
-## Flujo del Sistema
-    El usuario crea un reporte desde la aplicación móvil.
-    El sistema almacena el reporte localmente y/o en backend.
-    El administrador visualiza los reportes.
-    El administrador asigna una agencia.
-    La agencia gestiona el incidente.
-    El estado del reporte se actualiza hasta su resolución.
----
-## Funcionalidades Principales
-Navegación:
-
-    Explorar (feed de reportes)
-    Crear reporte
-    Mapa interactivo
-  
-Autenticación:
-
-    Registro y login
-    Modo invitado (solo lectura)
-  
-Reportes:
-
-    Creación con ubicación
-    Asociación a barrios
-    Subida de imágenes
-    Seguimiento de estado
+3. **Compilar y Ejecutar:**
+   Abre el proyecto en Android Studio (Flamingo o superior) o usa Gradle desde la terminal:
+   ```bash
+   ./gradlew installDebug
+   ```
 
 ---
 
-## Escalabilidad
-El sistema está diseñado para evolucionar hacia:
+## AI & Automation Roadmap
 
-    Backend centralizado (API REST / GraphQL)
-    Sincronización en tiempo real
-    Panel web administrativo
-    Notificaciones push
-    Integración con servicios externos
----
+Como parte de la evolución tecnológica de CityAlerta, planeamos integrar capacidades de Inteligencia Artificial para automatizar y agilizar el trabajo de las agencias de respuesta.
 
-## Roadmap
+### Especificación: Endpoint de IA para Categorización y Severidad
 
-     Implementación de casos de uso (UseCases)
-     Integración con backend remoto
-     Sistema de asignación de agencias
-     Gestión de estados de reportes
-     Subida de imágenes
-     Panel web para administradores
-     Notificaciones push
-     Sistema de comentarios
+**Objetivo:** Analizar automáticamente la descripción y el contexto del reporte para asignar una categoría sugerida y evaluar el nivel de severidad (Bajo, Medio, Alto, Crítico) sin intervención humana inicial.
 
----
+**Flujo Propuesto:**
+1. **Interceptación del Reporte:** Al crearse un reporte, un Edge Function (Supabase) o Worker captura el evento.
+2. **Procesamiento de Lenguaje Natural (NLP):**
+   - El texto del reporte se envía a un modelo de lenguaje (ej. Gemini o Claude) mediante un prompt estructurado.
+   - El modelo extrae palabras clave (ej. "fuego", "armas", "bache") e identifica el tono de urgencia.
+3. **Clasificación y Salida:**
+   - Retorna un JSON estructurado con la categoría recomendada (ej. `INCENDIO`, `VANDALISMO`) y un score de severidad de 1 a 10.
+4. **Actualización Automática:** El sistema actualiza el registro en la base de datos y, si la severidad es crítica, dispara notificaciones push inmediatas a los administradores de zona.
 
-## Guías de Desarrollo
-Nomenclatura:
-
-    PascalCase: Clases, composables
-    camelCase: Variables, funciones
-    Inglés: Código
-    Español: UI
-Buenas Prácticas:
-
-    Evitar lógica en la UI
-    Uso de StateFlow en lugar de LiveData
-    Separación estricta de capas
-    Testing de casos de uso
-
----
-
-## Testing
-  Unit Testing:
-  
-      Casos de uso
-      Validaciones
-      Repositorios
-  UI Testing:
-  
-      Componentes Compose
-      Flujos de usuario
-
----
-
-## Instalación
-  Prerrequisitos:
-  
-    Android Studio Flamingo o superior
-    JDK 11 o superior
-    SDK de Android 31+
-
-  Pasos:
-  
-    git clone <repositorio>
-    cd CityAlerta
-    ./gradlew build
-    ./gradlew installDebug
-
----
-
-## Contribuciones
-Commits
-  Formato:
-
-    tipo: descripcion
-
-  Ejemplo:
-
-    feat: agregar creacion de reportes
-
----
-
-## Pull Requests
-    Incluir tests
-    Documentar cambios
-    Seguir arquitectura establecida
+*Este módulo transformará a CityAlerta de un sistema pasivo de recolección de datos a una plataforma de triaje inteligente en tiempo real.*
